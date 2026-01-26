@@ -4,12 +4,12 @@ plugins {
 
 android {
     namespace = "com.mobility.hack" // 네임스페이스 변경
-    compileSdk = 35 // 최신 안정 버전 권장
+    compileSdk = 36 // 최신 안정 버전 권장
 
     defaultConfig {
         applicationId = "com.mobility.hack"
         minSdk = 24
-        targetSdk = 35
+        targetSdk = 36
         versionCode = 1
         versionName = "1.0"
 
