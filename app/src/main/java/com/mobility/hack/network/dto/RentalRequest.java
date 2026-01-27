@@ -1,0 +1,17 @@
+package com.example.mobilityhack.network.dto; // 패키지 이름 변경
+
+import com.google.gson.annotations.SerializedName;
+
+public class RentalRequest {
+
+    @SerializedName("bike_id")
+    private String bikeId;
+
+    @SerializedName("user_id")
+    private int userId;
+
+    public RentalRequest(String bikeId, int userId) {
+        this.bikeId = bikeId;
+        this.userId = userId;
+    }
+}

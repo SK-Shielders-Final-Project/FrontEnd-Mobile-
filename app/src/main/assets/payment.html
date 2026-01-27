@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment</title>
+    <!-- Toss Payments JavaScript SDK -->
+    <script src="https://js.tosspayments.com/v1"></script>
+</head>
+<body>
+
+<script>
+    /**
+     * Android 앱에서 이 함수를 호출하여 결제를 시작합니다.
+     */
+    function requestTossPayment(clientKey, method, orderId, amount, orderName) {
+        var tossPayments = TossPayments(clientKey);
+        tossPayments.requestPayment(method, {
+            amount: amount,
+            orderId: orderId,
+            orderName: orderName,
+            customerName: "고객",
+            successUrl: "http://localhost/success",
+            failUrl: "http://localhost/fail"
+            // flowMode: "DIRECT" // 오류의 원인이므로 최종적으로 제거
+        });
+    }
+</script>
+
+</body>
+</html>
