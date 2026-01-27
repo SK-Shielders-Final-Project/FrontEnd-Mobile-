@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#FFFFFF"
+    android:orientation="vertical">
+
+    <!-- 상단 바 -->
+    <RelativeLayout
+        android:id="@+id/top_bar"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:paddingHorizontal="16dp">
+
+        <ImageButton
+            android:id="@+id/btn_back"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_centerVertical="true"
+            android:background="?android:attr/selectableItemBackground"
+            android:src="@android:drawable/ic_menu_revert"
+            android:rotation="180"
+            android:contentDescription="뒤로가기"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:text="문의하기"
+            android:textColor="@color/deep_black"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+    </RelativeLayout>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingTop="20dp">
+
+            <TextView
+                android:id="@+id/menu_rent_return"
+                style="@style/InquiryCategoryItem"
+                android:text="대여 및 반납" />
+
+            <TextView
+                style="@style/InquiryCategoryItem"
+                android:text="자전거 추가배치" />
+
+            <TextView
+                style="@style/InquiryCategoryItem"
+                android:text="대여소(개설 및 폐쇄)" />
+
+            <TextView
+                style="@style/InquiryCategoryItem"
+                android:text="결제/환불/마일리지" />
+
+            <TextView
+                style="@style/InquiryCategoryItem"
+                android:text="운영 및 정책" />
+
+            <TextView
+                style="@style/InquiryCategoryItem"
+                android:text="자전거, 시설관리" />
+
+            <TextView
+                style="@style/InquiryCategoryItem"
+                android:text="앱, 홈페이지" />
+
+            <TextView
+                style="@style/InquiryCategoryItem"
+                android:text="방치 자전거" />
+
+            <TextView
+                style="@style/InquiryCategoryItem"
+                android:text="기타 문의 사항" />
+
+            <TextView
+                style="@style/InquiryCategoryItem"
+                android:layout_height="match_parent"
+                android:text="내가 문의한 내역" />
+
+        </LinearLayout>
+    </ScrollView>
+</LinearLayout>
