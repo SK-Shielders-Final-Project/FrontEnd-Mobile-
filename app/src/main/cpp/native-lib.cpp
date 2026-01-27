@@ -87,3 +87,8 @@ Java_com_mobility_hack_security_SecurityEngine_initAntiDebug(JNIEnv* env, jobjec
     // 안티 디버깅 로직 (나중에 구현하거나 일단 비워둠)
     return;
 }
+extern "C"
+JNIEXPORT jstring JNICALL
+Java_com_mobility_hack_util_Keys_getApiKey(JNIEnv *env, jobject thiz) {
+    // TODO: implement getApiKey()
+}

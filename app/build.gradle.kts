@@ -3,8 +3,8 @@ plugins {
 }
 
 android {
-    namespace = "com.mobility.hack" // 네임스페이스 변경
-    compileSdk = 36 // 최신 안정 버전 권장
+    namespace = "com.mobility.hack"
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.mobility.hack"
@@ -15,7 +15,6 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         
-        // NDK 설정 추가
         externalNativeBuild {
             cmake {
                 cppFlags("")
@@ -25,7 +24,7 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false // [4] 취약점: 난독화 미적용
+            isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -51,6 +50,12 @@ dependencies {
     implementation(libs.material)
     implementation(libs.activity)
     implementation(libs.constraintlayout)
+    
+    // Retrofit2 & OkHttp 추가
+    implementation("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+    implementation("com.squareup.okhttp3:logging-interceptor:4.9.1")
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)

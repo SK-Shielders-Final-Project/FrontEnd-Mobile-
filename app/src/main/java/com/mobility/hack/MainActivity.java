@@ -1,31 +1,26 @@
 package com.mobility.hack;
-import android.util.Log;
-import com.mobility.hack.security.SecurityBridge;
-import com.mobility.hack.security.SecurityEngine;
+
 import android.content.Intent;
 import android.os.Bundle;
+import android.widget.ImageButton;
 import androidx.appcompat.app.AppCompatActivity;
-import com.mobility.hack.auth.LoginActivity;
-import com.mobility.hack.R;
-import android.widget.Toast;
+import com.mobility.hack.community.CustomerCenterActivity;
 
 public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        // onCreate 안에 추가
-        SecurityBridge sb = new SecurityBridge();
-        int result = sb.detectRooting(this);
+        setContentView(R.layout.activity_main);
 
-        Log.d("SecurityTest", "루팅 탐지 결과: " + Integer.toHexString(result));
-        Toast.makeText(this, "보안 엔진 가동 중... 결과: " + result, Toast.LENGTH_SHORT).show();
-        // 보안 엔진 초기화 및 체크
-        SecurityEngine engine = new SecurityEngine();
-        engine.initAntiDebug();
-        
-        // 로그인 화면으로 이동
-        startActivity(new Intent(this, LoginActivity.class));
-        finish();
+        // 왼쪽 상단 메뉴 버튼 연결
+        ImageButton btnMenu = findViewById(R.id.btn_menu);
+
+        if (btnMenu != null) {
+            btnMenu.setOnClickListener(v -> {
+                // 클릭 시 고객센터(파일 업로드 취약점 실습지)로 이동
+                Intent intent = new Intent(MainActivity.this, CustomerCenterActivity.class);
+                startActivity(intent);
+            });
+        }
     }
 }
-
