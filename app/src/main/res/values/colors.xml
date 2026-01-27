@@ -2,4 +2,9 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+
+    <!-- 새로운 색상 테마 -->
+    <color name="colorPrimaryLight">#E1F5FE</color>
+    <color name="colorPrimary">#3FC2EC</color>
+    <color name="colorPrimaryDark">#0094B2</color>
 </resources>
