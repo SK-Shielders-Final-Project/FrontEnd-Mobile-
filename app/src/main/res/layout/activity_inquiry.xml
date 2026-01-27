@@ -80,6 +80,7 @@
                 android:text="기타 문의 사항" />
 
             <TextView
+                android:id="@+id/menu_my_inquiries"
                 style="@style/InquiryCategoryItem"
                 android:layout_height="match_parent"
                 android:text="내가 문의한 내역" />

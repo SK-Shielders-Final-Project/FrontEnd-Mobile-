@@ -22,6 +22,15 @@ public class CustomerCenterActivity extends AppCompatActivity {
             }
         });
 
+        // '신고내역보기' 클릭 시 InquiryListActivity로 이동
+        findViewById(R.id.menu_inquiry_list).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(CustomerCenterActivity.this, InquiryListActivity.class);
+                startActivity(intent);
+            }
+        });
+
         // 뒤로가기 버튼
         findViewById(R.id.btn_back).setOnClickListener(new View.OnClickListener() {
             @Override

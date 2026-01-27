@@ -31,7 +31,14 @@ public class InquiryActivity extends AppCompatActivity {
                 startActivity(intent);
             }
         });
-        
-        // 다른 항목들도 필요에 따라 추가적인 클릭 리스너를 달 수 있습니다.
+
+        // '내가 문의한 내역' 클릭 시 신고내역보기(InquiryListActivity) 화면으로 이동
+        findViewById(R.id.menu_my_inquiries).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(InquiryActivity.this, InquiryListActivity.class);
+                startActivity(intent);
+            }
+        });
     }
 }

@@ -42,6 +42,8 @@
         <activity android:name="com.mobility.hack.community.InquiryActivity" />
         <activity android:name="com.mobility.hack.community.NoticeActivity" />
         <activity android:name="com.mobility.hack.community.InquiryWriteActivity" />
+        <activity android:name="com.mobility.hack.community.InquiryListActivity" />
+        <activity android:name="com.mobility.hack.community.InquiryDetailActivity" />
 
         <activity android:name="com.mobility.hack.chatbot.ChatActivity" />
 
