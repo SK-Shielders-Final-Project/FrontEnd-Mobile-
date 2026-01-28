@@ -1,45 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="16dp"
     tools:context=".auth.MyInfoActivity">
 
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/events_button"
-        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:text="이벤트"
-        android:textColor="@color/white"
-        app:backgroundTint="@color/colorPrimaryDark"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
 
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/register_coupon_button"
-        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
-        android:text="쿠폰 등록"
-        android:textColor="@color/white"
-        app:backgroundTint="@color/colorPrimaryDark"
-        app:layout_constraintEnd_toEndOf="@+id/events_button"
-        app:layout_constraintStart_toStartOf="@+id/events_button"
-        app:layout_constraintTop_toBottomOf="@+id/events_button" />
 
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/payment_history_button"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:text="결제 내역 조회"
-        android:textColor="@color/white"
-        app:backgroundTint="@color/colorPrimaryDark"
-        app:layout_constraintEnd_toEndOf="@+id/register_coupon_button"
-        app:layout_constraintStart_toStartOf="@+id/register_coupon_button"
-        app:layout_constraintTop_toBottomOf="@+id/register_coupon_button" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

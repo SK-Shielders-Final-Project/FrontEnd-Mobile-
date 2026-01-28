@@ -12,6 +12,7 @@
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
 
     <application
+        android:name=".MainApplication"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -21,7 +22,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Mobile"
         android:networkSecurityConfig="@xml/network_security_config"
-        android:usesCleartextTraffic="true">
+        android.usesCleartextTraffic="true">
 
         <!-- 지도 api키(local.properties에 저장되어있음) -->
         <meta-data
@@ -58,8 +59,21 @@
             </intent-filter>
         </activity>
 
+        <activity android:name="com.mobility.hack.auth.LoginActivity" />
+        <activity android:name="com.mobility.hack.auth.RegisterActivity" />
+        <activity android:name="com.mobility.hack.auth.UserHistoryActivity" />
+        <activity android:name="com.mobility.hack.ride.MapActivity" />
+        <activity android:name="com.mobility.hack.ride.QrScanActivity" />
+        <activity android:name="com.mobility.hack.ride.RentEndActivity" />
+        <activity android:name="com.mobility.hack.ride.TicketActivity" />
+        <activity android:name="com.mobility.hack.community.NoticeActivity" />
+        <activity android:name="com.mobility.hack.community.InquiryActivity" />
+
+        <!-- LLM 챗봇 액티비티 추가 -->
+        <activity android:name="com.mobility.hack.chatbot.ChatActivity" />
+
         <activity
-            android:name=".DeepLinkActivity"
+            android:name="com.mobility.hack.DeepLinkActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
