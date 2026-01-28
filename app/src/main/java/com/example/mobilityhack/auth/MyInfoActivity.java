@@ -18,7 +18,7 @@ import com.example.mobilityhack.network.ApiService;
 import com.example.mobilityhack.network.RetrofitClient;
 import com.example.mobilityhack.network.dto.VoucherRequest;
 import com.example.mobilityhack.network.dto.VoucherResponse;
-import com.example.mobilityhack.ride.UserHistoryActivity; // ride 패키지의 UserHistoryActivity를 import
+import com.example.mobilityhack.ride.UserHistoryActivity;
 import com.example.mobilityhack.util.Constants;
 
 import retrofit2.Call;
@@ -78,31 +78,30 @@ public class MyInfoActivity extends AppCompatActivity {
     }
 
     private void redeemVoucherCode(String voucherCode) {
-        SharedPreferences prefs = getSharedPreferences(Constants.PREFS_NAME, Context.MODE_PRIVATE);
-        int userId = prefs.getInt(Constants.KEY_USER_ID, -1);
-
-        if (userId == -1) {
-            Toast.makeText(this, "로그인이 필요한 기능입니다.", Toast.LENGTH_LONG).show();
-            return;
-        }
-
-        VoucherRequest request = new VoucherRequest(voucherCode, userId);
+        VoucherRequest request = new VoucherRequest(voucherCode);
+        Log.d(TAG, "redeemVoucherCode: " + voucherCode);
         apiService.redeemVoucher(request).enqueue(new Callback<VoucherResponse>() {
             @Override
             public void onResponse(Call<VoucherResponse> call, Response<VoucherResponse> response) {
                 if (response.isSuccessful() && response.body() != null) {
-                    VoucherResponse result = response.body();
-                    if (result.isSuccess()) {
-                        VoucherResponse.SuccessData data = result.getData();
-                        String successMessage = String.format(
-                            "%s\n충전된 금액: %d\n현재 포인트: %d",
-                            data.getMessage(), data.getRechargedAmount(), data.getTotalPoint()
-                        );
-                        Toast.makeText(MyInfoActivity.this, successMessage, Toast.LENGTH_LONG).show();
-                    } else {
-                        Toast.makeText(MyInfoActivity.this, result.getMessage(), Toast.LENGTH_LONG).show();
-                    }
+                    VoucherResponse data = response.body();
+                    Log.d(TAG, "onResponse: success, recharged: " + data.getRechargedPoint() + ", total: " + data.getTotalPoint());
+                    String successMessage = String.format(
+                        "쿠폰이 성공적으로 사용되었습니다.\n충전된 금액: %d\n현재 포인트: %d",
+                        data.getRechargedPoint(),
+                        data.getTotalPoint()
+                    );
+                    Toast.makeText(MyInfoActivity.this, successMessage, Toast.LENGTH_LONG).show();
                 } else {
+                    String errorBody = "";
+                    if(response.errorBody() != null) {
+                        try {
+                            errorBody = response.errorBody().string();
+                        } catch (java.io.IOException e) {
+                            Log.e(TAG, "Error reading error body: " + e.getMessage());
+                        }
+                    }
+                    Log.e(TAG, "onResponse: failed, code: " + response.code() + " body: " + errorBody);
                     String errorMsg = "이용권 등록 실패. 서버 응답 코드: " + response.code();
                     Toast.makeText(MyInfoActivity.this, errorMsg, Toast.LENGTH_LONG).show();
                 }

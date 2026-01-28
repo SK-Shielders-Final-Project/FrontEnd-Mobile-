@@ -17,20 +17,22 @@ import retrofit2.converter.gson.GsonConverterFactory;
 public class RetrofitClient {
 
     private static Retrofit retrofit = null;
-    // 안드로이드 에뮬레이터에서 localhost에 접근하려면 10.0.2.2를 사용합니다.
-    // 실제 서버 배포 시에는 해당 서버의 도메인이나 IP 주소로 변경해야 합니다.
-    private static final String BASE_URL = "http://10.0.2.2:8080";
+    private static OkHttpClient okHttpClient = null;
+    private static final String BASE_URL = "http://43.203.51.77:8080";
 
     public static Retrofit getClient(Context context) {
-        if (retrofit == null) {
-            OkHttpClient.Builder httpClient = new OkHttpClient.Builder();
-            httpClient.addInterceptor(new AuthInterceptor(context));
-            OkHttpClient client = httpClient.build();
+        if (okHttpClient == null) {
+            OkHttpClient.Builder httpClientBuilder = new OkHttpClient.Builder();
+            // Use application context to avoid memory leaks
+            httpClientBuilder.addInterceptor(new AuthInterceptor(context.getApplicationContext()));
+            okHttpClient = httpClientBuilder.build();
+        }
 
+        if (retrofit == null) {
             retrofit = new Retrofit.Builder()
                     .baseUrl(BASE_URL)
                     .addConverterFactory(GsonConverterFactory.create())
-                    .client(client)
+                    .client(okHttpClient)
                     .build();
         }
         return retrofit;
@@ -51,7 +53,7 @@ public class RetrofitClient {
         public Response intercept(Chain chain) throws IOException {
             Request.Builder requestBuilder = chain.request().newBuilder();
             SharedPreferences prefs = context.getSharedPreferences(Constants.PREFS_NAME, Context.MODE_PRIVATE);
-            String token = prefs.getString("jwt_token", null); // "jwt_token" should be a constant
+            String token = prefs.getString("jwt_token", null);
             if (token != null) {
                 requestBuilder.addHeader("Authorization", "Bearer " + token);
             }

@@ -1,7 +1,6 @@
-package com.example.mobilityhack.ride; // 패키지 이름 변경
+package com.mobility.hack.ride;
 
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.InputType;
 import android.util.Log;
@@ -25,10 +24,6 @@ public class TicketActivity extends AppCompatActivity {
 
     private static final String TAG = "TicketActivity";
     private ApiService apiService;
-
-    // SharedPreferences의 이름과 사용자 ID 키를 정의합니다.
-    public static final String PREFS_NAME = "user_prefs";
-    public static final String KEY_USER_ID = "user_id";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,39 +60,30 @@ public class TicketActivity extends AppCompatActivity {
     }
 
     private void redeemVoucherCode(String voucherCode) {
-        // SharedPreferences에서 현재 로그인한 사용자 ID를 가져옵니다.
-        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
-        int userId = prefs.getInt(KEY_USER_ID, -1); // 로그인하지 않은 경우 기본값 -1
-
-        if (userId == -1) {
-            Toast.makeText(this, "로그인이 필요한 기능입니다.", Toast.LENGTH_LONG).show();
-            // 여기서 로그인 화면으로 이동시키는 로직을 추가할 수 있습니다.
-            return;
-        }
-
-        VoucherRequest request = new VoucherRequest(voucherCode, userId);
-
+        VoucherRequest request = new VoucherRequest(voucherCode);
+        Log.d(TAG, "redeemVoucherCode: " + voucherCode);
         apiService.redeemVoucher(request).enqueue(new Callback<VoucherResponse>() {
             @Override
             public void onResponse(Call<VoucherResponse> call, Response<VoucherResponse> response) {
                 if (response.isSuccessful() && response.body() != null) {
-                    VoucherResponse result = response.body();
-                    if (result.isSuccess()) {
-                        // 성공 케이스
-                        VoucherResponse.SuccessData data = result.getData();
-                        String successMessage = String.format(
-                            "%s\n충전된 금액: %d\n현재 포인트: %d",
-                            data.getMessage(),
-                            data.getRechargedAmount(),
-                            data.getTotalPoint()
-                        );
-                        Toast.makeText(TicketActivity.this, successMessage, Toast.LENGTH_LONG).show();
-                    } else {
-                        // 서버가 정의한 실패 케이스
-                        Toast.makeText(TicketActivity.this, result.getMessage(), Toast.LENGTH_LONG).show();
-                    }
+                    VoucherResponse data = response.body();
+                    Log.d(TAG, "onResponse: success, recharged: " + data.getRechargedPoint() + ", total: " + data.getTotalPoint());
+                    String successMessage = String.format(
+                        "쿠폰이 성공적으로 사용되었습니다.\n충전된 금액: %d\n현재 포인트: %d",
+                        data.getRechargedPoint(),
+                        data.getTotalPoint()
+                    );
+                    Toast.makeText(TicketActivity.this, successMessage, Toast.LENGTH_LONG).show();
                 } else {
-                    // HTTP 에러
+                    String errorBody = "";
+                    if(response.errorBody() != null) {
+                        try {
+                            errorBody = response.errorBody().string();
+                        } catch (java.io.IOException e) {
+                            Log.e(TAG, "Error reading error body: " + e.getMessage());
+                        }
+                    }
+                    Log.e(TAG, "onResponse: failed, code: " + response.code() + " body: " + errorBody);
                     String errorMsg = "이용권 등록 실패. 서버 응답 코드: " + response.code();
                     Toast.makeText(TicketActivity.this, errorMsg, Toast.LENGTH_LONG).show();
                 }
