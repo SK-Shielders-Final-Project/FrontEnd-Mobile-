@@ -7,6 +7,7 @@
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
 
     <application
+        android:name=".MainApplication"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -22,12 +23,22 @@
         <activity
             android:name="com.mobility.hack.SplashActivity"
             android:exported="true">
+            android:name=".MainActivity"
+            android:exported="false">
+        </activity>
+
+        <activity android:name=".auth.LoginActivity" android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
 
+        <activity android:name=".auth.RegisterActivity" />
+        <activity android:name=".auth.FindPasswordActivity" />
+        <activity android:name=".auth.CheckPasswordActivity" />
+        <activity android:name=".auth.ChangePasswordActivity" />
+        <activity android:name=".auth.MyInfoActivity" />
         <activity android:name="com.mobility.hack.MainActivity" android:exported="true" />
         <activity android:name="com.mobility.hack.auth.LoginActivity" />
         <activity android:name="com.mobility.hack.auth.RegisterActivity" />
@@ -45,10 +56,31 @@
         <activity android:name="com.mobility.hack.community.InquiryListActivity" />
         <activity android:name="com.mobility.hack.community.InquiryDetailActivity" />
 
+        <!-- [취약점 적용] 비밀번호 재설정 액티비티 및 딥링크 추가 -->
         <activity android:name="com.mobility.hack.chatbot.ChatActivity" />
 
         <activity
-            android:name="com.mobility.hack.DeepLinkActivity"
+            android:name=".auth.ResetPasswordActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="http" android:host="attacker.com" android:pathPrefix="/password-reset" />
+            </intent-filter>
+        </activity>
+
+        <activity android:name=".auth.UserHistoryActivity" />
+        <activity android:name=".ride.MapActivity" />
+        <activity android:name=".ride.QrScanActivity" />
+        <activity android:name=".ride.RentEndActivity" />
+        <activity android:name=".ride.TicketActivity" />
+        <activity android:name=".community.NoticeActivity" />
+        <activity android:name=".community.InquiryActivity" />
+        <activity android:name=".chatbot.ChatActivity" />
+
+        <activity
+            android:name=".DeepLinkActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
