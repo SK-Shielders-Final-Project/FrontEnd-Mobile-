@@ -4,6 +4,7 @@
     <!-- 기본 -->
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    <color name="deep_black">#FF000000</color>
 
     <!-- 새로운 색상 테마 -->
     <color name="colorPrimaryLight">#E1F5FE</color>

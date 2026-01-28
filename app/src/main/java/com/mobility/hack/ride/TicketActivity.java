@@ -10,11 +10,12 @@ import android.widget.Toast;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.example.mobilityhack.R;
-import com.example.mobilityhack.network.ApiService;
-import com.example.mobilityhack.network.RetrofitClient;
-import com.example.mobilityhack.network.dto.VoucherRequest;
-import com.example.mobilityhack.network.dto.VoucherResponse;
+import com.mobility.hack.MainApplication;
+import com.mobility.hack.R;
+import com.mobility.hack.network.ApiService;
+import com.mobility.hack.network.RetrofitClient;
+import com.mobility.hack.network.dto.VoucherRequest;
+import com.mobility.hack.network.dto.VoucherResponse;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -30,7 +31,7 @@ public class TicketActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_ticket);
 
-        apiService = RetrofitClient.getApiService(this);
+        apiService = RetrofitClient.getApiService(((MainApplication) getApplication()).getTokenManager());
 
         findViewById(R.id.show_coupon_dialog_button).setOnClickListener(v -> {
             showVoucherInputDialog();

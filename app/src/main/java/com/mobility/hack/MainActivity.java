@@ -1,4 +1,4 @@
-package com.example.mobilityhack; // 패키지 이름 변경
+package com.mobility.hack;
 
 import android.content.Context;
 import android.content.Intent;
@@ -11,26 +11,20 @@ import android.widget.Button;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
-import android.view.Menu;
-import android.view.MenuItem;
-import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
-import com.mobility.hack.auth.CheckPasswordActivity;
-import com.mobility.hack.auth.LoginActivity;
-import com.mobility.hack.security.SecurityEngine;
 
-import com.google.android.material.appbar.MaterialToolbar;
 import com.journeyapps.barcodescanner.ScanContract;
 import com.journeyapps.barcodescanner.ScanOptions;
-import com.example.mobilityhack.auth.MyInfoActivity; // import 경로 변경
-import com.example.mobilityhack.network.ApiService; // import 경로 변경
-import com.example.mobilityhack.network.RetrofitClient; // import 경로 변경
-import com.example.mobilityhack.network.dto.RentalRequest;
-import com.example.mobilityhack.network.dto.RentalResponse;
-import com.example.mobilityhack.ride.PurchaseTicketActivity; // import 경로 변경
-import com.example.mobilityhack.ride.QrScanActivity; // import 경로 변경
-import com.example.mobilityhack.util.Constants; // import 경로 변경
+import com.mobility.hack.auth.CheckPasswordActivity;
+import com.mobility.hack.auth.LoginActivity;
+import com.mobility.hack.network.ApiService;
+import com.mobility.hack.network.RetrofitClient;
+import com.mobility.hack.network.dto.RentalRequest;
+import com.mobility.hack.network.dto.RentalResponse;
+import com.mobility.hack.ride.PurchaseTicketActivity;
+import com.mobility.hack.security.SecurityEngine;
+import com.mobility.hack.util.Constants;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -41,30 +35,55 @@ public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
     private ApiService apiService;
 
+    private final ActivityResultLauncher<ScanOptions> qrScannerLauncher = registerForActivityResult(new ScanContract(),
+            result -> {
+                if(result.getContents() == null) {
+                    Toast.makeText(this, "QR 코드 스캔이 취소되었습니다.", Toast.LENGTH_SHORT).show();
+                } else {
+                    String scannedId = result.getContents();
+                    requestRentToServer(scannedId);
+                }
+            });
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // --- [보안 강화] 토큰 인증 확인 로직 추가 ---
-        // MainApplication.getTokenManager()가 초기화되었는지, 그리고 저장된 토큰이 있는지 확인
-        if (MainApplication.getTokenManager() == null || MainApplication.getTokenManager().fetchAuthToken() == null) {
+        if (((MainApplication) getApplication()).getTokenManager() == null || ((MainApplication) getApplication()).getTokenManager().fetchAuthToken() == null) {
             Toast.makeText(this, "로그인이 필요합니다. 로그인 페이지로 이동합니다.", Toast.LENGTH_SHORT).show();
             Intent intent = new Intent(this, LoginActivity.class);
-            // 이전 액티비티 스택을 모두 지우고, 새로운 태스크를 시작합니다.
             intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
             startActivity(intent);
-            finish(); // 현재 MainActivity를 완전히 종료
-            return;   // 아래의 UI 생성 코드를 실행하지 않음
+            finish();
+            return;
         }
-        // --- 로직 끝 ---
 
         setContentView(R.layout.activity_main);
 
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
+        apiService = RetrofitClient.getApiService(((MainApplication) getApplication()).getTokenManager());
+
+        Button buyTicketButton = findViewById(R.id.buy_ticket_button);
+        Button scanQrButton = findViewById(R.id.scan_qr_button);
+
+        buyTicketButton.setOnClickListener(v -> {
+            Intent intent = new Intent(this, PurchaseTicketActivity.class);
+            startActivity(intent);
+        });
+
+        scanQrButton.setOnClickListener(v -> {
+            ScanOptions options = new ScanOptions();
+            options.setOrientationLocked(false);
+            options.setBeepEnabled(false);
+            qrScannerLauncher.launch(options);
+        });
+
         SecurityEngine engine = new SecurityEngine();
         engine.initAntiDebug();
+        
+        autoTestLogin();
     }
 
     @Override
@@ -82,7 +101,7 @@ public class MainActivity extends AppCompatActivity {
             startActivity(intent);
             return true;
         } else if (id == R.id.action_logout) {
-            MainApplication.getTokenManager().clearData();
+            ((MainApplication) getApplication()).getTokenManager().clearData();
 
             Intent intent = new Intent(this, LoginActivity.class);
             intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -92,67 +111,14 @@ public class MainActivity extends AppCompatActivity {
         }
 
         return super.onOptionsItemSelected(item);
-        setContentView(R.layout.activity_main);
-
-        apiService = RetrofitClient.getApiService(this);
-
-        MaterialToolbar toolbar = findViewById(R.id.top_toolbar);
-        setSupportActionBar(toolbar);
-
-        Button buyTicketButton = findViewById(R.id.buy_ticket_button);
-        Button scanQrButton = findViewById(R.id.scan_qr_button);
-
-        buyTicketButton.setOnClickListener(v -> {
-            Intent intent = new Intent(this, PurchaseTicketActivity.class);
-            startActivity(intent);
-        });
-
-        scanQrButton.setOnClickListener(v -> {
-            ScanOptions options = new ScanOptions();
-            options.setOrientationLocked(false);
-            options.setBeepEnabled(false);
-            options.setCaptureActivity(QrScanActivity.class);
-            qrScannerLauncher.launch(options);
-        });
-
-        autoTestLogin();
     }
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.main_menu, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        int id = item.getItemId();
-        if (id == R.id.action_my_info) {
-            Intent intent = new Intent(this, MyInfoActivity.class);
-            startActivity(intent);
-            return true;
-        } else if (id == R.id.action_menu) {
-            Toast.makeText(this, "메뉴 기능은 아직 준비 중입니다.", Toast.LENGTH_SHORT).show();
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
-    }
-
-    private final ActivityResultLauncher<ScanOptions> qrScannerLauncher = registerForActivityResult(new ScanContract(),
-            result -> {
-                if(result.getContents() == null) {
-                    Toast.makeText(this, "QR 코드 스캔이 취소되었습니다.", Toast.LENGTH_SHORT).show();
-                } else {
-                    String scannedId = result.getContents();
-                    requestRentToServer(scannedId);
-                }
-            });
 
     private void requestRentToServer(String bikeId) {
         SharedPreferences prefs = getSharedPreferences(Constants.PREFS_NAME, Context.MODE_PRIVATE);
         int userId = prefs.getInt(Constants.KEY_USER_ID, -1);
+        String token = ((MainApplication) getApplication()).getTokenManager().fetchAuthToken();
 
-        if (userId == -1) {
+        if (userId == -1 || token == null) {
             Toast.makeText(this, "대여를 위해 먼저 로그인을 해주세요.", Toast.LENGTH_LONG).show();
             return;
         }

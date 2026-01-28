@@ -12,4 +12,8 @@
         <item name="android:clickable">true</item>
         <item name="android:focusable">true</item>
     </style>
+
+    <style name="InquiryCategoryItem" parent="MenuListItem">
+        <item name="android:drawableEnd">@drawable/ic_arrow_forward_24</item>
+    </style>
 </resources>

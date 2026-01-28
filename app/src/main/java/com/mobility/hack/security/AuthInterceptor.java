@@ -1,7 +1,7 @@
 package com.mobility.hack.security;
 
-import android.content.Context;
 import androidx.annotation.NonNull;
+import com.mobility.hack.util.TokenManager;
 import java.io.IOException;
 import okhttp3.Interceptor;
 import okhttp3.Request;
@@ -11,8 +11,8 @@ public class AuthInterceptor implements Interceptor {
 
     private final TokenManager tokenManager;
 
-    public AuthInterceptor(Context context) {
-        this.tokenManager = new TokenManager(context);
+    public AuthInterceptor(TokenManager tokenManager) {
+        this.tokenManager = tokenManager;
     }
 
     @NonNull

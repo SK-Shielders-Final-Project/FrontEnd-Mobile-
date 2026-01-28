@@ -9,6 +9,7 @@ import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
@@ -23,6 +24,8 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.journeyapps.barcodescanner.ScanContract;
+import com.journeyapps.barcodescanner.ScanOptions;
 import com.mobility.hack.R;
 import com.mobility.hack.auth.MenuActivity;
 import com.mobility.hack.chatbot.ChatActivity;
@@ -36,12 +39,22 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     private FusedLocationProviderClient fusedLocationClient;
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1000;
 
+    private final ActivityResultLauncher<ScanOptions> qrScannerLauncher = registerForActivityResult(new ScanContract(),
+            result -> {
+                if(result.getContents() == null) {
+                    Toast.makeText(this, "QR 코드 스캔이 취소되었습니다.", Toast.LENGTH_SHORT).show();
+                } else {
+                    String scannedId = result.getContents();
+                    // TODO: 서버로 대여 요청 보내는 로직 추가
+                    Toast.makeText(this, "스캔된 ID: " + scannedId, Toast.LENGTH_SHORT).show();
+                }
+            });
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_map);
 
-        // [추가] 위치 서비스 클라이언트 초기화
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
 
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
@@ -52,48 +65,40 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
         fileCacher = new FileCacher(this);
 
-        // 챗봇 버튼 초기화 및 클릭 이벤트
         ImageButton btnChatBot = findViewById(R.id.btnChatBot);
         btnChatBot.setOnClickListener(v -> {
-            // ChatActivity로 이동하는 의도(Intent) 생성
             Intent intent = new Intent(MapActivity.this, ChatActivity.class);
             startActivity(intent);
         });
 
-        // 메뉴 버튼 초기화 및 클릭 이벤트
         LinearLayout btnMenu = findViewById(R.id.btnMenu);
         btnMenu.setOnClickListener(v -> {
-            // MenuActivity로 이동하는 Intent 생성
             Intent intent = new Intent(MapActivity.this, MenuActivity.class);
             startActivity(intent);
         });
 
         ImageButton btnRefresh = findViewById(R.id.btnRefresh);
         btnRefresh.setOnClickListener(v -> loadBikeData());
-    }
 
-    // QR 스캔 버튼 초기화 및 클릭 이벤트
-/*    ImageButton btnQrScan = findViewById(R.id.btnQrScan);
+        ImageButton btnQrScan = findViewById(R.id.btnQrScan);
         btnQrScan.setOnClickListener(v -> {
-        // QrScanActivity로 이동하는 Intent 생성
-        Intent intent = new Intent(MapActivity.this, QrScanActivity.class);
-        startActivity(intent);
-    });
+            ScanOptions options = new ScanOptions();
+            options.setOrientationLocked(false);
+            options.setBeepEnabled(false);
+            qrScannerLauncher.launch(options);
+        });
 
-    // 이용권 구매 버튼 클릭 이벤트
-    LinearLayout btnPurchaseTicket = findViewById(R.id.btnPurchaseTicket);
-    btnPurchaseTicket.setOnClickListener(v -> {
-        // RentEndActivity로 이동하는 Intent 생성
-        Intent intent = new Intent(MapActivity.this, RentEndActivity.class);
-        startActivity(intent);
-    });
-    */
+        LinearLayout btnPurchaseTicket = findViewById(R.id.btnPurchaseTicket);
+        btnPurchaseTicket.setOnClickListener(v -> {
+            Intent intent = new Intent(MapActivity.this, PurchaseTicketActivity.class);
+            startActivity(intent);
+        });
+    }
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
 
-        // [수정] 권한 확인 후 현재 위치로 이동
         checkLocationPermissionAndMoveCamera();
 
         loadBikeData();
@@ -101,13 +106,11 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
     private void checkLocationPermissionAndMoveCamera() {
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // 권한이 없으면 요청
             ActivityCompat.requestPermissions(this,
                     new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_PERMISSION_REQUEST_CODE);
             return;
         }
 
-        // 권한이 있을 경우: 지도에 내 위치 파란 점 표시 및 현재 위치 가져오기
         mMap.setMyLocationEnabled(true);
         fusedLocationClient.getLastLocation().addOnSuccessListener(this, new OnSuccessListener<Location>() {
             @Override
@@ -116,7 +119,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                     LatLng currentLatLng = new LatLng(location.getLatitude(), location.getLongitude());
                     mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, 15));
                 } else {
-                    // 위치를 못 잡을 경우 기본값 (서울시청)
                     LatLng defaultLocation = new LatLng(37.5665, 126.9780);
                     mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(defaultLocation, 14));
                 }
@@ -124,7 +126,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         });
     }
 
-    // 권한 요청 결과 처리
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);

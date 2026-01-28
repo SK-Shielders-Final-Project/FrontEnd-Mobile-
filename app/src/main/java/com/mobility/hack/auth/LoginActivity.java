@@ -7,12 +7,14 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
-import com.mobility.hack.MainActivity;
 import com.mobility.hack.MainApplication;
 import com.mobility.hack.R;
 import com.mobility.hack.network.ApiService;
-import com.mobility.hack.network.LoginRequest;
-import com.mobility.hack.network.LoginResponse;
+import com.mobility.hack.network.RetrofitClient;
+import com.mobility.hack.network.dto.LoginRequest;
+import com.mobility.hack.network.dto.LoginResponse;
+import com.mobility.hack.ride.MapActivity;
+import com.mobility.hack.util.TokenManager;
 import org.jetbrains.annotations.NotNull;
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -26,19 +28,19 @@ public class LoginActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        if (MainApplication.getTokenManager() != null && MainApplication.getTokenManager().fetchAuthToken() != null) {
-            goToMainActivity();
+        TokenManager tokenManager = ((MainApplication) getApplication()).getTokenManager();
+
+        if (tokenManager != null && tokenManager.fetchAuthToken() != null) {
+            goToMapActivity();
             return;
         }
 
         setContentView(R.layout.activity_login);
 
-        apiService = MainApplication.getRetrofit().create(ApiService.class);
+        apiService = RetrofitClient.getApiService(tokenManager);
 
         EditText usernameEditText = findViewById(R.id.editTextId);
         EditText passwordEditText = findViewById(R.id.editTextPassword);
-        // [제거] 자동 로그인 체크박스를 더 이상 사용하지 않음
-        // CheckBox autoLoginCheckbox = findViewById(R.id.checkboxAutoLogin);
         Button loginButton = findViewById(R.id.buttonLogin);
         TextView registerTextView = findViewById(R.id.textViewRegister);
         TextView findPasswordTextView = findViewById(R.id.textViewFindPassword);
@@ -47,14 +49,7 @@ public class LoginActivity extends AppCompatActivity {
             String username = usernameEditText.getText().toString();
             String password = passwordEditText.getText().toString();
 
-            if (username.contains("' OR '1'='1'")) {
-                Toast.makeText(this, "인증 우회 성공 (SQL Injection)", Toast.LENGTH_SHORT).show();
-                goToMainActivity();
-                return;
-            }
-
             if (!username.isEmpty() && !password.isEmpty()) {
-                // [수정] 로그인 유지 여부를 묻지 않고 바로 로그인 시도
                 login(new LoginRequest(username, password));
             } else {
                 Toast.makeText(this, "아이디와 비밀번호를 입력해주세요.", Toast.LENGTH_SHORT).show();
@@ -72,7 +67,6 @@ public class LoginActivity extends AppCompatActivity {
         });
     }
 
-    // [수정] autoLogin 파라미터 제거
     private void login(LoginRequest loginRequest) {
         apiService.login(loginRequest).enqueue(new Callback<LoginResponse>() {
             @Override
@@ -81,12 +75,10 @@ public class LoginActivity extends AppCompatActivity {
 
                 LoginResponse loginResponse = response.body();
                 if (response.isSuccessful() && loginResponse != null) {
-                    // [수정] 로그인에 성공하면 무조건 토큰과 ID를 저장
-                    MainApplication.getTokenManager().saveAuthToken(loginResponse.getJwtToken());
-                    MainApplication.getTokenManager().saveUserId(loginResponse.getUserId());
+                    ((MainApplication) getApplication()).getTokenManager().saveAuthToken(loginResponse.getAccessToken());
 
                     Toast.makeText(LoginActivity.this, "로그인 성공!", Toast.LENGTH_SHORT).show();
-                    goToMainActivity();
+                    goToMapActivity();
                 } else {
                     Toast.makeText(LoginActivity.this, "로그인에 실패했습니다. 아이디 또는 비밀번호를 확인해주세요.", Toast.LENGTH_SHORT).show();
                 }
@@ -100,8 +92,8 @@ public class LoginActivity extends AppCompatActivity {
         });
     }
 
-    private void goToMainActivity() {
-        Intent intent = new Intent(this, MainActivity.class);
+    private void goToMapActivity() {
+        Intent intent = new Intent(this, MapActivity.class);
         startActivity(intent);
         finish();
     }

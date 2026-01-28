@@ -1,10 +1,21 @@
+import java.util.Properties
+import java.io.FileInputStream
+
 plugins {
     alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
+}
+
+// Load MAPS_API_KEY from local.properties
+val localProperties = Properties()
+val localPropertiesFile = rootProject.file("local.properties")
+if (localPropertiesFile.exists()) {
+    localProperties.load(FileInputStream(localPropertiesFile))
 }
 
 android {
-    namespace = "com.mobility.hack" // 네임스페이스 변경
-    compileSdk = 35 // 최신 안정 버전 권장
+    namespace = "com.mobility.hack"
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.mobility.hack"
@@ -20,6 +31,9 @@ android {
                 cppFlags("")
             }
         }
+
+        // Set the API key as a manifest placeholder
+        manifestPlaceholders["MAPS_API_KEY"] = localProperties.getProperty("MAPS_API_KEY") ?: ""
     }
 
     buildTypes {
@@ -31,7 +45,7 @@ android {
             )
         }
     }
-    
+
     externalNativeBuild {
         cmake {
             path = file("src/main/cpp/CMakeLists.txt")
@@ -43,8 +57,13 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
-    kotlinOptions { // 코틀린 옵션은 유지해도 괜찮습니다.
+
+    kotlinOptions {
         jvmTarget = "11"
+    }
+
+    packaging {
+        resources.excludes.add("META-INF/versions/9/OSGI-INF/MANIFEST.MF")
     }
 }
 
@@ -59,10 +78,6 @@ dependencies {
     implementation(libs.converter.gson)
     implementation(libs.logging.interceptor)
 
-    // Hilt 의존성 제거
-    // implementation(libs.hilt.android)
-    // kapt(libs.hilt.compiler)
-
     // Security
     implementation(libs.security.crypto)
 
@@ -70,27 +85,12 @@ dependencies {
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
 
-    // UI 및 기본 테마 지원
-    implementation("com.google.android.material:material:1.9.0")
-
-    // Google Maps SDK (지도 표시)
+    // Google Maps SDK
     implementation("com.google.android.gms:play-services-maps:17.0.0")
 
-    // Google Location SDK (내 위치 가져오기)
+    // Google Location SDK
     implementation("com.google.android.gms:play-services-location:17.0.0")
 
-    // Retrofit & Gson
-    implementation("com.squareup.retrofit2:retrofit:3.0.0")
-    implementation("com.squareup.retrofit2:converter-gson:3.0.0")
-
-    // OkHttp
-    implementation("com.squareup.okhttp3:okhttp:5.3.2")
-
     // Barcode Scanner
-    implementation("com.journeyapps:zxing-android-embedded:4.3.0")
+    implementation(libs.zxing.embedded)
 }
-
-// Kapt 블록 제거
-// kapt {
-//     correctErrorTypes = true
-// }

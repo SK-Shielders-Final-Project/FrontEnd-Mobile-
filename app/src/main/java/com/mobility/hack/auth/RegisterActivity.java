@@ -11,7 +11,8 @@ import com.google.android.material.textfield.TextInputLayout;
 import com.mobility.hack.MainApplication;
 import com.mobility.hack.R;
 import com.mobility.hack.network.ApiService;
-import com.mobility.hack.network.RegisterResponse;
+import com.mobility.hack.network.RetrofitClient;
+import com.mobility.hack.network.dto.RegisterResponse;
 import org.jetbrains.annotations.NotNull;
 import java.util.HashMap;
 import java.util.Map;
@@ -28,7 +29,7 @@ public class RegisterActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_register);
 
-        apiService = MainApplication.getRetrofit().create(ApiService.class);
+        apiService = RetrofitClient.getApiService(((MainApplication) getApplication()).getTokenManager());
 
         TextInputLayout usernameInputLayout = findViewById(R.id.textInputLayoutUsername);
         TextInputLayout nameInputLayout = findViewById(R.id.textInputLayoutName);
@@ -61,21 +62,18 @@ public class RegisterActivity extends AppCompatActivity {
             String email = emailEditText.getText().toString();
             String phone = phoneEditText.getText().toString();
 
-            // (입력값 검증 로직은 동일)
             if (!password.equals(passwordConfirm)) {
                 passwordInputLayout.setError("비밀번호가 일치하지 않습니다.");
                 passwordConfirmInputLayout.setError("비밀번호가 일치하지 않습니다.");
                 return;
             }
 
-            // [취약점 적용] RegisterRequest 대신 HashMap 사용
             Map<String, Object> requestData = new HashMap<>();
             requestData.put("username", username);
             requestData.put("name", name);
             requestData.put("password", password);
             requestData.put("email", email);
             requestData.put("phone", phone);
-            // 모의해킹 시, 여기에 requestData.put("admin_lev", 1); 등을 추가하여 테스트 가능
 
             signup(requestData);
         });

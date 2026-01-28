@@ -1,14 +1,15 @@
-package com.example.mobilityhack.ride; // 패키지 이름 변경
+package com.mobility.hack.ride;
 
 import android.content.Intent;
 import android.os.Bundle;
 import android.widget.TextView;
+import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.button.MaterialButtonToggleGroup;
-import com.example.mobilityhack.R; // import 경로 변경
+import com.mobility.hack.R;
 
 import java.text.NumberFormat;
 import java.util.Locale;
@@ -55,10 +56,11 @@ public class PurchaseTicketActivity extends AppCompatActivity {
 
         // '다음' 버튼 리스너 (결제 화면으로 이동)
         nextButton.setOnClickListener(v -> {
-            Intent intent = new Intent(this, PaymentActivity.class);
-            intent.putExtra(PaymentActivity.EXTRA_AMOUNT, selectedAmount);
-            intent.putExtra(PaymentActivity.EXTRA_ORDER_NAME, String.format(Locale.getDefault(), "일일권(%d시간)", selectedHours));
-            startActivity(intent);
+            Toast.makeText(this, "결제 기능은 현재 준비 중입니다.", Toast.LENGTH_SHORT).show();
+            // Intent intent = new Intent(this, PaymentActivity.class);
+            // intent.putExtra(PaymentActivity.EXTRA_AMOUNT, selectedAmount);
+            // intent.putExtra(PaymentActivity.EXTRA_ORDER_NAME, String.format(Locale.getDefault(), "일일권(%d시간)", selectedHours));
+            // startActivity(intent);
         });
     }
 

@@ -1,4 +1,4 @@
-package com.example.mobilityhack.network.dto; // 패키지 이름 변경
+package com.mobility.hack.network.dto;
 
 import com.google.gson.annotations.SerializedName;
 

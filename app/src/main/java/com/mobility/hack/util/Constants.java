@@ -1,6 +1,7 @@
-package com.example.mobilityhack.util; // 패키지 이름 변경
+package com.mobility.hack.util;
 
 public class Constants {
-    public static final String PREFS_NAME = "user_prefs";
+    public static final String PREFS_NAME = "mobility_hack_prefs";
     public static final String KEY_USER_ID = "user_id";
+    public static final String KEY_AUTH_TOKEN = "auth_token";
 }

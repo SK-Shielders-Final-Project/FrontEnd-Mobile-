@@ -30,7 +30,7 @@ public class ResetPasswordActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_reset_password);
 
-        apiService = MainApplication.getRetrofit().create(ApiService.class);
+        apiService = ((MainApplication) getApplication()).getApiService();
 
         // --- 딥링크에서 토큰 파싱 ---
         Uri data = getIntent().getData();

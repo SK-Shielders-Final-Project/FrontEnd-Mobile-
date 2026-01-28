@@ -8,9 +8,10 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
-import com.mobility.hack.MainApplication;
 import com.mobility.hack.R;
 import com.mobility.hack.network.ApiService;
+import com.mobility.hack.network.RetrofitClient;
+import com.mobility.hack.util.TokenManager;
 import org.jetbrains.annotations.NotNull;
 import java.util.HashMap;
 import java.util.Map;
@@ -21,13 +22,15 @@ import retrofit2.Response;
 public class FindPasswordActivity extends AppCompatActivity {
 
     private ApiService apiService;
+    private TokenManager tokenManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_find_password);
 
-        apiService = MainApplication.getRetrofit().create(ApiService.class);
+        tokenManager = new TokenManager(this);
+        apiService = RetrofitClient.getApiService(tokenManager);
 
         TextInputLayout usernameInputLayout = findViewById(R.id.textInputLayoutUsername);
         TextInputLayout emailInputLayout = findViewById(R.id.textInputLayoutEmail);
@@ -54,18 +57,16 @@ public class FindPasswordActivity extends AppCompatActivity {
 
             if (hasError) return;
 
-            // [수정] 서버의 요구사항에 맞춰 username과 email을 모두 전달
-            String forgedHost = "attacker.com";
             Map<String, String> payload = new HashMap<>();
             payload.put("username", username);
             payload.put("email", email);
 
-            requestPasswordReset(forgedHost, payload);
+            requestPasswordReset(payload);
         });
     }
 
-    private void requestPasswordReset(String host, Map<String, String> payload) {
-        apiService.requestPasswordReset(host, payload).enqueue(new Callback<Void>() {
+    private void requestPasswordReset(Map<String, String> payload) {
+        apiService.requestPasswordReset(payload).enqueue(new Callback<Void>() {
             @Override
             public void onResponse(@NotNull Call<Void> call, @NotNull Response<Void> response) {
                 if (isFinishing() || isDestroyed()) return;

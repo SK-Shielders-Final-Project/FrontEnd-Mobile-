@@ -11,7 +11,8 @@ import com.google.android.material.textfield.TextInputLayout;
 import com.mobility.hack.MainApplication;
 import com.mobility.hack.R;
 import com.mobility.hack.network.ApiService;
-import com.mobility.hack.network.ChangePasswordRequest;
+import com.mobility.hack.network.RetrofitClient;
+import com.mobility.hack.network.dto.ChangePasswordRequest;
 import org.jetbrains.annotations.NotNull;
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -26,8 +27,7 @@ public class ChangePasswordActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_change_password);
 
-        // 수정된 접근 방식
-        apiService = MainApplication.getRetrofit().create(ApiService.class);
+        apiService = RetrofitClient.getApiService(((MainApplication) getApplication()).getTokenManager());
 
         TextInputLayout currentPasswordLayout = findViewById(R.id.textInputLayoutCurrentPassword);
         TextInputLayout newPasswordLayout = findViewById(R.id.textInputLayoutNewPassword);
@@ -76,7 +76,13 @@ public class ChangePasswordActivity extends AppCompatActivity {
     }
 
     private void changePassword(ChangePasswordRequest request, TextInputLayout currentPasswordLayout) {
-        apiService.changePassword(request).enqueue(new Callback<Void>() {
+        String token = ((MainApplication) getApplication()).getTokenManager().fetchAuthToken();
+        if (token == null) {
+            Toast.makeText(this, "로그인이 필요합니다.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        apiService.changePassword("Bearer " + token, request).enqueue(new Callback<Void>() {
             @Override
             public void onResponse(@NotNull Call<Void> call, @NotNull Response<Void> response) {
                 if (isFinishing() || isDestroyed()) return;

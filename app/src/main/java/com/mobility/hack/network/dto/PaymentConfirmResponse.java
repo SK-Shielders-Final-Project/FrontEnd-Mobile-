@@ -1,24 +1,19 @@
-package com.example.mobilityhack.network.dto; // 패키지 이름 변경
+package com.mobility.hack.network.dto;
+
+import com.google.gson.annotations.SerializedName;
 
 public class PaymentConfirmResponse {
-    private long paymentId;
-    private int userId;
-    private int totalPoint;
-    private String paymentKey;
+    @SerializedName("status")
+    private String status;
 
-    public long getPaymentId() {
-        return paymentId;
+    @SerializedName("message")
+    private String message;
+
+    public String getStatus() {
+        return status;
     }
 
-    public int getUserId() {
-        return userId;
-    }
-
-    public int getTotalPoint() {
-        return totalPoint;
-    }
-
-    public String getPaymentKey() {
-        return paymentKey;
+    public String getMessage() {
+        return message;
     }
 }

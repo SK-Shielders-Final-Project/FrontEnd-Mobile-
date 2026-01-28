@@ -3,7 +3,6 @@ package com.mobility.hack.auth;
 import android.content.Intent;
 import android.os.Bundle;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import com.google.android.material.textfield.TextInputEditText;
@@ -11,9 +10,11 @@ import com.google.android.material.textfield.TextInputLayout;
 import com.mobility.hack.MainApplication;
 import com.mobility.hack.R;
 import com.mobility.hack.network.ApiService;
-import com.mobility.hack.network.RegisterResponse;
-import com.mobility.hack.network.UpdateInfoRequest;
-import com.mobility.hack.network.UpdateInfoResponse;
+import com.mobility.hack.network.RetrofitClient;
+import com.mobility.hack.network.dto.RegisterResponse;
+import com.mobility.hack.network.dto.UpdateInfoRequest;
+import com.mobility.hack.network.dto.UpdateInfoResponse;
+import com.mobility.hack.util.TokenManager;
 import org.jetbrains.annotations.NotNull;
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -31,7 +32,7 @@ public class MyInfoActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_my_info);
 
-        apiService = MainApplication.getRetrofit().create(ApiService.class);
+        apiService = RetrofitClient.getApiService(((MainApplication) getApplication()).getTokenManager());
 
         passwordInputLayout = findViewById(R.id.textInputLayoutPassword);
 
@@ -68,18 +69,14 @@ public class MyInfoActivity extends AppCompatActivity {
     }
 
     private void fetchUserInfo() {
-        // [수정] TokenManager에서 저장된 userId 가져오기
-        long userId = MainApplication.getTokenManager().fetchUserId();
-
-        // userId가 0이면 (저장된 값이 없으면) 에러 처리
-        if (userId == 0) {
-            Toast.makeText(MyInfoActivity.this, "사용자 정보를 찾을 수 없습니다. 다시 로그인해주세요.", Toast.LENGTH_SHORT).show();
-            finish(); 
+        String token = ((MainApplication) getApplication()).getTokenManager().fetchAuthToken();
+        if (token == null) {
+            Toast.makeText(this, "로그인이 필요합니다.", Toast.LENGTH_SHORT).show();
+            finish();
             return;
         }
 
-        // [수정] getUserInfo API 호출 시 userId 전달
-        apiService.getUserInfo(userId).enqueue(new Callback<RegisterResponse>() {
+        apiService.getUserInfo("Bearer " + token).enqueue(new Callback<RegisterResponse>() {
             @Override
             public void onResponse(@NotNull Call<RegisterResponse> call, @NotNull Response<RegisterResponse> response) {
                 if (isFinishing() || isDestroyed()) return;
@@ -104,7 +101,13 @@ public class MyInfoActivity extends AppCompatActivity {
     }
 
     private void updateUserInfo(UpdateInfoRequest request) {
-        apiService.updateUserInfo(request).enqueue(new Callback<UpdateInfoResponse>() {
+        String token = ((MainApplication) getApplication()).getTokenManager().fetchAuthToken();
+        if (token == null) {
+            Toast.makeText(this, "로그인이 필요합니다.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        
+        apiService.updateUserInfo("Bearer " + token, request).enqueue(new Callback<UpdateInfoResponse>() {
             @Override
             public void onResponse(@NotNull Call<UpdateInfoResponse> call, @NotNull Response<UpdateInfoResponse> response) {
                 if (isFinishing() || isDestroyed()) return;
