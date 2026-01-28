@@ -6,6 +6,8 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import com.mobility.hack.R;
 
+import com.mobility.hack.R;
+
 public class MainActivity extends AppCompatActivity {
 
     @Override

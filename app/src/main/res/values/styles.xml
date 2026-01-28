@@ -1,13 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <style name="InquiryCategoryItem">
+    <style name="MenuListItem">
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">wrap_content</item>
         <item name="android:paddingLeft">20dp</item>
         <item name="android:paddingRight">20dp</item>
         <item name="android:paddingTop">18dp</item>
         <item name="android:paddingBottom">18dp</item>
+        <item name="android:padding">16dp</item>
         <item name="android:textSize">16sp</item>
+        <item name="android:textColor">@color/text_primary</item>
+        <item name="android:background">?attr/selectableItemBackground</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:drawablePadding">12dp</item>
         <item name="android:textColor">@color/deep_black</item>
         <item name="android:textStyle">bold</item>
         <item name="android:background">?android:attr/selectableItemBackground</item>

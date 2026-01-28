@@ -1,14 +1,20 @@
 package com.mobility.hack.chatbot;
 
 public class ChatMessage {
-    private String message;
-    private boolean isUser;
+    public static final int VIEW_TYPE_USER = 1;
+    public static final int VIEW_TYPE_BOT = 2;
 
-    public ChatMessage(String message, boolean isUser) {
+    private String message;
+    private int viewType;
+    private String time;
+
+    public ChatMessage(String message, int viewType, String time) {
         this.message = message;
-        this.isUser = isUser;
+        this.viewType = viewType;
+        this.time = time;
     }
 
     public String getMessage() { return message; }
-    public boolean isUser() { return isUser; }
+    public int getViewType() { return viewType; }
+    public String getTime() { return time; }
 }

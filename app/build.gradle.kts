@@ -3,10 +3,11 @@ plugins {
     // alias(libs.plugins.hilt) // Hilt 플러그인 제거
     alias(libs.plugins.kotlin.android)
     // alias(libs.plugins.kotlin.kapt) // Kapt 플러그인 제거
+    id("com.google.android.libraries.mapsplatform.secrets-gradle-plugin")
 }
 
 android {
-    namespace = "com.mobility.hack"
+    namespace = "com.mobility.hack" // 네임스페이스 변경
     compileSdk = 36
 
     defaultConfig {
@@ -78,6 +79,15 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
+
+    // UI 및 기본 테마 지원
+    implementation("com.google.android.material:material:1.9.0")
+
+    // Google Maps SDK (지도 표시)
+    implementation("com.google.android.gms:play-services-maps:17.0.0")
+
+    // Google Location SDK (내 위치 가져오기)
+    implementation("com.google.android.gms:play-services-location:17.0.0")
 }
 
 // Kapt 블록 제거

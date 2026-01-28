@@ -1,6 +1,39 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+
+    <!-- 기본 -->
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
     <color name="deep_black">#222222</color>
+    <color name="light_gray">#E0E0E0</color>
+    <color name="gray">#FFFFFFFF</color>
+
+    <!-- 🚨 팀 합의 고정 컬러 (절대 변경 금지) -->
+    <color name="brand_pale">#E1F5FE</color>
+    <color name="brand_primary">#3FC2EC</color>
+    <color name="brand_accent">#0094B2</color>
+
+    <!-- 다크 UI 배경 -->
+    <color name="brand_surface">#1C1C1E</color>        <!-- 전체 배경 -->
+    <color name="brand_surface_dark">#121212</color>  <!-- 더 어두운 영역 -->
+    <color name="brand_input_bg">#2C2C2E</color>      <!-- 입력창 배경 -->
+
+    <!-- 채팅 말풍선 -->
+    <color name="chat_bot_bg">#EFEFEF</color>         <!-- 봇 말풍선 -->
+    <color name="chat_user_bg">@color/brand_primary</color>
+
+    <!-- 텍스트 -->
+    <color name="text_primary">#333333</color>
+    <color name="text_secondary">#888888</color>
+    <color name="text_on_dark">#FFFFFF</color>
+    <color name="text_hint">#AAAAAA</color>
+
+    <!-- Divider / Border -->
+    <color name="divider_dark">#3A3A3C</color>
+
+    <!-- 상태 컬러 (확장용) -->
+    <color name="state_success">#4CAF50</color>
+    <color name="state_warning">#FFC107</color>
+    <color name="state_error">#F44336</color>
+
 </resources>
