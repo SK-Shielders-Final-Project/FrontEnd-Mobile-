@@ -1,13 +1,20 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
-    // alias(libs.plugins.hilt) // Hilt 플러그인 제거
     alias(libs.plugins.kotlin.android)
-    // alias(libs.plugins.kotlin.kapt) // Kapt 플러그인 제거
     id("com.google.android.libraries.mapsplatform.secrets-gradle-plugin")
 }
 
+// local.properties 파일 읽기 로직 추가
+val localProperties = Properties()
+val localPropertiesFile = rootProject.file("local.properties")
+if (localPropertiesFile.exists()) {
+    localProperties.load(localPropertiesFile.inputStream())
+}
+
 android {
-    namespace = "com.mobility.hack" // 네임스페이스 변경
+    namespace = "com.mobility.hack"
     compileSdk = 36
 
     defaultConfig {
@@ -18,6 +25,11 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // [2] local.properties 키 주입
+        manifestPlaceholders["MAPS_API_KEY"] = localProperties.getProperty("MAPS_API_KEY") ?: ""
+        // [에러 해결] MAPS_API_KEY라는 정확한 이름을 사용하고, 반드시 이중 따옴표를 포함해야 합니다.
+        buildConfigField("String", "MAPS_API_KEY", "\"${localProperties.getProperty("MAPS_API_KEY") ?: ""}\"")
 
         externalNativeBuild {
             cmake {
@@ -47,8 +59,8 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
-    kotlinOptions { // 코틀린 옵션은 유지해도 괜찮습니다.
-        jvmTarget = "11"
+    buildFeatures {
+        buildConfig = true
     }
 }
 
@@ -57,40 +69,15 @@ dependencies {
     implementation(libs.material)
     implementation(libs.activity)
     implementation(libs.constraintlayout)
-
-    // Retrofit & OkHttp
     implementation(libs.retrofit)
     implementation(libs.converter.gson)
     implementation(libs.logging.interceptor)
-
-    // Hilt 의존성 제거
-    // implementation(libs.hilt.android)
-    // kapt(libs.hilt.compiler)
-
-    // Security
     implementation(libs.security.crypto)
 
-
-    // Retrofit2 & OkHttp 추가
-    implementation("com.squareup.retrofit2:retrofit:2.9.0")
-    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
-    implementation("com.squareup.okhttp3:logging-interceptor:4.9.1")
+    implementation("com.google.android.gms:play-services-maps:18.1.0")
+    implementation("com.google.android.gms:play-services-location:21.0.1")
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
-
-    // UI 및 기본 테마 지원
-    implementation("com.google.android.material:material:1.9.0")
-
-    // Google Maps SDK (지도 표시)
-    implementation("com.google.android.gms:play-services-maps:17.0.0")
-
-    // Google Location SDK (내 위치 가져오기)
-    implementation("com.google.android.gms:play-services-location:17.0.0")
 }
-
-// Kapt 블록 제거
-// kapt {
-//     correctErrorTypes = true
-// }

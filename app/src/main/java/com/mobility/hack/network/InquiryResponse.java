@@ -4,8 +4,11 @@ import com.google.gson.annotations.SerializedName;
 import java.io.Serializable;
 
 public class InquiryResponse implements Serializable {
-    @SerializedName("id")
-    private int id;
+    @SerializedName("inquiry_id") // Swagger 명세에 맞춘 필드명
+    private Long inquiryId;
+
+    @SerializedName("user_id")
+    private Long userId;
 
     @SerializedName("title")
     private String title;
@@ -16,20 +19,22 @@ public class InquiryResponse implements Serializable {
     @SerializedName("file_id")
     private String fileId;
 
-    @SerializedName("stored_name")
-    private String storedName;
+    @SerializedName("image_url")
+    private String imageUrl;
 
-    @SerializedName("path")
-    private String path;
-
-    @SerializedName("created_at")
+    @SerializedName("created_at") // Swagger JSON 명세 반영
     private String createdAt;
 
-    public int getId() { return id; }
+    public Long getInquiryId() { return inquiryId; }
+    public Long getUserId() { return userId; }
     public String getTitle() { return title; }
     public String getContent() { return content; }
     public String getFileId() { return fileId; }
-    public String getStoredName() { return storedName; }
-    public String getPath() { return path; }
+    public String getImageUrl() { return imageUrl; }
+    
+    // [중요] 요구하신 getCreatedAt() 메서드 추가
     public String getCreatedAt() { return createdAt; }
+
+    // [에러 방지] 기존 어댑터 로직 호환을 위해 추가
+    public String getStoredName() { return title; }
 }

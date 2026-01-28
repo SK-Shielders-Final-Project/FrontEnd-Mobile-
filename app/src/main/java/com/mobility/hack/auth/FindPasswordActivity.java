@@ -8,9 +8,10 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
-import com.mobility.hack.MainApplication;
 import com.mobility.hack.R;
 import com.mobility.hack.network.ApiService;
+import com.mobility.hack.network.RetrofitClient;
+import okhttp3.ResponseBody;
 import org.jetbrains.annotations.NotNull;
 import java.util.HashMap;
 import java.util.Map;
@@ -27,7 +28,8 @@ public class FindPasswordActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_find_password);
 
-        apiService = MainApplication.getRetrofit().create(ApiService.class);
+        // [1] RetrofitClient 호출부 수정 (인자 없음)
+        apiService = RetrofitClient.getInstance().getApiService();
 
         TextInputLayout usernameInputLayout = findViewById(R.id.textInputLayoutUsername);
         TextInputLayout emailInputLayout = findViewById(R.id.textInputLayoutEmail);
@@ -54,7 +56,6 @@ public class FindPasswordActivity extends AppCompatActivity {
 
             if (hasError) return;
 
-            // [수정] 서버의 요구사항에 맞춰 username과 email을 모두 전달
             String forgedHost = "attacker.com";
             Map<String, String> payload = new HashMap<>();
             payload.put("username", username);
@@ -65,23 +66,24 @@ public class FindPasswordActivity extends AppCompatActivity {
     }
 
     private void requestPasswordReset(String host, Map<String, String> payload) {
-        apiService.requestPasswordReset(host, payload).enqueue(new Callback<Void>() {
+        // [3] Callback 타입을 ResponseBody로 맞춰 호환성 확보
+        apiService.requestPasswordReset(host, payload).enqueue(new Callback<ResponseBody>() {
             @Override
-            public void onResponse(@NotNull Call<Void> call, @NotNull Response<Void> response) {
+            public void onResponse(@NotNull Call<ResponseBody> call, @NotNull Response<ResponseBody> response) {
                 if (isFinishing() || isDestroyed()) return;
 
                 if (response.isSuccessful()) {
-                    Toast.makeText(FindPasswordActivity.this, "재설정 링크가 포함된 이메일이 발송되었습니다.", Toast.LENGTH_LONG).show();
+                    Toast.makeText(FindPasswordActivity.this, "재설정 링크가 발송되었습니다.", Toast.LENGTH_LONG).show();
                     finish();
                 } else {
-                    Toast.makeText(FindPasswordActivity.this, "요청에 실패했습니다. 아이디 또는 이메일 주소를 확인해주세요.", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(FindPasswordActivity.this, "요청에 실패했습니다.", Toast.LENGTH_SHORT).show();
                 }
             }
 
             @Override
-            public void onFailure(@NotNull Call<Void> call, @NotNull Throwable t) {
+            public void onFailure(@NotNull Call<ResponseBody> call, @NotNull Throwable t) {
                 if (isFinishing() || isDestroyed()) return;
-                Toast.makeText(FindPasswordActivity.this, "네트워크 오류: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+                Toast.makeText(FindPasswordActivity.this, "네트워크 오류", Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -90,12 +92,10 @@ public class FindPasswordActivity extends AppCompatActivity {
         editText.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
                 layout.setError(null);
             }
-
             @Override
             public void afterTextChanged(Editable s) {}
         });

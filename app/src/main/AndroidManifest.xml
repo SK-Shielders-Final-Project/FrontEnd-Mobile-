@@ -1,14 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.INTERNET" />
-
-    <!-- 지도 사용할 때 필요 -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission
+        android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32"
+        tools:ignore="ScopedStorage" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
 
     <application
         android:name=".MainApplication"
@@ -19,82 +23,44 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.Mobile"
+        android:theme="@style/Theme.MobilityHack"
         android:networkSecurityConfig="@xml/network_security_config"
         android:usesCleartextTraffic="true">
+
+        <!-- [3] Gradle에서 주입된 MAPS_API_KEY 참조 -->
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="${MAPS_API_KEY}" />
 
         <activity
             android:name="com.mobility.hack.SplashActivity"
             android:exported="true">
-            android:name=".MainActivity"
-            android:exported="false">
-        </activity>
-
-        <activity android:name=".auth.LoginActivity" android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
 
-        <activity android:name=".auth.RegisterActivity" />
-        <activity android:name=".auth.FindPasswordActivity" />
-        <activity android:name=".auth.CheckPasswordActivity" />
-        <activity android:name=".auth.ChangePasswordActivity" />
-        <activity android:name=".auth.MyInfoActivity" />
         <activity android:name="com.mobility.hack.MainActivity" android:exported="true" />
         <activity android:name="com.mobility.hack.auth.LoginActivity" />
         <activity android:name="com.mobility.hack.auth.RegisterActivity" />
-        <activity android:name="com.mobility.hack.auth.UserHistoryActivity" />
+
+        <!-- MapActivity 등록 및 레이아웃 에러 해결 -->
         <activity android:name="com.mobility.hack.ride.MapActivity" />
+
         <activity android:name="com.mobility.hack.ride.QrScanActivity" />
         <activity android:name="com.mobility.hack.ride.RentEndActivity" />
         <activity android:name="com.mobility.hack.ride.TicketActivity" />
-
-        <!-- 고객센터 관련 액티비티들 -->
         <activity android:name="com.mobility.hack.community.CustomerCenterActivity" />
         <activity android:name="com.mobility.hack.community.InquiryActivity" />
         <activity android:name="com.mobility.hack.community.NoticeActivity" />
         <activity android:name="com.mobility.hack.community.InquiryWriteActivity" />
         <activity android:name="com.mobility.hack.community.InquiryListActivity" />
         <activity android:name="com.mobility.hack.community.InquiryDetailActivity" />
-
-        <!-- [취약점 적용] 비밀번호 재설정 액티비티 및 딥링크 추가 -->
         <activity android:name="com.mobility.hack.chatbot.ChatActivity" />
 
-        <!-- 테스트 - MapActivity를 처음으로 -->
         <activity
-            android:name="com.mobility.hack.ride.MapActivity"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
-
-        <activity
-            android:name=".auth.ResetPasswordActivity"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="http" android:host="attacker.com" android:pathPrefix="/password-reset" />
-            </intent-filter>
-        </activity>
-
-        <activity android:name=".auth.UserHistoryActivity" />
-        <activity android:name=".ride.MapActivity" />
-        <activity android:name=".ride.QrScanActivity" />
-        <activity android:name=".ride.RentEndActivity" />
-        <activity android:name=".ride.TicketActivity" />
-        <activity android:name=".community.NoticeActivity" />
-        <activity android:name=".community.InquiryActivity" />
-        <activity android:name=".chatbot.ChatActivity" />
-
-        <activity
-            android:name=".DeepLinkActivity"
+            android:name="com.mobility.hack.DeepLinkActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />

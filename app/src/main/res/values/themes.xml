@@ -1,9 +1,8 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme. -->
-    <style name="Base.Theme.Mobile" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Customize your light theme here. -->
-        <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
+    <!-- 테마 이름을 프로젝트 설정과 일치시킵니다. -->
+    <style name="Base.Theme.MobilityHack" parent="Theme.Material3.DayNight.NoActionBar">
+        <!-- 기본 컬러 설정 (필요 시 수정 가능) -->
     </style>
 
-    <style name="Theme.Mobile" parent="Base.Theme.Mobile" />
+    <style name="Theme.MobilityHack" parent="Base.Theme.MobilityHack" />
 </resources>

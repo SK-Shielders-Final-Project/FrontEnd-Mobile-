@@ -8,10 +8,11 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
-import com.mobility.hack.MainApplication;
 import com.mobility.hack.R;
 import com.mobility.hack.network.ApiService;
 import com.mobility.hack.network.ChangePasswordRequest;
+import com.mobility.hack.network.RetrofitClient;
+import okhttp3.ResponseBody;
 import org.jetbrains.annotations.NotNull;
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -26,8 +27,8 @@ public class ChangePasswordActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_change_password);
 
-        // 수정된 접근 방식
-        apiService = MainApplication.getRetrofit().create(ApiService.class);
+        // [1] RetrofitClient 싱글톤 호출 방식 통일 (인자 없음)
+        apiService = RetrofitClient.getInstance().getApiService();
 
         TextInputLayout currentPasswordLayout = findViewById(R.id.textInputLayoutCurrentPassword);
         TextInputLayout newPasswordLayout = findViewById(R.id.textInputLayoutNewPassword);
@@ -76,9 +77,10 @@ public class ChangePasswordActivity extends AppCompatActivity {
     }
 
     private void changePassword(ChangePasswordRequest request, TextInputLayout currentPasswordLayout) {
-        apiService.changePassword(request).enqueue(new Callback<Void>() {
+        // [3] Callback 타입을 ResponseBody로 맞춰 컴파일 에러 해결
+        apiService.changePassword(request).enqueue(new Callback<ResponseBody>() {
             @Override
-            public void onResponse(@NotNull Call<Void> call, @NotNull Response<Void> response) {
+            public void onResponse(@NotNull Call<ResponseBody> call, @NotNull Response<ResponseBody> response) {
                 if (isFinishing() || isDestroyed()) return;
 
                 if (response.isSuccessful()) {
@@ -90,7 +92,7 @@ public class ChangePasswordActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onFailure(@NotNull Call<Void> call, @NotNull Throwable t) {
+            public void onFailure(@NotNull Call<ResponseBody> call, @NotNull Throwable t) {
                 if (isFinishing() || isDestroyed()) return;
                 Toast.makeText(ChangePasswordActivity.this, "네트워크 오류: " + t.getMessage(), Toast.LENGTH_SHORT).show();
             }

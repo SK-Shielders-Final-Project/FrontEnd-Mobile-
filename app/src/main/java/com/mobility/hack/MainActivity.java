@@ -2,80 +2,80 @@ package com.mobility.hack;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.ImageButton;
-import android.view.Menu;
-import android.view.MenuItem;
-import android.widget.Toast;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import com.mobility.hack.community.CustomerCenterActivity;
 import androidx.appcompat.widget.Toolbar;
-import com.mobility.hack.auth.CheckPasswordActivity;
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.LatLng;
 import com.mobility.hack.auth.LoginActivity;
-import com.mobility.hack.security.SecurityEngine;
+import com.mobility.hack.community.CustomerCenterActivity;
+import com.mobility.hack.ride.QrScanActivity;
+import com.mobility.hack.security.TokenManager;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements OnMapReadyCallback {
+    private static final String TAG = "MainActivity";
+    private GoogleMap mMap;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // --- [보안 강화] 토큰 인증 확인 로직 추가 ---
-        // MainApplication.getTokenManager()가 초기화되었는지, 그리고 저장된 토큰이 있는지 확인
-        if (MainApplication.getTokenManager() == null || MainApplication.getTokenManager().fetchAuthToken() == null) {
-            Toast.makeText(this, "로그인이 필요합니다. 로그인 페이지로 이동합니다.", Toast.LENGTH_SHORT).show();
-            Intent intent = new Intent(this, LoginActivity.class);
-            // 이전 액티비티 스택을 모두 지우고, 새로운 태스크를 시작합니다.
-            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
-            startActivity(intent);
-            finish(); // 현재 MainActivity를 완전히 종료
-            return;   // 아래의 UI 생성 코드를 실행하지 않음
-        }
-        // --- 로직 끝 ---
-
-        setContentView(R.layout.activity_main);
-
-        Toolbar toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-
-        SecurityEngine engine = new SecurityEngine();
-        engine.initAntiDebug();
-    }
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.main_menu, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        int id = item.getItemId();
-
-        if (id == R.id.action_my_info) {
-            Intent intent = new Intent(this, CheckPasswordActivity.class);
-            startActivity(intent);
-            return true;
-        } else if (id == R.id.action_logout) {
-            MainApplication.getTokenManager().clearData();
-
-            Intent intent = new Intent(this, LoginActivity.class);
-            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
-            startActivity(intent);
+        // 1. 세션 체크 (보안 강화)
+        TokenManager tokenManager = new TokenManager(this);
+        if (tokenManager.fetchAuthToken() == null) {
+            startActivity(new Intent(this, LoginActivity.class));
             finish();
-            return true;
+            return;
         }
 
-        return super.onOptionsItemSelected(item);
         setContentView(R.layout.activity_main);
 
-        // 왼쪽 상단 메뉴 버튼 연결
-        ImageButton btnMenu = findViewById(R.id.btn_menu);
+        // 2. 구글 지도 초기화
+        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
+                .findFragmentById(R.id.map);
+        if (mapFragment != null) {
+            mapFragment.getMapAsync(this);
+        }
 
+        // 3. UI 컴포넌트 연결 및 리스너 등록
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        if (toolbar != null) {
+            setSupportActionBar(toolbar);
+        }
+
+        // 메뉴 버튼 -> 고객센터 이동
+        ImageButton btnMenu = findViewById(R.id.btn_menu);
         if (btnMenu != null) {
             btnMenu.setOnClickListener(v -> {
-                // 클릭 시 고객센터(파일 업로드 취약점 실습지)로 이동
-                Intent intent = new Intent(MainActivity.this, CustomerCenterActivity.class);
-                startActivity(intent);
+                startActivity(new Intent(MainActivity.this, CustomerCenterActivity.class));
             });
         }
+
+        // QR 스캔 버튼 -> QrScanActivity 이동
+        ImageButton btnQrScan = findViewById(R.id.btnQrScan);
+        if (btnQrScan != null) {
+            btnQrScan.setOnClickListener(v -> {
+                startActivity(new Intent(MainActivity.this, QrScanActivity.class));
+            });
+        }
+    }
+
+    /**
+     * 구글 지도가 준비되면 호출되는 콜백
+     */
+    @Override
+    public void onMapReady(@NonNull GoogleMap googleMap) {
+        mMap = googleMap;
+
+        // [에러 해결] 지도가 로드되면 서울 시청 중심으로 카메라 이동
+        LatLng seoul = new LatLng(37.5665, 126.9780);
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(seoul, 15f));
+        
+        Log.d(TAG, "Map is ready. Centered at Seoul.");
     }
 }

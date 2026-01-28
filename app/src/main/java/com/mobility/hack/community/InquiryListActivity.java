@@ -2,6 +2,7 @@ package com.mobility.hack.community;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -32,6 +33,7 @@ public class InquiryListActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_inquiry_list);
 
+        // [3] 리소스 ID 수정: rv_inquiry_list -> rv_inquiries (XML과 일치시킴)
         rvInquiries = findViewById(R.id.rv_inquiries);
         rvInquiries.setLayoutManager(new LinearLayoutManager(this));
         adapter = new InquiryAdapter(inquiryList);
@@ -43,8 +45,9 @@ public class InquiryListActivity extends AppCompatActivity {
     }
 
     private void loadInquiries() {
-        ApiService apiService = RetrofitClient.getClient().create(ApiService.class);
-        apiService.getInquiries().enqueue(new Callback<List<InquiryResponse>>() {
+        // [1] RetrofitClient 호출부 수정: 인자 제거
+        ApiService apiService = RetrofitClient.getInstance().getApiService();
+        apiService.getInquiryList().enqueue(new Callback<List<InquiryResponse>>() {
             @Override
             public void onResponse(Call<List<InquiryResponse>> call, Response<List<InquiryResponse>> response) {
                 if (response.isSuccessful() && response.body() != null) {
@@ -52,7 +55,7 @@ public class InquiryListActivity extends AppCompatActivity {
                     inquiryList.addAll(response.body());
                     adapter.notifyDataSetChanged();
                 } else {
-                    Toast.makeText(InquiryListActivity.this, "목록을 불러오지 못했습니다.", Toast.LENGTH_SHORT).show();
+                    Log.e("API_ERROR", "목록 로드 실패: " + response.code());
                 }
             }
 
@@ -81,28 +84,36 @@ public class InquiryListActivity extends AppCompatActivity {
         public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
             InquiryResponse item = items.get(position);
             holder.tvTitle.setText(item.getTitle());
-            holder.tvStatus.setText("접수중"); // 상태값 바인딩
-            holder.tvDate.setText(item.getCreatedAt()); // 날짜 바인딩
+            holder.tvStatus.setText("접수중"); 
+            
+            String rawDate = item.getCreatedAt();
+            if (rawDate != null && rawDate.contains("T")) {
+                holder.tvDate.setText(rawDate.split("T")[0]);
+            } else {
+                holder.tvDate.setText(rawDate != null ? rawDate : "2026-01-27");
+            }
 
             holder.itemView.setOnClickListener(v -> {
                 Intent intent = new Intent(InquiryListActivity.this, InquiryDetailActivity.class);
-                intent.putExtra("inquiry_id", item.getId()); // ID를 넘겨서 상세 조회 유도
+                intent.putExtra("inquiry_id", item.getInquiryId());
                 startActivity(intent);
             });
         }
+
         @Override
         public int getItemCount() {
             return items.size();
         }
 
         class ViewHolder extends RecyclerView.ViewHolder {
-            TextView tvTitle, tvStatus, tvDate; // XML ID와 일치시킴
+            TextView tvTitle, tvStatus, tvDate;
 
             ViewHolder(View itemView) {
                 super(itemView);
-                tvTitle = itemView.findViewById(R.id.tv_title);
-                tvStatus = itemView.findViewById(R.id.tv_status);
-                tvDate = itemView.findViewById(R.id.tv_date);
+                // [3] 리소스 ID 수정: item_inquiry.xml의 실제 ID와 매칭
+                tvTitle = itemView.findViewById(R.id.tv_item_title);
+                tvStatus = itemView.findViewById(R.id.tv_item_status);
+                tvDate = itemView.findViewById(R.id.tv_item_date);
             }
         }
     }

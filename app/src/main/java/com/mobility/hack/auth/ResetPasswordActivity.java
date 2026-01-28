@@ -7,12 +7,10 @@ import android.text.Editable;
 import android.text.TextWatcher;
 import android.widget.Button;
 import android.widget.Toast;
-import androidx.appcompat.app.AppCompatActivity;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
-import com.mobility.hack.MainApplication;
 import com.mobility.hack.R;
-import com.mobility.hack.network.ApiService;
+import okhttp3.ResponseBody;
 import org.jetbrains.annotations.NotNull;
 import java.util.HashMap;
 import java.util.Map;
@@ -20,17 +18,17 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-public class ResetPasswordActivity extends AppCompatActivity {
+/**
+ * BaseActivity를 상속받아 컴파일 에러 해결 및 코드 간소화
+ */
+public class ResetPasswordActivity extends BaseActivity {
 
-    private ApiService apiService;
     private String resetToken; // 딥링크로 받은 토큰을 저장할 변수
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_reset_password);
-
-        apiService = MainApplication.getRetrofit().create(ApiService.class);
 
         // --- 딥링크에서 토큰 파싱 ---
         Uri data = getIntent().getData();
@@ -77,27 +75,28 @@ public class ResetPasswordActivity extends AppCompatActivity {
     }
 
     private void resetPassword(Map<String, String> payload) {
-        apiService.resetPassword(payload).enqueue(new Callback<Void>() {
+        if (apiService == null) return;
+        // [에러 해결] Callback 타입을 ResponseBody로 맞춰 컴파일 에러 방지
+        apiService.resetPassword(payload).enqueue(new Callback<ResponseBody>() {
             @Override
-            public void onResponse(@NotNull Call<Void> call, @NotNull Response<Void> response) {
+            public void onResponse(@NotNull Call<ResponseBody> call, @NotNull Response<ResponseBody> response) {
                 if (isFinishing() || isDestroyed()) return;
 
                 if (response.isSuccessful()) {
                     Toast.makeText(ResetPasswordActivity.this, "비밀번호가 성공적으로 변경되었습니다. 다시 로그인해주세요.", Toast.LENGTH_LONG).show();
-                    // [수정] 성공 시, 로그인 화면으로 이동
                     Intent intent = new Intent(ResetPasswordActivity.this, LoginActivity.class);
                     intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
                     startActivity(intent);
                     finish();
                 } else {
-                    Toast.makeText(ResetPasswordActivity.this, "비밀번호 변경에 실패했습니다. 유효하지 않은 토큰이거나 다시 시도해주세요.", Toast.LENGTH_LONG).show();
+                    Toast.makeText(ResetPasswordActivity.this, "비밀번호 변경에 실패했습니다.", Toast.LENGTH_LONG).show();
                 }
             }
 
             @Override
-            public void onFailure(@NotNull Call<Void> call, @NotNull Throwable t) {
+            public void onFailure(@NotNull Call<ResponseBody> call, @NotNull Throwable t) {
                 if (isFinishing() || isDestroyed()) return;
-                Toast.makeText(ResetPasswordActivity.this, "네트워크 오류: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+                Toast.makeText(ResetPasswordActivity.this, "네트워크 오류", Toast.LENGTH_SHORT).show();
             }
         });
     }

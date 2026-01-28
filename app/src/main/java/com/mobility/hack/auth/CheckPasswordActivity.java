@@ -8,7 +8,7 @@ import android.widget.Button;
 import androidx.appcompat.app.AppCompatActivity;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
-import com.mobility.hack.MainApplication;
+import com.mobility.hack.MainApplication; // [중요] 임포트 확인
 import com.mobility.hack.R;
 import com.mobility.hack.network.ApiService;
 import com.mobility.hack.network.CheckPasswordRequest;
@@ -27,23 +27,22 @@ public class CheckPasswordActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_check_password);
 
-        // 수정된 접근 방식
-        apiService = MainApplication.getRetrofit().create(ApiService.class);
+        // [에러 해결] MainApplication.getRetrofit() 호출
+        if (MainApplication.getRetrofit() != null) {
+            apiService = MainApplication.getRetrofit().create(ApiService.class);
+        }
 
         TextInputLayout passwordInputLayout = findViewById(R.id.textInputLayoutPassword);
         TextInputEditText passwordEditText = findViewById(R.id.editTextPassword);
         Button confirmButton = findViewById(R.id.buttonConfirm);
 
-        // 입력 시 에러 메시지 제거
         passwordEditText.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
                 passwordInputLayout.setError(null);
             }
-
             @Override
             public void afterTextChanged(Editable s) {}
         });
@@ -59,6 +58,7 @@ public class CheckPasswordActivity extends AppCompatActivity {
     }
 
     private void checkPassword(CheckPasswordRequest request, TextInputLayout textInputLayout) {
+        if (apiService == null) return;
         apiService.checkPassword(request).enqueue(new Callback<CheckPasswordResponse>() {
             @Override
             public void onResponse(@NotNull Call<CheckPasswordResponse> call, @NotNull Response<CheckPasswordResponse> response) {

@@ -1,10 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <network-security-config>
-    <!-- [11] 취약점: 모든 도메인에 대해 평문(HTTP) 통신 허용 -->
+    <!-- 우리 서버 IP에 대해 평문(HTTP) 통신을 명시적으로 허용 -->
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="true">43.203.51.77</domain>
+    </domain-config>
+
     <base-config cleartextTrafficPermitted="true">
         <trust-anchors>
             <certificates src="system" />
-            <certificates src="user" /> <!-- [11] Proxy 툴의 사용자 인증서 허용 -->
+            <certificates src="user" />
         </trust-anchors>
     </base-config>
 </network-security-config>
