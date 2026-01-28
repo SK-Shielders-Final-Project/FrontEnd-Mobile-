@@ -1,50 +1,39 @@
 plugins {
     alias(libs.plugins.android.application)
-    // id("org.jetbrains.kotlin.android") // 중복 오류의 원인이므로 다시 주석 처리합니다.
-}
-
-import java.util.Properties
-import java.io.FileInputStream
-
-val properties = Properties()
-try {
-    properties.load(FileInputStream(rootProject.file("local.properties")))
-} catch (e: Exception) {
-    // local.properties 파일이 없는 경우, CI/CD 환경 등을 고려하여 무시
+    id("com.google.android.libraries.mapsplatform.secrets-gradle-plugin")
 }
 
 android {
-    namespace = "com.example.mobilityhack"
+    namespace = "com.mobility.hack" // 네임스페이스 변경
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.example.mobilityhack"
+        applicationId = "com.mobility.hack"
         minSdk = 24
         targetSdk = 36
         versionCode = 1
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-
+        
+        // NDK 설정 추가
         externalNativeBuild {
             cmake {
                 cppFlags("")
             }
         }
-
-        buildConfigField("String", "TOSS_CLIENT_KEY", "\"${properties.getProperty("toss.clientKey")}\"")
     }
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = false // [4] 취약점: 난독화 미적용
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
         }
     }
-
+    
     externalNativeBuild {
         cmake {
             path = file("src/main/cpp/CMakeLists.txt")
@@ -56,18 +45,9 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
-
-    buildFeatures {
-        buildConfig = true
-        viewBinding = true
-    }
 }
 
 dependencies {
-    implementation(libs.retrofit)
-    implementation(libs.retrofit.converter.gson)
-    implementation(libs.zxing.embedded)
-
     implementation(libs.appcompat)
     implementation(libs.material)
     implementation(libs.activity)
@@ -75,4 +55,23 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
+
+    // UI 및 기본 테마 지원
+    implementation("com.google.android.material:material:1.9.0")
+
+    // Google Maps SDK (지도 표시)
+    implementation("com.google.android.gms:play-services-maps:17.0.0")
+
+    // Google Location SDK (내 위치 가져오기)
+    implementation("com.google.android.gms:play-services-location:17.0.0")
+
+    // Retrofit & Gson
+    implementation("com.squareup.retrofit2:retrofit:3.0.0")
+    implementation("com.squareup.retrofit2:converter-gson:3.0.0")
+
+    // OkHttp
+    implementation("com.squareup.okhttp3:okhttp:5.3.2")
+
+    // Barcode Scanner
+    implementation("com.journeyapps:zxing-android-embedded:4.3.0")
 }

@@ -3,7 +3,11 @@
 
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.INTERNET" />
+
+    <!-- 지도 사용할 때 필요 -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
 
@@ -19,6 +23,11 @@
         android:networkSecurityConfig="@xml/network_security_config"
         android:usesCleartextTraffic="true">
 
+        <!-- 지도 api키(local.properties에 저장되어있음) -->
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="${MAPS_API_KEY}" />
+
         <activity
             android:name=".ride.QrScanActivity"
             android:screenOrientation="fullSensor"
@@ -31,16 +40,17 @@
         <activity android:name=".auth.MyInfoActivity" />
         <activity android:name=".auth.LoginActivity" />
         <activity android:name=".auth.RegisterActivity" />
-        <activity android:name=".ride.UserHistoryActivity" /> <!-- 패키지 위치 변경 -->
-        <activity android:name=".ride.MapActivity" />
+        <activity android:name=".auth.UserHistoryActivity" />
         <activity android:name=".ride.RentEndActivity" />
         <activity android:name=".ride.TicketActivity" />
         <activity android:name=".community.NoticeActivity" />
         <activity android:name=".community.InquiryActivity" />
         <activity android:name=".chatbot.ChatActivity" />
+        <activity android:name=".auth.MenuActivity" />
 
+        <!-- 테스트 - MapActivity를 처음으로 -->
         <activity
-            android:name="com.example.mobilityhack.MainActivity"
+            android:name=".ride.MapActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -49,7 +59,7 @@
         </activity>
 
         <activity
-            android:name="com.example.mobilityhack.DeepLinkActivity"
+            android:name=".DeepLinkActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
