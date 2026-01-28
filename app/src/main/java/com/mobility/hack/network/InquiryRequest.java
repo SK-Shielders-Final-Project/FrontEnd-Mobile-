@@ -13,7 +13,7 @@ public class InquiryRequest {
     private String content;
 
     @SerializedName("file_id")
-    private Long fileId;
+    private Long fileId; // [수정] int에서 Long으로 타입 변경
 
     public InquiryRequest(Long userId, String title, String content, Long fileId) {
         this.userId = userId;
