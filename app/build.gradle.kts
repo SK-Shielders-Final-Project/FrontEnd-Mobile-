@@ -1,15 +1,16 @@
 plugins {
     alias(libs.plugins.android.application)
+    id("com.google.android.libraries.mapsplatform.secrets-gradle-plugin")
 }
 
 android {
     namespace = "com.mobility.hack" // 네임스페이스 변경
-    compileSdk = 35 // 최신 안정 버전 권장
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.mobility.hack"
         minSdk = 24
-        targetSdk = 35
+        targetSdk = 36
         versionCode = 1
         versionName = "1.0"
 
@@ -54,4 +55,13 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
+
+    // UI 및 기본 테마 지원
+    implementation("com.google.android.material:material:1.9.0")
+
+    // Google Maps SDK (지도 표시)
+    implementation("com.google.android.gms:play-services-maps:17.0.0")
+
+    // Google Location SDK (내 위치 가져오기)
+    implementation("com.google.android.gms:play-services-location:17.0.0")
 }
