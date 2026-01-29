@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Toss Payment</title>
+    <!-- 올바른 토스페이먼츠 결제 창 SDK 스크립트로 변경 -->
+    <script src="https://js.tosspayments.com/v1/payment"></script>
+</head>
+<body>
+
+<script>
+    // URL 파라미터에서 클라이언트 키, 금액, 주문명을 가져옵니다.
+    const urlParams = new URLSearchParams(window.location.search);
+    const clientKey = urlParams.get('clientKey');
+    const amount = parseInt(urlParams.get('amount'), 10);
+    const orderName = urlParams.get('orderName');
+    const orderId = "order_" + new Date().getTime();
+
+    if (!clientKey || !amount || !orderName) {
+        alert("결제 요청에 필요한 정보가 누락되었습니다.");
+    } else {
+        const tossPayments = TossPayments(clientKey);
+
+        tossPayments.requestPayment('카드', {
+            amount: amount,
+            orderId: orderId,
+            orderName: orderName,
+            customerName: '고객',
+            successUrl: 'http://localhost/success',
+            failUrl: 'http://localhost/fail'
+        }).catch(function (error) {
+            console.error("Error requesting payment:", error);
+            window.location.href = 'http://localhost/fail?message=' + encodeURIComponent(error.message);
+        });
+    }
+</script>
+
+</body>
+</html>

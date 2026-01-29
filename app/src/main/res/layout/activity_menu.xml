@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/white">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/brand_primary"
+        android:orientation="vertical"
+        android:padding="20dp">
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <ImageButton
+                android:id="@+id/btnSettings"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:layout_toStartOf="@id/btnClose"
+                android:layout_marginEnd="10dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@drawable/baseline_settings_24"
+                app:tint="@color/white" />
+
+            <ImageButton
+                android:id="@+id/btnClose"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:layout_alignParentEnd="true"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@android:drawable/ic_menu_close_clear_cancel"
+                app:tint="@color/white" />
+        </RelativeLayout>
+
+        <TextView
+            android:id="@+id/textUsername"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="불러오는 중... "
+            android:textColor="@color/white"
+            android:textSize="22sp"
+            android:textStyle="bold"
+            android:layout_marginTop="10dp"/>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:background="@drawable/bg_menu_status_dash"
+            android:orientation="vertical"
+            android:padding="20dp"
+            android:gravity="center">
+
+            <TextView
+                android:id="@+id/textUserPoint"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="현재 이용권 잔액: "
+                android:textColor="@color/white"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+        </LinearLayout>
+    </LinearLayout>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="10dp">
+
+            <TextView
+                android:id="@+id/btnNotice"
+                style="@style/MenuListItem"
+                android:text="공지사항"
+                android:drawableStart="@drawable/ic_stat_campaign"
+                android:drawableTint="@color/brand_primary"
+                android:clickable="true"
+                android:focusable="true"
+                android:background="?attr/selectableItemBackground"/>
+
+            <TextView
+                android:id="@+id/btnPaymentHistory"
+                style="@style/MenuListItem"
+                android:text="결제 내역 확인"
+                android:drawableStart="@drawable/ic_stat_chrome_reader_mode"
+                android:drawableTint="@color/brand_primary"
+                android:clickable="true"
+                android:focusable="true"
+                android:background="?attr/selectableItemBackground"/>
+
+            <TextView
+                android:id="@+id/btnCoupon"
+                style="@style/MenuListItem"
+                android:text="쿠폰 등록"
+                android:drawableStart="@drawable/ic_stat_confirmation_number"
+                android:drawableTint="@color/brand_primary"
+                android:clickable="true"
+                android:focusable="true"
+                android:background="?attr/selectableItemBackground"/>
+
+            <TextView
+                android:id="@+id/btnCustomerCenter"
+                style="@style/MenuListItem"
+                android:text="고객센터"
+                android:drawableStart="@drawable/ic_stat_headset_mic"
+                android:drawableTint="@color/brand_primary"
+                android:clickable="true"
+                android:focusable="true"
+                android:background="?attr/selectableItemBackground"/>
+
+            <TextView
+                style="@style/MenuListItem"
+                android:text="자전거 안전수칙"
+                android:drawableStart="@drawable/ic_stat_directions_bike"
+                android:drawableTint="@color/brand_primary"
+                android:clickable="true"
+                android:focusable="true"
+                android:background="?attr/selectableItemBackground"/>
+
+            <TextView
+                style="@style/MenuListItem"
+                android:text="추가요금 결제"
+                android:drawableStart="@drawable/ic_stat_monetization_on"
+                android:drawableTint="@color/brand_primary"
+                android:clickable="true"
+                android:focusable="true"
+                android:background="?attr/selectableItemBackground"/>
+
+            <TextView
+                style="@style/MenuListItem"
+                android:text="작당모빌 이용 랭킹"
+                android:drawableStart="@drawable/ic_stat_stars"
+                android:drawableTint="@color/brand_primary"
+                android:clickable="true"
+                android:focusable="true"
+                android:background="?attr/selectableItemBackground"/>
+
+            <TextView
+                style="@style/MenuListItem"
+                android:text="포인트 전환"
+                android:drawableStart="@drawable/ic_stat_monetization_on"
+                android:drawableTint="@color/brand_primary"
+                android:clickable="true"
+                android:focusable="true"
+                android:background="?attr/selectableItemBackground"/>
+
+            <View android:layout_width="match_parent" android:layout_height="1dp"
+                android:background="#EEEEEE" android:layout_marginVertical="10dp"/>
+
+            <TextView
+                android:id="@+id/btnLogout"
+                style="@style/MenuListItem"
+                android:text="로그아웃" />
+        </LinearLayout>
+    </ScrollView>
+</LinearLayout>
