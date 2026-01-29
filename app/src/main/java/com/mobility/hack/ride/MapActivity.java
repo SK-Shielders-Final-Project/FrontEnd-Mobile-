@@ -30,6 +30,7 @@ import com.mobility.hack.R;
 import com.mobility.hack.auth.MenuActivity;
 import com.mobility.hack.chatbot.ChatActivity;
 
+import java.io.File;
 import java.util.List;
 
 public class MapActivity extends AppCompatActivity implements OnMapReadyCallback {
@@ -41,12 +42,13 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
     private final ActivityResultLauncher<ScanOptions> qrScannerLauncher = registerForActivityResult(new ScanContract(),
             result -> {
-                if(result.getContents() == null) {
-                    Toast.makeText(this, "QR 코드 스캔이 취소되었습니다.", Toast.LENGTH_SHORT).show();
-                } else {
+                if (result.getContents() != null) {
                     String scannedId = result.getContents();
-                    // TODO: 서버로 대여 요청 보내는 로직 추가
-                    Toast.makeText(this, "스캔된 ID: " + scannedId, Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, "스캔된 ID: " + scannedId, Toast.LENGTH_LONG).show();
+                    Intent intent = new Intent(MapActivity.this, PurchaseTicketActivity.class);
+                    startActivity(intent);
+                } else {
+                    Toast.makeText(this, "QR 코드 스캔이 취소되었습니다.", Toast.LENGTH_SHORT).show();
                 }
             });
 
@@ -54,6 +56,9 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_map);
+
+        // Clear the cache before initializing FileCacher
+        clearCache();
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
 
@@ -93,6 +98,20 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             Intent intent = new Intent(MapActivity.this, PurchaseTicketActivity.class);
             startActivity(intent);
         });
+    }
+
+    private void clearCache() {
+        try {
+            File cacheDir = getCacheDir();
+            File[] files = cacheDir.listFiles();
+            if (files != null) {
+                for (File file : files) {
+                    file.delete();
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     @Override

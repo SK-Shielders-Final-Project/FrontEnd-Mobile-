@@ -71,6 +71,9 @@ public interface ApiService {
     @GET("/api/payments/user")
     Call<List<com.mobility.hack.Payment>> getPaymentHistory();
 
+    @POST("/api/user/point")
+    Call<PointResponse> usePoint(@Body PointRequest request);
+
     // 사용되지 않는 findPassword 메소드는 주석 처리 또는 삭제
     // @PUT("/api/user/auth/findpw")
     // Call<Void> findPassword(@Body FindPasswordRequest request);

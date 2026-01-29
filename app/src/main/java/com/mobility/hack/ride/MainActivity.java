@@ -46,8 +46,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     Toast.makeText(this, "QR 코드 스캔이 취소되었습니다.", Toast.LENGTH_SHORT).show();
                 } else {
                     String scannedId = result.getContents();
-                    // TODO: 서버로 대여 요청 보내는 로직 추가
                     Toast.makeText(this, "스캔된 ID: " + scannedId, Toast.LENGTH_SHORT).show();
+                    Intent intent = new Intent(MainActivity.this, PurchaseTicketActivity.class);
+                    startActivity(intent);
                 }
             });
 
@@ -97,7 +98,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         LinearLayout btnPurchaseTicket = findViewById(R.id.btnPurchaseTicket);
         btnPurchaseTicket.setOnClickListener(v -> {
-            Intent intent = new Intent(MainActivity.this, PurchaseTicketActivity.class);
+            Intent intent = new Intent(MainActivity.this, PointChargeActivity.class);
             startActivity(intent);
         });
     }

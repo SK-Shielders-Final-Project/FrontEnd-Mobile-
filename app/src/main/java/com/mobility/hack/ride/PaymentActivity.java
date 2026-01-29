@@ -28,6 +28,9 @@ import retrofit2.Response;
 
 public class PaymentActivity extends AppCompatActivity {
 
+    public static final String EXTRA_AMOUNT = "EXTRA_AMOUNT";
+    public static final String EXTRA_ORDER_NAME = "EXTRA_ORDER_NAME";
+
     private static final String TAG = "PaymentActivity";
     private WebView webView;
     private ApiService apiService;
@@ -99,8 +102,8 @@ public class PaymentActivity extends AppCompatActivity {
             return;
         }
 
-        int amount = getIntent().getIntExtra(PurchaseTicketActivity.EXTRA_AMOUNT, 0);
-        String orderName = getIntent().getStringExtra(PurchaseTicketActivity.EXTRA_ORDER_NAME);
+        int amount = getIntent().getIntExtra(EXTRA_AMOUNT, 0);
+        String orderName = getIntent().getStringExtra(EXTRA_ORDER_NAME);
 
         if (amount <= 0 || orderName == null) {
             Toast.makeText(this, "결제 정보가 올바르지 않습니다.", Toast.LENGTH_SHORT).show();
