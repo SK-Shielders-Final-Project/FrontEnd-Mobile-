@@ -6,7 +6,7 @@ public class UserInfoResponse {
     private String email;
     private String phone;
     private int rideCount;
-    private int total_point;
+    private int totalPoint;
 
     public String getUsername() {
         return username;
@@ -49,10 +49,10 @@ public class UserInfoResponse {
     }
 
     public int getTotalPoint() {
-        return total_point;
+        return totalPoint;
     }
 
-    public void setTotalPoint(int total_point) {
-        this.total_point = total_point;
+    public void setTotalPoint(int totalPoint) {
+        this.totalPoint = totalPoint;
     }
 }

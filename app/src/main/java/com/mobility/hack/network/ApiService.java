@@ -65,7 +65,7 @@ public interface ApiService {
     @POST("/api/voucher/redeem")
     Call<VoucherResponse> redeemVoucher(@Body VoucherRequest request);
 
-    @POST("/api/payment/confirm")
+    @POST("/api/payments/user/confirm")
     Call<PaymentResponse> confirmPayment(@Body PaymentRequest request);
 
 
