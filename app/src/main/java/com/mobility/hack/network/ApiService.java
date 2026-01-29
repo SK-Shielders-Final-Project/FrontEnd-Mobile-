@@ -62,7 +62,7 @@ public interface ApiService {
     @GET("/api/inquiries/download/{filename}")
     Call<ResponseBody> downloadFile(@Header("Authorization") String token, @Path("filename") String filename);
 
-    @POST("/api/voucher/redeem")
+    @POST("/api/coupon/redeem")
     Call<VoucherResponse> redeemVoucher(@Body VoucherRequest request);
 
     @POST("/api/payments/user/confirm")

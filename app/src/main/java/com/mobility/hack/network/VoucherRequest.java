@@ -1,17 +1,20 @@
 package com.mobility.hack.network;
 
+import com.google.gson.annotations.SerializedName;
+
 public class VoucherRequest {
-    private String voucherCode;
+    @SerializedName("couponCode")
+    private String couponCode;
 
-    public VoucherRequest(String voucherCode) {
-        this.voucherCode = voucherCode;
+    public VoucherRequest(String couponCode) {
+        this.couponCode = couponCode;
     }
 
-    public String getVoucherCode() {
-        return voucherCode;
+    public String getCouponCode() {
+        return couponCode;
     }
 
-    public void setVoucherCode(String voucherCode) {
-        this.voucherCode = voucherCode;
+    public void setCouponCode(String couponCode) {
+        this.couponCode = couponCode;
     }
 }
