@@ -31,11 +31,9 @@ public interface ApiService {
     @POST("/api/user/verify-password")
     Call<Void> verifyPassword(@Body PasswordRequest request);
 
-    // [취약점 적용] Host 헤더 인젝션을 위해 Host 헤더를 파라미터로 받고, 엔드포인트 및 요청 데이터 변경
     @POST("/api/auth/password-reset/request")
     Call<Void> requestPasswordReset(@Header("Host") String host, @Body Map<String, String> emailPayload);
 
-    // [취약점 적용] 비밀번호 재설정 실행을 위한 새로운 엔드포인트 추가
     @POST("/api/auth/password-reset/reset")
     Call<Void> resetPassword(@Body ResetPasswordRequest resetPayload);
 
@@ -51,8 +49,8 @@ public interface ApiService {
     @POST("/api/checkpw")
     Call<CheckPasswordResponse> checkPassword(@Body CheckPasswordRequest request);
 
-    @PUT("/api/user/auth/changepw")
-    Call<UserInfoResponse> changePassword(@Body ChangePasswordRequest request);
+    @POST("/api/user/auth/changepw")
+    Call<UserInfoResponse> changePassword(@Body Map<String, String> body);
 
     @GET("/api/inquiries")
     Call<List<InquiryResponse>> getInquiries(@Header("Authorization") String token);
@@ -71,16 +69,9 @@ public interface ApiService {
     @POST("/api/payment/confirm")
     Call<PaymentResponse> confirmPayment(@Body PaymentRequest request);
 
-
-    // 자전거 목록 불러오기
     @POST("/api/bikes")
     Call<List<BikeResponse>> getBikes();
 
-    // 챗봇
     @POST("/api/chat")
     Call<ChatResponse> sendChatMessage(@Body ChatRequest request);
-
-    // 사용되지 않는 findPassword 메소드는 주석 처리 또는 삭제
-    // @PUT("/api/user/auth/findpw")
-    // Call<Void> findPassword(@Body FindPasswordRequest request);
 }

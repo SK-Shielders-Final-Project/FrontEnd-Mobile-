@@ -9,26 +9,32 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.mobility.hack.R;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
-    private List<ChatMessage> chatList = new ArrayList<>();
+    private static final int VIEW_TYPE_USER = 1;
+    private static final int VIEW_TYPE_BOT = 2;
 
-    public void addMessage(ChatMessage message) {
-        chatList.add(message);
-        notifyItemInserted(chatList.size() - 1);
+    private List<Message> messageList;
+
+    public ChatAdapter(List<Message> messageList) {
+        this.messageList = messageList;
     }
 
     @Override
     public int getItemViewType(int position) {
-        return chatList.get(position).getViewType();
+        Message message = messageList.get(position);
+        if (message.isUser()) {
+            return VIEW_TYPE_USER;
+        } else {
+            return VIEW_TYPE_BOT;
+        }
     }
 
     @NonNull
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        if (viewType == ChatMessage.VIEW_TYPE_USER) {
+        if (viewType == VIEW_TYPE_USER) {
             View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_chat_user, parent, false);
             return new UserViewHolder(view);
         } else {
@@ -39,32 +45,44 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
-        ChatMessage message = chatList.get(position);
-        if (holder instanceof UserViewHolder) {
-            ((UserViewHolder) holder).textMessage.setText(message.getMessage());
-            ((UserViewHolder) holder).textTime.setText(message.getTime());
+        Message message = messageList.get(position);
+        if (holder.getItemViewType() == VIEW_TYPE_USER) {
+            ((UserViewHolder) holder).bind(message);
         } else {
-            ((BotViewHolder) holder).textMessage.setText(message.getMessage());
+            ((BotViewHolder) holder).bind(message);
         }
     }
 
     @Override
-    public int getItemCount() { return chatList.size(); }
+    public int getItemCount() {
+        return messageList.size();
+    }
 
-    static class UserViewHolder extends RecyclerView.ViewHolder {
-        TextView textMessage, textTime;
+    // User's message ViewHolder
+    private static class UserViewHolder extends RecyclerView.ViewHolder {
+        TextView messageText;
+
         UserViewHolder(View itemView) {
             super(itemView);
-            textMessage = itemView.findViewById(R.id.textMessage);
-            textTime = itemView.findViewById(R.id.textTime);
+            messageText = itemView.findViewById(R.id.textMessage);
+        }
+
+        void bind(Message message) {
+            messageText.setText(message.getText());
         }
     }
 
-    static class BotViewHolder extends RecyclerView.ViewHolder {
-        TextView textMessage;
+    // Bot's message ViewHolder
+    private static class BotViewHolder extends RecyclerView.ViewHolder {
+        TextView messageText;
+
         BotViewHolder(View itemView) {
             super(itemView);
-            textMessage = itemView.findViewById(R.id.textMessage);
+            messageText = itemView.findViewById(R.id.textMessage);
+        }
+
+        void bind(Message message) {
+            messageText.setText(message.getText());
         }
     }
 }

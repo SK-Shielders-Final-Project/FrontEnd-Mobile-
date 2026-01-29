@@ -62,10 +62,8 @@ public class SplashActivity extends AppCompatActivity {
             public void onResponse(@NotNull Call<LoginResponse> call, @NotNull Response<LoginResponse> response) {
                 if (response.isSuccessful() && response.body() != null) {
                     LoginResponse loginResponse = response.body();
-                    // 새로운 액세스 토큰 저장
                     tokenManager.saveAuthToken(loginResponse.getAccessToken());
                     
-                    // 서버로부터 새로운 리프레시 토큰을 받았을 경우에만 갱신
                     if (loginResponse.getRefreshToken() != null && !loginResponse.getRefreshToken().isEmpty()) {
                         tokenManager.saveRefreshToken(loginResponse.getRefreshToken());
                     }

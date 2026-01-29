@@ -24,7 +24,6 @@ public class EditMyInfoActivity extends AppCompatActivity {
     private Button btnSave;
     private ApiService apiService;
     private TokenManager tokenManager;
-    private UserInfoResponse currentUserInfo;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,9 +40,6 @@ public class EditMyInfoActivity extends AppCompatActivity {
         etPassword = findViewById(R.id.et_password);
         btnSave = findViewById(R.id.btn_save);
 
-        // 아이디는 수정 불가능하도록 설정
-        etId.setEnabled(false);
-
         loadUserInfo();
 
         btnSave.setOnClickListener(v -> saveUserInfo());
@@ -55,11 +51,11 @@ public class EditMyInfoActivity extends AppCompatActivity {
             @Override
             public void onResponse(Call<UserInfoResponse> call, Response<UserInfoResponse> response) {
                 if (response.isSuccessful() && response.body() != null) {
-                    currentUserInfo = response.body();
-                    etId.setText(String.valueOf(currentUserInfo.getUserId())); // 유저 ID를 아이디로 사용
-                    etName.setText(currentUserInfo.getUsername());
-                    etEmail.setText(currentUserInfo.getEmail());
-                    etPhone.setText(currentUserInfo.getPhone());
+                    UserInfoResponse userInfo = response.body();
+                    etId.setText(userInfo.getUsername()); // 아이디 필드에 username 설정
+                    etName.setText(userInfo.getUsername());
+                    etEmail.setText(userInfo.getEmail());
+                    etPhone.setText(userInfo.getPhone());
                 }
             }
 
@@ -71,7 +67,7 @@ public class EditMyInfoActivity extends AppCompatActivity {
     }
 
     private void saveUserInfo() {
-        String username = etName.getText().toString(); // 이름 필드의 값을 username으로 사용
+        String username = etId.getText().toString();
         String name = etName.getText().toString();
         String email = etEmail.getText().toString();
         String phone = etPhone.getText().toString();
@@ -82,12 +78,7 @@ public class EditMyInfoActivity extends AppCompatActivity {
             return;
         }
 
-        if (currentUserInfo == null) {
-            Toast.makeText(this, "기존 사용자 정보를 불러오지 못했습니다. 다시 시도해주세요.", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        UpdateUserRequest request = new UpdateUserRequest(username, name, password, email, phone, currentUserInfo.getAdminLev());
+        UpdateUserRequest request = new UpdateUserRequest(username, name, password, email, phone, 0);
 
         apiService.updateUserInfo(request).enqueue(new Callback<UserInfoResponse>() {
             @Override
@@ -96,11 +87,7 @@ public class EditMyInfoActivity extends AppCompatActivity {
                     Toast.makeText(EditMyInfoActivity.this, "정보가 성공적으로 수정되었습니다.", Toast.LENGTH_SHORT).show();
                     finish();
                 } else {
-                    String errorMessage = "정보 수정에 실패했습니다.";
-                    if (response.code() == 401) {
-                        errorMessage = "비밀번호가 일치하지 않습니다.";
-                    }
-                    Toast.makeText(EditMyInfoActivity.this, errorMessage, Toast.LENGTH_SHORT).show();
+                    Toast.makeText(EditMyInfoActivity.this, "정보 수정에 실패했습니다. 비밀번호를 확인해주세요.", Toast.LENGTH_SHORT).show();
                 }
             }
 

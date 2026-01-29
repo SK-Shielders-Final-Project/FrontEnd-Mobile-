@@ -12,12 +12,14 @@ import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 import com.mobility.hack.R;
 import com.mobility.hack.network.ApiService;
-import com.mobility.hack.network.ChangePasswordRequest;
 import com.mobility.hack.network.RetrofitClient;
 import com.mobility.hack.network.UserInfoResponse;
 import com.mobility.hack.security.TokenManager;
 
 import org.jetbrains.annotations.NotNull;
+
+import java.util.HashMap;
+import java.util.Map;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -68,13 +70,18 @@ public class ChangePasswordActivity extends AppCompatActivity {
                 newPasswordConfirmLayout.setError("새로운 비밀번호가 일치하지 않습니다.");
                 return;
             }
-            ChangePasswordRequest request = new ChangePasswordRequest(currentPassword, newPassword);
-            changePassword(request, currentPasswordLayout);
+            
+            // Map을 사용하여 JSON 데이터를 직접 구성
+            Map<String, String> requestBody = new HashMap<>();
+            requestBody.put("current_password", currentPassword);
+            requestBody.put("new_password", newPassword);
+            
+            changePassword(requestBody, currentPasswordLayout);
         });
     }
 
-    private void changePassword(ChangePasswordRequest request, TextInputLayout currentPasswordLayout) {
-        apiService.changePassword(request).enqueue(new Callback<UserInfoResponse>() {
+    private void changePassword(Map<String, String> body, TextInputLayout currentPasswordLayout) {
+        apiService.changePassword(body).enqueue(new Callback<UserInfoResponse>() {
             @Override
             public void onResponse(@NotNull Call<UserInfoResponse> call, @NotNull Response<UserInfoResponse> response) {
                 if (isFinishing() || isDestroyed()) return;

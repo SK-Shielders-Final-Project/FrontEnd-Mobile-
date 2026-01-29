@@ -87,7 +87,7 @@
             android:exported="false" />
 
         <activity
-            android:name=".PaymentHistoryActivity"
+            android:name="com.mobility.hack.PaymentHistoryActivity"
             android:exported="false" />
 
         <activity

@@ -67,7 +67,6 @@ public class MyInfoActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        // EditMyInfoActivity에서 정보가 수정되었을 수 있으므로, 화면에 다시 보여질 때 사용자 정보를 새로고침합니다.
         fetchUserInfo();
     }
 
@@ -115,7 +114,7 @@ public class MyInfoActivity extends AppCompatActivity {
             return date != null ? targetFormat.format(date) : "";
         } catch (ParseException e) {
             e.printStackTrace();
-            return dateString; // 파싱 실패 시 원본 문자열 반환
+            return dateString; 
         }
     }
 }
