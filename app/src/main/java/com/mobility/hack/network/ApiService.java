@@ -22,6 +22,9 @@ public interface ApiService {
     @POST("/api/user/auth/login")
     Call<LoginResponse> login(@Body LoginRequest request);
 
+    @POST("/api/user/auth/refresh")
+    Call<LoginResponse> refresh(@Body RefreshRequest request);
+
     @POST("/api/user/auth/signup")
     Call<Void> register(@Body RegisterRequest request);
 

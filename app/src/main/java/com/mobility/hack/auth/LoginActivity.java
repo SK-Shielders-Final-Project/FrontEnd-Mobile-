@@ -3,6 +3,7 @@ package com.mobility.hack.auth;
 import android.content.Intent;
 import android.os.Bundle;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -27,15 +28,16 @@ import retrofit2.Retrofit;
 public class LoginActivity extends AppCompatActivity {
     private ApiService apiService;
     private TokenManager tokenManager;
+    private CheckBox autoLoginCheckBox;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         tokenManager = new TokenManager(getApplicationContext());
-        if (tokenManager.fetchAuthToken() != null) {
-            goToMainActivity();
-            return;
-        }
+        
+        // 자동 로그인 로직은 SplashActivity로 이동합니다.
+        // 앱이 시작될 때마다 로그인 여부를 확인하여 적절한 화면으로 안내합니다.
+        
         setContentView(R.layout.activity_login);
         Retrofit retrofit = RetrofitClient.getClient(tokenManager);
         apiService = retrofit.create(ApiService.class);
@@ -44,6 +46,8 @@ public class LoginActivity extends AppCompatActivity {
         Button loginButton = findViewById(R.id.buttonLogin);
         TextView registerTextView = findViewById(R.id.textViewRegister);
         TextView findPasswordTextView = findViewById(R.id.textViewFindPassword);
+        autoLoginCheckBox = findViewById(R.id.checkbox_auto_login);
+
         loginButton.setOnClickListener(v -> {
             String username = usernameEditText.getText().toString();
             String password = passwordEditText.getText().toString();
@@ -74,10 +78,22 @@ public class LoginActivity extends AppCompatActivity {
             public void onResponse(@NotNull Call<LoginResponse> call, @NotNull Response<LoginResponse> response) {
                 if (isFinishing() || isDestroyed()) return;
                 LoginResponse loginResponse = response.body();
-                // [수정] 토큰 유효성 검사 강화
+
                 if (response.isSuccessful() && loginResponse != null && loginResponse.getAccessToken() != null && !loginResponse.getAccessToken().isEmpty()) {
+                    // 액세스 토큰과 유저 ID 저장
                     tokenManager.saveAuthToken(loginResponse.getAccessToken());
                     tokenManager.saveUserId(loginResponse.getUserId());
+
+                    // 자동 로그인 체크 시, 리프레시 토큰과 자동 로그인 설정 저장
+                    if (autoLoginCheckBox.isChecked()) {
+                        tokenManager.saveRefreshToken(loginResponse.getRefreshToken());
+                        tokenManager.saveAutoLogin(true);
+                    } else {
+                        // 자동 로그인을 원하지 않는 경우, 기존 설정과 리프레시 토큰을 지웁니다.
+                        tokenManager.saveAutoLogin(false);
+                        tokenManager.saveRefreshToken(null); 
+                    }
+
                     Toast.makeText(LoginActivity.this, "로그인 성공!", Toast.LENGTH_SHORT).show();
                     goToMainActivity();
                 } else {
