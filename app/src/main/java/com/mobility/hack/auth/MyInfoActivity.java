@@ -34,6 +34,7 @@ public class MyInfoActivity extends AppCompatActivity {
     private TextView rideCountTextView;
     private Button changePasswordButton;
     private Button userHistoryButton;
+    private Button logoutButton;
     private EditText passwordEditText;
     private Button verifyPasswordButton;
     private LinearLayout verifiedContentLayout;
@@ -51,6 +52,7 @@ public class MyInfoActivity extends AppCompatActivity {
         rideCountTextView = findViewById(R.id.textViewRideCount);
         changePasswordButton = findViewById(R.id.buttonChangePassword);
         userHistoryButton = findViewById(R.id.buttonUserHistory);
+        logoutButton = findViewById(R.id.buttonLogout);
         passwordEditText = findViewById(R.id.editTextPassword);
         verifyPasswordButton = findViewById(R.id.buttonVerifyPassword);
         verifiedContentLayout = findViewById(R.id.layoutVerifiedContent);
@@ -75,6 +77,8 @@ public class MyInfoActivity extends AppCompatActivity {
             Intent intent = new Intent(this, UserHistoryActivity.class);
             startActivity(intent);
         });
+
+        logoutButton.setOnClickListener(v -> logout());
     }
 
     private void fetchUserInfo() {
@@ -125,5 +129,14 @@ public class MyInfoActivity extends AppCompatActivity {
                 Toast.makeText(MyInfoActivity.this, "네트워크 오류: " + t.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
+    }
+
+    private void logout() {
+        tokenManager.clearData();
+        Toast.makeText(this, "로그아웃되었습니다.", Toast.LENGTH_SHORT).show();
+        Intent intent = new Intent(this, LoginActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
+        finish();
     }
 }
