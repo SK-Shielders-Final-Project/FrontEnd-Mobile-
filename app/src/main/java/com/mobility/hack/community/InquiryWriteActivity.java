@@ -13,7 +13,7 @@ import com.mobility.hack.MainApplication;
 import com.mobility.hack.R;
 import com.mobility.hack.network.ApiService;
 import com.mobility.hack.network.RetrofitClient;
-import com.mobility.hack.network.dto.InquiryResponse;
+import com.mobility.hack.network.InquiryResponse;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
@@ -36,7 +36,7 @@ public class InquiryWriteActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_inquiry_write);
 
-        apiService = RetrofitClient.getApiService(((MainApplication) getApplication()).getTokenManager());
+        apiService = ((MainApplication) getApplication()).getApiService();
 
         findViewById(R.id.iv_add_image).setOnClickListener(v -> {
             Intent intent = new Intent(Intent.ACTION_GET_CONTENT);

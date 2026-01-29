@@ -1,35 +1,60 @@
 package com.mobility.hack.network;
 
-import com.google.gson.annotations.SerializedName;
 import java.io.Serializable;
 
 public class InquiryResponse implements Serializable {
-    @SerializedName("id")
-    private int id;
-
-    @SerializedName("title")
+    private Long id;
     private String title;
-
-    @SerializedName("content")
     private String content;
-
-    @SerializedName("file_id")
-    private String fileId;
-
-    @SerializedName("stored_name")
-    private String storedName;
-
-    @SerializedName("path")
-    private String path;
-
-    @SerializedName("created_at")
+    private String filename;
+    private String author;
     private String createdAt;
 
-    public int getId() { return id; }
-    public String getTitle() { return title; }
-    public String getContent() { return content; }
-    public String getFileId() { return fileId; }
-    public String getStoredName() { return storedName; }
-    public String getPath() { return path; }
-    public String getCreatedAt() { return createdAt; }
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public String getContent() {
+        return content;
+    }
+
+    public void setContent(String content) {
+        this.content = content;
+    }
+
+    public String getFilename() {
+        return filename;
+    }
+
+    public void setFilename(String filename) {
+        this.filename = filename;
+    }
+
+    public String getAuthor() {
+        return author;
+    }
+
+    public void setAuthor(String author) {
+        this.author = author;
+    }
+
+    public String getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(String createdAt) {
+        this.createdAt = createdAt;
+    }
 }

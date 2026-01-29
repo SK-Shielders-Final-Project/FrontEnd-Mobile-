@@ -1,9 +1,10 @@
-package com.mobility.hack.network.dto;
+package com.mobility.hack.network;
 
 public class VoucherResponse {
     private String message;
     private int rechargedPoint;
     private int totalPoint;
+
 
     public String getMessage() {
         return message;

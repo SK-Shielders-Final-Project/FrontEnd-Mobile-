@@ -11,7 +11,7 @@ import com.mobility.hack.MainApplication;
 import com.mobility.hack.R;
 import com.mobility.hack.network.ApiService;
 import com.mobility.hack.network.dto.InquiryResponse;
-import com.mobility.hack.util.TokenManager;
+import com.mobility.hack.security.TokenManager;
 import okhttp3.ResponseBody;
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -32,9 +32,8 @@ public class InquiryDetailActivity extends AppCompatActivity {
         setContentView(R.layout.activity_inquiry_detail);
 
         // MainApplication에서 관리되는 ApiService와 TokenManager 인스턴스를 가져옵니다.
-        MainApplication application = (MainApplication) getApplication();
-        apiService = application.getApiService();
-        tokenManager = application.getTokenManager();
+        apiService = ((MainApplication) getApplication()).getApiService();
+        tokenManager = ((MainApplication) getApplication()).getTokenManager();
 
         tvTitle = findViewById(R.id.tv_title);
         tvContent = findViewById(R.id.tv_content);

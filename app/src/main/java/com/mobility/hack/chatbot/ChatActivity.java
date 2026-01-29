@@ -52,14 +52,14 @@ public class ChatActivity extends AppCompatActivity {
 
         buttonSend.setOnClickListener(v -> sendMessage());
 
-        // 닫기 버튼 클릭 시 MapActivity로 이동
+        // 닫기 버튼 클릭 시 MainActivity로 이동
         buttonClose.setOnClickListener(v -> {
             // 1. Intent 객체 생성 (context와 목적지 클래스 명시)
-            android.content.Intent intent = new android.content.Intent(ChatActivity.this, com.mobility.hack.ride.MapActivity.class);
+            android.content.Intent intent = new android.content.Intent(ChatActivity.this, com.mobility.hack.ride.MainActivity.class);
 
             // 2. 보안 및 리소스 관리를 위한 플래그 설정
-            // FLAG_ACTIVITY_CLEAR_TOP: 스택에 기존 MapActivity가 있으면 그 위의 것들을 모두 제거
-            // FLAG_ACTIVITY_SINGLE_TOP: 기존 MapActivity를 재사용 (새로 생성 X)
+            // FLAG_ACTIVITY_CLEAR_TOP: 스택에 기존 MainActivity가 있으면 그 위의 것들을 모두 제거
+            // FLAG_ACTIVITY_SINGLE_TOP: 기존 MainActivity를 재사용 (새로 생성 X)
             intent.setFlags(android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP | android.content.Intent.FLAG_ACTIVITY_SINGLE_TOP);
 
             // 3. 이동 및 현재 화면 종료

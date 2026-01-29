@@ -1,4 +1,4 @@
-package com.mobility.hack.network.dto;
+package com.mobility.hack.network;
 
 public class VoucherRequest {
     private String voucherCode;

@@ -8,11 +8,10 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import com.mobility.hack.auth.LoginActivity;
 import com.mobility.hack.network.ApiService;
-import com.mobility.hack.network.RetrofitClient;
-import com.mobility.hack.network.dto.RegisterResponse;
+import com.mobility.hack.network.UserInfoResponse;
 import com.mobility.hack.security.SecurityBridge;
 import com.mobility.hack.security.SecurityEngine;
-import com.mobility.hack.util.TokenManager;
+import com.mobility.hack.security.TokenManager;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -39,10 +38,11 @@ public class SplashActivity extends AppCompatActivity {
             String token = tokenManager.fetchAuthToken();
 
             if (token != null && !token.isEmpty()) {
-                ApiService apiService = RetrofitClient.getApiService(tokenManager);
-                apiService.getUserInfo("Bearer " + token).enqueue(new Callback<RegisterResponse>() {
+                ApiService apiService = ((MainApplication) getApplication()).getApiService();
+                long userId = tokenManager.fetchUserId();
+                apiService.getUserInfo(userId).enqueue(new Callback<UserInfoResponse>() {
                     @Override
-                    public void onResponse(Call<RegisterResponse> call, Response<RegisterResponse> response) {
+                    public void onResponse(Call<UserInfoResponse> call, Response<UserInfoResponse> response) {
                         if (response.isSuccessful()) {
                             startActivity(new Intent(SplashActivity.this, MainActivity.class));
                         } else {
@@ -52,7 +52,7 @@ public class SplashActivity extends AppCompatActivity {
                     }
 
                     @Override
-                    public void onFailure(Call<RegisterResponse> call, Throwable t) {
+                    public void onFailure(Call<UserInfoResponse> call, Throwable t) {
                         startActivity(new Intent(SplashActivity.this, LoginActivity.class));
                         finish();
                     }

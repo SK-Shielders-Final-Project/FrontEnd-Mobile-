@@ -18,8 +18,12 @@
             android:name="com.google.android.geo.API_KEY"
             android:value="${MAPS_API_KEY}" />
 
+        <meta-data
+            android:name="TOSS_CLIENT_KEY"
+            android:value="${TOSS_CLIENT_KEY}" />
+
         <activity
-            android:name=".auth.LoginActivity"
+            android:name=".ride.MainActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -32,11 +36,43 @@
             android:exported="false" />
 
         <activity
-            android:name=".ride.MapActivity"
+            android:name=".auth.LoginActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".auth.MenuActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".auth.MyInfoActivity"
             android:exported="false" />
 
         <activity
             android:name=".ride.PurchaseTicketActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".ride.TicketActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".ride.PaymentActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".CustomerCenterActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".InquiryListActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".InquiryWriteActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".PaymentHistoryActivity"
             android:exported="false" />
 
     </application>

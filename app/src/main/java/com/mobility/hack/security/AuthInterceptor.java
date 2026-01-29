@@ -1,7 +1,7 @@
 package com.mobility.hack.security;
 
 import androidx.annotation.NonNull;
-import com.mobility.hack.util.TokenManager;
+import com.mobility.hack.security.TokenManager;
 import java.io.IOException;
 import okhttp3.Interceptor;
 import okhttp3.Request;

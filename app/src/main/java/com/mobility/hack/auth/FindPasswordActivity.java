@@ -5,22 +5,27 @@ import android.text.Editable;
 import android.text.TextWatcher;
 import android.widget.Button;
 import android.widget.Toast;
+
 import androidx.appcompat.app.AppCompatActivity;
+
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 import com.mobility.hack.R;
 import com.mobility.hack.network.ApiService;
 import com.mobility.hack.network.RetrofitClient;
-import com.mobility.hack.util.TokenManager;
+import com.mobility.hack.security.TokenManager;
+
 import org.jetbrains.annotations.NotNull;
+
 import java.util.HashMap;
 import java.util.Map;
+
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
+import retrofit2.Retrofit;
 
 public class FindPasswordActivity extends AppCompatActivity {
-
     private ApiService apiService;
     private TokenManager tokenManager;
 
@@ -28,23 +33,19 @@ public class FindPasswordActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_find_password);
-
-        tokenManager = new TokenManager(this);
-        apiService = RetrofitClient.getApiService(tokenManager);
-
+        tokenManager = new TokenManager(getApplicationContext());
+        Retrofit retrofit = RetrofitClient.getClient(tokenManager);
+        apiService = retrofit.create(ApiService.class);
         TextInputLayout usernameInputLayout = findViewById(R.id.textInputLayoutUsername);
         TextInputLayout emailInputLayout = findViewById(R.id.textInputLayoutEmail);
         TextInputEditText usernameEditText = findViewById(R.id.editTextUsername);
         TextInputEditText emailEditText = findViewById(R.id.editTextEmail);
         Button requestResetButton = findViewById(R.id.buttonRequestReset);
-
         addTextWatcher(usernameEditText, usernameInputLayout);
         addTextWatcher(emailEditText, emailInputLayout);
-
         requestResetButton.setOnClickListener(v -> {
             String username = usernameEditText.getText().toString();
             String email = emailEditText.getText().toString();
-
             boolean hasError = false;
             if (username.isEmpty()) {
                 usernameInputLayout.setError("아이디를 입력해주세요.");
@@ -54,23 +55,21 @@ public class FindPasswordActivity extends AppCompatActivity {
                 emailInputLayout.setError("이메일을 입력해주세요.");
                 hasError = true;
             }
-
             if (hasError) return;
-
+            // [수정] 서버의 요구사항에 맞춰 username과 email을 모두 전달
+            String forgedHost = "attacker.com";
             Map<String, String> payload = new HashMap<>();
             payload.put("username", username);
             payload.put("email", email);
-
-            requestPasswordReset(payload);
+            requestPasswordReset(forgedHost, payload);
         });
     }
 
-    private void requestPasswordReset(Map<String, String> payload) {
-        apiService.requestPasswordReset(payload).enqueue(new Callback<Void>() {
+    private void requestPasswordReset(String host, Map<String, String> payload) {
+        apiService.requestPasswordReset(host, payload).enqueue(new Callback<Void>() {
             @Override
             public void onResponse(@NotNull Call<Void> call, @NotNull Response<Void> response) {
                 if (isFinishing() || isDestroyed()) return;
-
                 if (response.isSuccessful()) {
                     Toast.makeText(FindPasswordActivity.this, "재설정 링크가 포함된 이메일이 발송되었습니다.", Toast.LENGTH_LONG).show();
                     finish();
@@ -90,7 +89,8 @@ public class FindPasswordActivity extends AppCompatActivity {
     private void addTextWatcher(TextInputEditText editText, TextInputLayout layout) {
         editText.addTextChangedListener(new TextWatcher() {
             @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
@@ -98,7 +98,8 @@ public class FindPasswordActivity extends AppCompatActivity {
             }
 
             @Override
-            public void afterTextChanged(Editable s) {}
+            public void afterTextChanged(Editable s) {
+            }
         });
     }
 }

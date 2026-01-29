@@ -14,7 +14,6 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.mobility.hack.MainApplication;
 import com.mobility.hack.R;
 import com.mobility.hack.network.ApiService;
-import com.mobility.hack.network.RetrofitClient;
 import com.mobility.hack.network.dto.InquiryResponse;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,7 +25,7 @@ public class InquiryListActivity extends AppCompatActivity {
 
     private RecyclerView rvInquiries;
     private InquiryAdapter adapter;
-    private List<InquiryResponse> inquiryList = new ArrayList<>();
+    private List<com.mobility.hack.network.InquiryResponse> inquiryList = new ArrayList<>();
     private ApiService apiService;
 
     @Override
@@ -34,7 +33,7 @@ public class InquiryListActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_inquiry_list);
 
-        apiService = RetrofitClient.getApiService(((MainApplication) getApplication()).getTokenManager());
+        apiService = ((MainApplication) getApplication()).getApiService();
 
         rvInquiries = findViewById(R.id.rv_inquiries);
         rvInquiries.setLayoutManager(new LinearLayoutManager(this));
@@ -53,9 +52,9 @@ public class InquiryListActivity extends AppCompatActivity {
             return;
         }
 
-        apiService.getInquiries("Bearer " + token).enqueue(new Callback<List<InquiryResponse>>() {
+        apiService.getInquiries("Bearer " + token).enqueue(new Callback<List<com.mobility.hack.network.InquiryResponse>>() {
             @Override
-            public void onResponse(Call<List<InquiryResponse>> call, Response<List<InquiryResponse>> response) {
+            public void onResponse(Call<List<com.mobility.hack.network.InquiryResponse>> call, Response<List<com.mobility.hack.network.InquiryResponse>> response) {
                 if (response.isSuccessful() && response.body() != null) {
                     inquiryList.clear();
                     inquiryList.addAll(response.body());
@@ -66,16 +65,16 @@ public class InquiryListActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onFailure(Call<List<InquiryResponse>> call, Throwable t) {
+            public void onFailure(Call<List<com.mobility.hack.network.InquiryResponse>> call, Throwable t) {
                 Toast.makeText(InquiryListActivity.this, "네트워크 오류", Toast.LENGTH_SHORT).show();
             }
         });
     }
 
     private class InquiryAdapter extends RecyclerView.Adapter<InquiryAdapter.ViewHolder> {
-        private List<InquiryResponse> items;
+        private List<com.mobility.hack.network.InquiryResponse> items;
 
-        InquiryAdapter(List<InquiryResponse> items) {
+        InquiryAdapter(List<com.mobility.hack.network.InquiryResponse> items) {
             this.items = items;
         }
 
@@ -88,7 +87,7 @@ public class InquiryListActivity extends AppCompatActivity {
 
         @Override
         public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-            InquiryResponse item = items.get(position);
+            com.mobility.hack.network.InquiryResponse item = items.get(position);
             holder.tvTitle.setText(item.getTitle());
             holder.tvStatus.setText("접수중"); // 상태값 바인딩
             holder.tvDate.setText(item.getCreatedAt()); // 날짜 바인딩

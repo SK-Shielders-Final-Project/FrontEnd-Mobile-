@@ -3,7 +3,6 @@ package com.mobility.hack.ride;
 import android.content.Intent;
 import android.os.Bundle;
 import android.widget.TextView;
-import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.material.appbar.MaterialToolbar;
@@ -21,6 +20,9 @@ public class PurchaseTicketActivity extends AppCompatActivity {
     private TextView planDetailsText;
     private int selectedAmount = 1000;
     private int selectedHours = 1;
+
+    public static final String EXTRA_AMOUNT = "com.mobility.hack.ride.EXTRA_AMOUNT";
+    public static final String EXTRA_ORDER_NAME = "com.mobility.hack.ride.EXTRA_ORDER_NAME";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,11 +58,10 @@ public class PurchaseTicketActivity extends AppCompatActivity {
 
         // '다음' 버튼 리스너 (결제 화면으로 이동)
         nextButton.setOnClickListener(v -> {
-            Toast.makeText(this, "결제 기능은 현재 준비 중입니다.", Toast.LENGTH_SHORT).show();
-            // Intent intent = new Intent(this, PaymentActivity.class);
-            // intent.putExtra(PaymentActivity.EXTRA_AMOUNT, selectedAmount);
-            // intent.putExtra(PaymentActivity.EXTRA_ORDER_NAME, String.format(Locale.getDefault(), "일일권(%d시간)", selectedHours));
-            // startActivity(intent);
+            Intent intent = new Intent(this, PaymentActivity.class);
+            intent.putExtra(EXTRA_AMOUNT, selectedAmount);
+            intent.putExtra(EXTRA_ORDER_NAME, String.format(Locale.getDefault(), "일일권(%d시간)", selectedHours));
+            startActivity(intent);
         });
     }
 

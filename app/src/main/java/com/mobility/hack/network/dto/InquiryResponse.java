@@ -1,37 +1,60 @@
 package com.mobility.hack.network.dto;
 
-import com.google.gson.annotations.SerializedName;
 import java.io.Serializable;
 
 public class InquiryResponse implements Serializable {
-    @SerializedName("id")
     private Long id;
-    @SerializedName("title")
     private String title;
-    @SerializedName("content")
     private String content;
-    @SerializedName("storedName")
     private String storedName;
-    @SerializedName("createdAt")
+    private String author;
     private String createdAt;
 
     public Long getId() {
         return id;
     }
 
+    public void setId(Long id) {
+        this.id = id;
+    }
+
     public String getTitle() {
         return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
     }
 
     public String getContent() {
         return content;
     }
 
+    public void setContent(String content) {
+        this.content = content;
+    }
+
     public String getStoredName() {
         return storedName;
     }
 
+    public void setStoredName(String storedName) {
+        this.storedName = storedName;
+    }
+
+    public String getAuthor() {
+        return author;
+    }
+
+    public void setAuthor(String author) {
+        this.author = author;
+    }
+
     public String getCreatedAt() {
         return createdAt;
+    }
+
+    public void setCreatedAt(String createdAt) {
+        this.createdAt = createdAt;
     }
 }

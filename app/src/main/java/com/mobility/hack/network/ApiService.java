@@ -1,74 +1,75 @@
 package com.mobility.hack.network;
 
-import com.mobility.hack.network.dto.ChangePasswordRequest;
-import com.mobility.hack.network.dto.CheckPasswordRequest;
-import com.mobility.hack.network.dto.CheckPasswordResponse;
-import com.mobility.hack.network.dto.InquiryResponse;
-import com.mobility.hack.network.dto.LoginRequest;
-import com.mobility.hack.network.dto.LoginResponse;
-import com.mobility.hack.network.dto.PaymentConfirmRequest;
-import com.mobility.hack.network.dto.PaymentConfirmResponse;
-import com.mobility.hack.network.dto.PaymentHistoryItem;
-import com.mobility.hack.network.dto.RegisterResponse;
-import com.mobility.hack.network.dto.RentalRequest;
-import com.mobility.hack.network.dto.RentalResponse;
-import com.mobility.hack.network.dto.UpdateInfoRequest;
-import com.mobility.hack.network.dto.UpdateInfoResponse;
-import com.mobility.hack.network.dto.VoucherRequest;
-import com.mobility.hack.network.dto.VoucherResponse;
 import java.util.List;
 import java.util.Map;
+
 import okhttp3.MultipartBody;
 import okhttp3.RequestBody;
 import okhttp3.ResponseBody;
 import retrofit2.Call;
-import retrofit2.http.*;
+import retrofit2.http.Body;
+import retrofit2.http.GET;
+import retrofit2.http.Header;
+import retrofit2.http.Multipart;
+import retrofit2.http.POST;
+import retrofit2.http.PUT;
+import retrofit2.http.Part;
+import retrofit2.http.PartMap;
+import retrofit2.http.Path;
+import retrofit2.http.Streaming;
 
 public interface ApiService {
+    @POST("/api/user/auth/login")
+    Call<LoginResponse> login(@Body LoginRequest request);
 
-    @POST("api/auth/login")
-    Call<LoginResponse> login(@Body LoginRequest loginRequest);
+    @POST("/api/user/auth/signup")
+    Call<Void> register(@Body RegisterRequest request);
 
-    @POST("api/auth/signup")
-    Call<RegisterResponse> signup(@Body Map<String, Object> request);
+    @POST("/api/user/verify-password")
+    Call<Void> verifyPassword(@Body PasswordRequest request);
 
-    @POST("api/rentals/start")
-    Call<RentalResponse> rentBike(@Body RentalRequest request);
+    // [취약점 적용] Host 헤더 인젝션을 위해 Host 헤더를 파라미터로 받고, 엔드포인트 및 요청 데이터 변경
+    @POST("/api/auth/password-reset/request")
+    Call<Void> requestPasswordReset(@Header("Host") String host, @Body Map<String, String> emailPayload);
 
-    @POST("api/vouchers/redeem")
-    Call<VoucherResponse> redeemVoucher(@Body VoucherRequest request);
+    // [취약점 적용] 비밀번호 재설정 실행을 위한 새로운 엔드포인트 추가
+    @POST("/api/auth/password-reset/reset")
+    Call<Void> resetPassword(@Body ResetPasswordRequest resetPayload);
 
-    @GET("api/users/me")
-    Call<RegisterResponse> getUserInfo(@Header("Authorization") String token);
+    @GET("/api/user/info/{userId}")
+    Call<UserInfoResponse> getUserInfo(@Path("userId") long userId);
 
-    @PUT("api/users/me")
-    Call<UpdateInfoResponse> updateUserInfo(@Header("Authorization") String token, @Body UpdateInfoRequest request);
+    @GET("/api/user/info")
+    Call<UserInfoResponse> getUserInfo();
 
-    @POST("api/auth/change-password")
-    Call<Void> changePassword(@Header("Authorization") String token, @Body ChangePasswordRequest request);
+    @PUT("/api/user/info")
+    Call<UpdateInfoResponse> updateUserInfo(@Body UpdateInfoRequest request);
 
-    @POST("api/auth/check-password")
-    Call<CheckPasswordResponse> checkPassword(@Header("Authorization") String token, @Body CheckPasswordRequest request);
+    @POST("/api/checkpw")
+    Call<CheckPasswordResponse> checkPassword(@Body CheckPasswordRequest request);
 
-    @POST("api/auth/request-password-reset")
-    Call<Void> requestPasswordReset(@Body Map<String, String> payload);
+    @PUT("/api/user/auth/changepw")
+    Call<Void> changePassword(@Body ChangePasswordRequest request);
 
-    @POST("api/auth/reset-password")
-    Call<Void> resetPassword(@Body Map<String, String> payload);
-
-    @GET("api/inquiries")
+    @GET("/api/inquiries")
     Call<List<InquiryResponse>> getInquiries(@Header("Authorization") String token);
 
     @Multipart
-    @POST("api/inquiries")
+    @POST("/api/inquiries")
     Call<InquiryResponse> uploadInquiry(@Header("Authorization") String token, @PartMap Map<String, RequestBody> partMap, @Part MultipartBody.Part file);
 
-    @GET("api/inquiries/download/{filename}")
+    @Streaming
+    @GET("/api/inquiries/download/{filename}")
     Call<ResponseBody> downloadFile(@Header("Authorization") String token, @Path("filename") String filename);
-    
-    @GET("api/payments/history")
-    Call<List<PaymentHistoryItem>> getPaymentHistory(@Header("Authorization") String token);
-    
-    @POST("api/payment/confirm")
-    Call<PaymentConfirmResponse> confirmPayment(@Header("Authorization") String token, @Body PaymentConfirmRequest request);
+
+    @POST("/api/voucher/redeem")
+    Call<VoucherResponse> redeemVoucher(@Body VoucherRequest request);
+
+    @POST("/api/payment/confirm")
+    Call<PaymentResponse> confirmPayment(@Body PaymentRequest request);
+
+
+    // 사용되지 않는 findPassword 메소드는 주석 처리 또는 삭제
+    // @PUT("/api/user/auth/findpw")
+    // Call<Void> findPassword(@Body FindPasswordRequest request);
 }

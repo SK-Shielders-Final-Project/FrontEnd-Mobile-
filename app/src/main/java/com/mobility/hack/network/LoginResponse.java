@@ -7,19 +7,27 @@ public class LoginResponse {
     @SerializedName("userId")
     private final Long userId;
 
-    @SerializedName("jwttoken")
-    private final String jwtToken;
+    @SerializedName("accessToken")
+    private final String accessToken;
 
-    public LoginResponse(Long userId, String jwtToken) {
+    @SerializedName("refreshToken")
+    private final String refreshToken;
+
+    public LoginResponse(Long userId, String accessToken, String refreshToken) {
         this.userId = userId;
-        this.jwtToken = jwtToken;
+        this.accessToken = accessToken;
+        this.refreshToken = refreshToken;
     }
 
     public Long getUserId() {
         return userId;
     }
 
-    public String getJwtToken() {
-        return jwtToken;
+    public String getAccessToken() {
+        return accessToken;
+    }
+
+    public String getRefreshToken() {
+        return refreshToken;
     }
 }
