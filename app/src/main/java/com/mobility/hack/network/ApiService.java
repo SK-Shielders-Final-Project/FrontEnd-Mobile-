@@ -22,6 +22,9 @@ public interface ApiService {
     @POST("/api/user/auth/login")
     Call<LoginResponse> login(@Body LoginRequest request);
 
+    @POST("/api/user/auth/refresh")
+    Call<LoginResponse> refresh(@Body RefreshRequest request);
+
     @POST("/api/user/auth/signup")
     Call<Void> register(@Body RegisterRequest request);
 
@@ -73,6 +76,14 @@ public interface ApiService {
 
     @POST("/api/user/point")
     Call<PointResponse> usePoint(@Body PointRequest request);
+
+    // 자전거 목록 불러오기
+    @POST("/api/bikes")
+    Call<List<BikeResponse>> getBikes();
+
+    // 챗봇
+    @POST("/api/chat")
+    Call<ChatResponse> sendChatMessage(@Body ChatRequest request);
 
     // 사용되지 않는 findPassword 메소드는 주석 처리 또는 삭제
     // @PUT("/api/user/auth/findpw")

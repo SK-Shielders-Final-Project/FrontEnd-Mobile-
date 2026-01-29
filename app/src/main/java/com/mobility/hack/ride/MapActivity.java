@@ -1,3 +1,5 @@
+// 삭제
+/*
 package com.mobility.hack.ride;
 
 import android.Manifest;
@@ -180,3 +182,4 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         });
     }
 }
+*/

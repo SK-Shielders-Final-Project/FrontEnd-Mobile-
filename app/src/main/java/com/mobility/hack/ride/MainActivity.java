@@ -30,6 +30,7 @@ import com.mobility.hack.R;
 import com.mobility.hack.auth.MenuActivity;
 import com.mobility.hack.auth.MyInfoActivity;
 import com.mobility.hack.chatbot.ChatActivity;
+import com.mobility.hack.network.BikeResponse; // [수정] BikeResponse 임포트 추가
 
 import java.util.List;
 
@@ -146,20 +147,35 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
     }
 
+    /**
+     * [수정] BikeDTO 대신 BikeResponse를 사용하여 지도에 마커를 표시
+     */
     private void loadBikeData() {
         Toast.makeText(this, "주변 자전거를 찾습니다...", Toast.LENGTH_SHORT).show();
         fileCacher.getBikeList(new FileCacher.BikeCallback() {
             @Override
-            public void onSuccess(List<BikeDTO> bikeList) {
+            public void onSuccess(List<BikeResponse> bikeList) { // [수정] 타입 변경
                 mMap.clear();
-                for (BikeDTO bike : bikeList) {
-                    LatLng position = new LatLng(bike.getLatitude(), bike.getLongitude());
-                    MarkerOptions markerOptions = new MarkerOptions()
-                            .position(position)
-                            .title(bike.getModelName())
-                            .snippet("상태: " + (bike.isAvailable() ? "이용가능" : "사용중"))
-                            .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN));
-                    mMap.addMarker(markerOptions);
+                for (BikeResponse bike : bikeList) { // [수정] 타입 변경
+                    try {
+                        // [수정] String 좌표를 Double로 변환
+                        double lat = Double.parseDouble(bike.getLatitude());
+                        double lng = Double.parseDouble(bike.getLongitude());
+                        LatLng position = new LatLng(lat, lng);
+
+                        // [수정] status 문자열 기반 대여 가능 여부 판단
+                        boolean isAvailable = "true".equalsIgnoreCase(bike.getStatus());
+
+                        MarkerOptions markerOptions = new MarkerOptions()
+                                .position(position)
+                                .title(bike.getModelName())
+                                .snippet("상태: " + (isAvailable ? "이용가능" : "사용중"))
+                                .icon(BitmapDescriptorFactory.defaultMarker(
+                                        isAvailable ? BitmapDescriptorFactory.HUE_GREEN : BitmapDescriptorFactory.HUE_RED));
+                        mMap.addMarker(markerOptions);
+                    } catch (Exception e) {
+                        e.printStackTrace(); // 파싱 에러 시 해당 마커 무시
+                    }
                 }
             }
             @Override
