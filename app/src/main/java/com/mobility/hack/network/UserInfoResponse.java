@@ -1,11 +1,15 @@
 package com.mobility.hack.network;
 
+import com.google.gson.annotations.SerializedName;
+
 public class UserInfoResponse {
     private String username;
     private String name;
     private String email;
     private String phone;
     private int rideCount;
+
+    @SerializedName("total_point") // 서버가 보내주는 JSON 필드 이름으로 수정
     private int totalPoint;
 
     public String getUsername() {
