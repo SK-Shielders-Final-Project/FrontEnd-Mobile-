@@ -68,6 +68,8 @@ public interface ApiService {
     @POST("/api/payments/user/confirm")
     Call<PaymentResponse> confirmPayment(@Body PaymentRequest request);
 
+    @GET("/api/payments/user")
+    Call<List<com.mobility.hack.Payment>> getPaymentHistory();
 
     // 사용되지 않는 findPassword 메소드는 주석 처리 또는 삭제
     // @PUT("/api/user/auth/findpw")
