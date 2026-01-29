@@ -77,6 +77,10 @@
             android:name=".PaymentHistoryActivity"
             android:exported="false" />
 
+        <activity
+            android:name=".chatbot.ChatActivity"
+            android:exported="false" />
+
     </application>
 
 </manifest>

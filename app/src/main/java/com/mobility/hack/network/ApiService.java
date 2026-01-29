@@ -73,9 +73,9 @@ public interface ApiService {
     @POST("/api/bikes")
     Call<List<BikeResponse>> getBikes();
 
-/*    // 챗봇
+    // 챗봇
     @POST("/api/chat")
-    Call<ChatResponse> sendChatMessage(@Body ChatRequest request);*/
+    Call<ChatResponse> sendChatMessage(@Body ChatRequest request);
 
     // 사용되지 않는 findPassword 메소드는 주석 처리 또는 삭제
     // @PUT("/api/user/auth/findpw")
