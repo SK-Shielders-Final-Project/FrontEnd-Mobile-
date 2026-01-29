@@ -1,3 +1,5 @@
+// 삭제
+/*
 package com.mobility.hack.ride;
 
 public class BikeDTO {
@@ -30,4 +32,4 @@ public class BikeDTO {
     public boolean isAvailable() {
         return "true".equalsIgnoreCase(this.status);
     }
-}
+}*/
