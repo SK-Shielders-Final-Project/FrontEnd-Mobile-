@@ -1,35 +1,118 @@
 package com.mobility.hack.chatbot;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-import java.util.ArrayList;
-import java.util.List;
+
+import com.mobility.hack.R;
+import com.mobility.hack.network.ApiService;
+import com.mobility.hack.network.ChatRequest;
+import com.mobility.hack.network.ChatResponse;
+import com.mobility.hack.network.RetrofitClient;
+import com.mobility.hack.security.TokenManager; // 1. TokenManager 임포트 추가
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class ChatActivity extends AppCompatActivity {
-    private List<ChatMessage> messages = new ArrayList<>();
-    private ChatHistoryManager historyManager;
+
+    private RecyclerView recyclerView;
+    private ChatAdapter chatAdapter;
+    private EditText editTextMessage;
+    private ImageButton buttonSend;
+    private ImageButton buttonClose;
+
+    private ApiService apiService;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        // [15] 프롬프트 인젝션 실습용 UI
-        // [16] 대화 내역 평문 저장 취약점 포함
-        historyManager = new ChatHistoryManager(this);
-        
-        // UI 초기화 로직 (실제 레이아웃 파일 필요)
-        // setupChat();
+        setContentView(R.layout.activity_chat);
+
+        // 2. [수정] TokenManager 인스턴스를 생성합니다.
+        TokenManager tokenManager = new TokenManager(this);
+
+        // 3. [수정] getClient에 tokenManager를 전달하여 서비스 초기화 (에러 해결)
+        apiService = RetrofitClient.getClient(tokenManager).create(ApiService.class);
+
+        initViews();
+        setupRecyclerView();
+        loadWelcomeMessage();
+
+        buttonSend.setOnClickListener(v -> sendMessage());
+        buttonClose.setOnClickListener(v -> finish());
     }
 
-    private void sendMessage(String userText) {
-        messages.add(new ChatMessage(userText, true));
-        historyManager.saveChatHistory(userText); // [16] 평문 저장 호출
-        
-        // LLM 응답 시뮬레이션 및 프롬프트 인젝션 포인트
-        String botResponse = "AI: " + userText + " 에 대한 답변입니다.";
-        messages.add(new ChatMessage(botResponse, false));
+    private void initViews() {
+        recyclerView = findViewById(R.id.recyclerViewChat);
+        editTextMessage = findViewById(R.id.editTextMessage);
+        buttonSend = findViewById(R.id.buttonSend);
+        buttonClose = findViewById(R.id.buttonClose);
+    }
+
+    private void setupRecyclerView() {
+        chatAdapter = new ChatAdapter();
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        recyclerView.setAdapter(chatAdapter);
+    }
+
+    private void loadWelcomeMessage() {
+        String welcomeText = "안녕하세요,\n🌲서울을 즐기는 가장 친환경적인 방법\n서울자전거 작당모빌 🚲 입니다.";
+        addMessageToChat(welcomeText, ChatMessage.VIEW_TYPE_BOT);
+    }
+
+    private void sendMessage() {
+        String messageText = editTextMessage.getText().toString();
+        if (messageText.isEmpty()) return;
+
+        addMessageToChat(messageText, ChatMessage.VIEW_TYPE_USER);
+        editTextMessage.setText("");
+
+        // Retrofit을 사용한 서버 통신
+        requestBotResponse(messageText);
+    }
+
+    private void requestBotResponse(String userMessage) {
+        SharedPreferences prefs = getSharedPreferences("secure_auth_prefs", Context.MODE_PRIVATE);
+        long userId = prefs.getLong("user_id", 0);
+
+        ChatRequest request = new ChatRequest(userId, userMessage);
+
+        apiService.sendChatMessage(request).enqueue(new Callback<ChatResponse>() {
+            @Override
+            public void onResponse(Call<ChatResponse> call, Response<ChatResponse> response) {
+                // 화면이 이미 닫혔다면 UI 업데이트 중단 (안정성)
+                if (isFinishing() || isDestroyed()) return;
+
+                if (response.isSuccessful() && response.body() != null) {
+                    addMessageToChat(response.body().getAssistantMessage(), ChatMessage.VIEW_TYPE_BOT);
+                } else {
+                    String error = (response.code() == 401) ? "로그인이 필요합니다." : "서버 오류";
+                    addMessageToChat(error, ChatMessage.VIEW_TYPE_BOT);
+                }
+            }
+
+            @Override
+            public void onFailure(Call<ChatResponse> call, Throwable t) {
+                addMessageToChat("연결 실패: " + t.getMessage(), ChatMessage.VIEW_TYPE_BOT);
+            }
+        });
+    }
+
+    private void addMessageToChat(String message, int viewType) {
+        String currentTime = new SimpleDateFormat("a h:mm", Locale.KOREA).format(new Date());
+        ChatMessage chatMsg = new ChatMessage(message, viewType, currentTime);
+        chatAdapter.addMessage(chatMsg);
+        recyclerView.smoothScrollToPosition(chatAdapter.getItemCount() - 1);
     }
 }

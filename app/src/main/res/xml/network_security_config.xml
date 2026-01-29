@@ -4,7 +4,7 @@
     <base-config cleartextTrafficPermitted="true">
         <trust-anchors>
             <certificates src="system" />
-            <certificates src="user" /> <!-- [11] Proxy 툴의 사용자 인증서 허용 -->
+            <!-- <certificates src="user" /> --> <!-- WebView 충돌의 원인이므로 임시 주석 처리 -->
         </trust-anchors>
     </base-config>
 </network-security-config>

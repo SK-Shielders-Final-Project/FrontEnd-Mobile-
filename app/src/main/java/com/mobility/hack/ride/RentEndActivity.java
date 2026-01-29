@@ -1,17 +1,27 @@
 package com.mobility.hack.ride;
 
+import android.content.Intent;
 import android.os.Bundle;
-import android.widget.Toast;
+import android.widget.Button;
+
 import androidx.appcompat.app.AppCompatActivity;
 
-public class RentEndActivity extends AppCompatActivity {
-    // [9] 취약점: 결제 완료 여부를 서버가 아닌 클라이언트에서 판단
-    private boolean isPaymentSuccess = false;
+import com.mobility.hack.R;
 
-    public void processPayment() {
-        // 실제로는 서버 응답을 확인해야 하지만, 로컬 변수로만 체크
-        if (isPaymentSuccess) {
-            Toast.makeText(this, "반납 완료!", Toast.LENGTH_SHORT).show();
-        }
+public class RentEndActivity extends AppCompatActivity {
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_rent_end);
+
+        Button requestPaymentButton = findViewById(R.id.request_payment_button);
+        requestPaymentButton.setOnClickListener(v -> {
+            Intent intent = new Intent(RentEndActivity.this, PaymentActivity.class);
+            // 실제 결제 금액과 주문명은 이 곳에서 설정해야 합니다.
+            intent.putExtra(PurchaseTicketActivity.EXTRA_AMOUNT, 1000); // 예: 1000원
+            intent.putExtra(PurchaseTicketActivity.EXTRA_ORDER_NAME, "포인트 충전");
+            startActivity(intent);
+        });
     }
 }
