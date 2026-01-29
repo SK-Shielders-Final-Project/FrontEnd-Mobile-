@@ -33,14 +33,12 @@ public class LoginActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        tokenManager = new TokenManager(getApplicationContext());
-        
-        // 자동 로그인 로직은 SplashActivity로 이동합니다.
-        // 앱이 시작될 때마다 로그인 여부를 확인하여 적절한 화면으로 안내합니다.
-        
         setContentView(R.layout.activity_login);
+        
+        tokenManager = new TokenManager(getApplicationContext());
         Retrofit retrofit = RetrofitClient.getClient(tokenManager);
         apiService = retrofit.create(ApiService.class);
+
         EditText usernameEditText = findViewById(R.id.editTextId);
         EditText passwordEditText = findViewById(R.id.editTextPassword);
         Button loginButton = findViewById(R.id.buttonLogin);
@@ -67,8 +65,7 @@ public class LoginActivity extends AppCompatActivity {
             startActivity(intent);
         });
         findPasswordTextView.setOnClickListener(v -> {
-            Intent intent = new Intent(this, FindPasswordActivity.class);
-            startActivity(intent);
+            // TODO: 비밀번호 찾기 기능 구현 필요
         });
     }
 
@@ -80,18 +77,15 @@ public class LoginActivity extends AppCompatActivity {
                 LoginResponse loginResponse = response.body();
 
                 if (response.isSuccessful() && loginResponse != null && loginResponse.getAccessToken() != null && !loginResponse.getAccessToken().isEmpty()) {
-                    // 액세스 토큰과 유저 ID 저장
                     tokenManager.saveAuthToken(loginResponse.getAccessToken());
                     tokenManager.saveUserId(loginResponse.getUserId());
 
-                    // 자동 로그인 체크 시, 리프레시 토큰과 자동 로그인 설정 저장
                     if (autoLoginCheckBox.isChecked()) {
                         tokenManager.saveRefreshToken(loginResponse.getRefreshToken());
                         tokenManager.saveAutoLogin(true);
                     } else {
-                        // 자동 로그인을 원하지 않는 경우, 기존 설정과 리프레시 토큰을 지웁니다.
+                        tokenManager.saveRefreshToken(null);
                         tokenManager.saveAutoLogin(false);
-                        tokenManager.saveRefreshToken(null); 
                     }
 
                     Toast.makeText(LoginActivity.this, "로그인 성공!", Toast.LENGTH_SHORT).show();
@@ -111,6 +105,8 @@ public class LoginActivity extends AppCompatActivity {
 
     private void goToMainActivity() {
         Intent intent = new Intent(this, MainActivity.class);
+        // 기존의 모든 액티비티를 스택에서 제거하고, 새로운 태스크를 시작합니다.
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);
         finish();
     }
