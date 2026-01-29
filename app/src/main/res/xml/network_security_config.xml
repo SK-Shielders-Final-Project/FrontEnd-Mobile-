@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <!-- [11] 취약점: 모든 도메인에 대해 평문(HTTP) 통신 허용 -->
+    <base-config cleartextTrafficPermitted="true">
+        <trust-anchors>
+            <certificates src="system" />
+            <!-- <certificates src="user" /> --> <!-- WebView 충돌의 원인이므로 임시 주석 처리 -->
+        </trust-anchors>
+    </base-config>
+</network-security-config>

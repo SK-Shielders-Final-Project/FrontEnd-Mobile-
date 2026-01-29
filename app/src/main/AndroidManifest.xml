@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+
+    <application
+        android:name=".MainApplication"
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.Mobile"
+        android:usesCleartextTraffic="true">
+
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="${MAPS_API_KEY}" />
+
+        <meta-data
+            android:name="TOSS_CLIENT_KEY"
+            android:value="${TOSS_CLIENT_KEY}" />
+
+        <activity
+            android:name=".ride.MainActivity"
+            android:exported="true">
+        </activity>
+
+        <activity
+            android:name=".SplashActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <activity
+            android:name=".auth.RegisterActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".auth.LoginActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".auth.MenuActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".auth.MyInfoActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".auth.EditMyInfoActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".auth.ChangePasswordActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".ride.PurchaseTicketActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".ride.TicketActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".ride.PaymentActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".CustomerCenterActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".InquiryListActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".InquiryWriteActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".PaymentHistoryActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".chatbot.ChatActivity"
+            android:exported="false" />
+
+    </application>
+
+</manifest>
