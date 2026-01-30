@@ -14,12 +14,14 @@ import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.net.Uri;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.app.ActivityCompat;
+
 
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
@@ -62,12 +64,51 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 if (result.getContents() == null) {
                     Toast.makeText(this, "QR 코드 스캔이 취소되었습니다.", Toast.LENGTH_SHORT).show();
                 } else {
-                    String scannedId = result.getContents();
-                    Toast.makeText(this, "스캔된 ID: " + scannedId, Toast.LENGTH_SHORT).show();
-                    Intent intent = new Intent(MainActivity.this, PurchaseTicketActivity.class);
-                    startActivity(intent);
+                    String qrContent = result.getContents(); // 스캔된 전체 URL
+                    Log.d("MainActivity", "Scanned QR Content: " + qrContent);
+
+                    // 1. URL에서 바이크 정보(숫자) 추출
+                    String bikeNumber = parseBikeNumberFromUrl(qrContent);
+
+                    if (bikeNumber != null && !bikeNumber.isEmpty()) {
+                        // 2. "SN-2026-001" 형태로 최종 자전거 ID 생성
+                        String finalBikeId = formatBikeId(bikeNumber);
+
+                        Toast.makeText(this, "인식된 자전거: " + finalBikeId, Toast.LENGTH_SHORT).show();
+
+                        // 3. PurchaseTicketActivity로 최종 자전거 ID를 담아서 이동
+                        Intent intent = new Intent(MainActivity.this, PurchaseTicketActivity.class);
+                        intent.putExtra("BIKE_ID", finalBikeId); // 포맷팅된 최종 ID 전달
+                        startActivity(intent);
+
+                    } else {
+                        Toast.makeText(this, "유효하지 않은 GO-EQST QR 코드입니다.", Toast.LENGTH_SHORT).show();
+                    }
                 }
             });
+
+    private String parseBikeNumberFromUrl(String url) {
+        if (url == null || !url.startsWith("https://zdme.kro.kr")) {
+            // 우리 도메인이 아니면 유효하지 않은 QR로 처리
+            return null;
+        }
+        try {
+            android.net.Uri uri = android.net.Uri.parse(url);
+            return uri.getQueryParameter("b");
+        } catch (Exception e) {
+            Log.e("MainActivity", "QR 코드 URL 파싱 오류", e);
+            return null;
+        }
+    }
+
+    private String formatBikeId(String bikeNumber) {
+        if (bikeNumber == null || bikeNumber.length() != 7) {
+            return "UNKNOWN"; // 형식이 맞지 않으면 예외 처리
+        }
+        // 문자열을 자르고 하이픈을 추가하여 재조합
+        return "SN-" + bikeNumber.substring(0, 4) + "-" + bikeNumber.substring(4);
+    }
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -108,7 +149,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         ImageButton btnQrScan = findViewById(R.id.btnQrScan);
         btnQrScan.setOnClickListener(v -> {
             ScanOptions options = new ScanOptions();
-            options.setOrientationLocked(false);
+            options.setOrientationLocked(true);
             options.setBeepEnabled(false);
             qrScannerLauncher.launch(options);
         });
