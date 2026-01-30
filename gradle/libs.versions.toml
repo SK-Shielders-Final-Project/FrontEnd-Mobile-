@@ -12,7 +12,7 @@ okhttp = "5.3.2"
 hilt = "2.51.1"
 securityCrypto = "1.1.0"
 zxing-embedded = "4.3.0"
-kotlin = "1.9.22"
+kotlin = "1.9.0"
 
 [libraries]
 junit = { group = "junit", name = "junit", version.ref = "junit" }

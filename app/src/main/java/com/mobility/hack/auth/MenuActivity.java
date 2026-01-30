@@ -9,7 +9,7 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.gson.annotations.SerializedName;
-import com.mobility.hack.CustomerCenterActivity;
+import com.mobility.hack.community.CustomerCenterActivity;
 import com.mobility.hack.MainApplication;
 import com.mobility.hack.PaymentHistoryActivity;
 import com.mobility.hack.R;
@@ -63,7 +63,7 @@ public class MenuActivity extends AppCompatActivity {
         });
 
         btnCustomerCenter.setOnClickListener(v -> {
-            Intent intent = new Intent(MenuActivity.this, CustomerCenterActivity.class);
+            Intent intent = new Intent(MenuActivity.this, com.mobility.hack.community.CustomerCenterActivity.class);
             startActivity(intent);
         });
 
@@ -127,7 +127,5 @@ public class MenuActivity extends AppCompatActivity {
         Toast.makeText(this, "로그아웃 되었습니다.", Toast.LENGTH_SHORT).show();
         Intent intent = new Intent(this, LoginActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
-        startActivity(intent);
-        finish();
     }
 }

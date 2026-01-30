@@ -89,6 +89,26 @@
             android:exported="false" />
 
         <activity
+            android:name=".community.InquiryListActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".community.InquiryWriteActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".community.InquiryActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".community.CustomerCenterActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".community.NoticeActivity"
+            android:exported="false" />
+
+        <activity
             android:name=".community.InquiryEditActivity"
             android:exported="false"
             android:windowSoftInputMode="adjustResize" />

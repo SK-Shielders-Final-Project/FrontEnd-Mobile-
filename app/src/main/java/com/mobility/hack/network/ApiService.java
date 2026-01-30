@@ -17,6 +17,7 @@ import retrofit2.http.Part;
 import retrofit2.http.PartMap;
 import retrofit2.http.Path;
 import retrofit2.http.Streaming;
+import retrofit2.http.Query;
 
 public interface ApiService {
     @POST("/api/user/auth/login")
@@ -62,9 +63,6 @@ public interface ApiService {
     Call<InquiryResponse> uploadInquiry(@Header("Authorization") String token, @PartMap Map<String, RequestBody> partMap, @Part MultipartBody.Part file);
 
     @Streaming
-    @GET("/api/inquiries/download/{filename}")
-    Call<ResponseBody> downloadFile(@Header("Authorization") String token, @Path("filename") String filename);
-
     @POST("/api/coupon/redeem")
     Call<VoucherResponse> redeemVoucher(@Body VoucherRequest request);
 
@@ -119,12 +117,6 @@ public interface ApiService {
             @Header("Authorization") String token,
             @Query("file") String filename
     );
-    // 비밀번호 관련 (에러난 메서드들 추가)
-    @POST("/api/user/change-password")
-    Call<Void> changePassword(@Body ChangePasswordRequest request);
-
-    @POST("/api/user/check-password")
-    Call<CheckPasswordResponse> checkPassword(@Body CheckPasswordRequest request);
 
     // 자전거 목록 불러오기
     @POST("/api/bikes")
