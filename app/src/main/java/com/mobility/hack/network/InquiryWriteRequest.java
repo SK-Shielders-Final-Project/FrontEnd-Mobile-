@@ -19,6 +19,6 @@ public class InquiryWriteRequest {
         this.user_id = user_id;
         this.title = title;
         this.content = content;
-        this.file_id = (fileId != null) ? fileId : 0L;
+        this.file_id = (fileId != null) ? fileId : null;
     }
 }

@@ -141,31 +141,41 @@ public class InquiryWriteActivity extends AppCompatActivity {
 
     // [수정] 토큰 생성/로깅/전달 코드 모두 삭제
     private void finalWriteInquiry(String title, String content, Long fileId) {
-        // 변수명을 요청하신 대로 user_Id로 변경했습니다.
-        Long user_id = tokenManager.fetchUserId();
+        Long user_Id = tokenManager.fetchUserId();
+        InquiryWriteRequest request = new InquiryWriteRequest(user_Id, title, content, fileId);
 
-        // 생성자 파라미터에 변경된 user_Id를 전달합니다.
-        InquiryWriteRequest request = new InquiryWriteRequest(user_id, title, content, fileId);
-
-        // 인터셉터가 토큰을 자동으로 넣어주므로 request 객체만 보냅니다.
         apiService.writeInquiry(request).enqueue(new Callback<InquiryResponse>() {
             @Override
             public void onResponse(Call<InquiryResponse> call, Response<InquiryResponse> response) {
-                resetSubmitUI();
+                resetSubmitUI(); // 버튼 잠금 해제
+
                 if (response.isSuccessful()) {
-                    Toast.makeText(InquiryWriteActivity.this, "문의가 성공적으로 등록되었습니다!", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(InquiryWriteActivity.this, "등록 성공!", Toast.LENGTH_SHORT).show();
                     setResult(Activity.RESULT_OK);
                     finish();
                 } else {
-                    // 404가 계속 뜬다면 RetrofitClient의 BASE_URL 끝에 /가 있는지,
-                    // ApiService의 경로 앞에 /가 중복되지 않았는지 확인해야 합니다.
-                    Log.e(TAG, "등록 실패 코드: " + response.code());
-                    Toast.makeText(InquiryWriteActivity.this, "등록 실패 (" + response.code() + ")", Toast.LENGTH_SHORT).show();
+                    // 🚨 여기서 에러를 해부합니다.
+                    try {
+                        // 에러 바디는 한 번 읽으면 사라지므로 변수에 저장
+                        String errorBody = response.errorBody() != null ? response.errorBody().string() : "null";
+                        String requestUrl = call.request().url().toString(); // 실제 날아가는 주소
+
+                        Log.e("InquiryDetailLog", "=== 404 원인 분석 ===");
+                        Log.e("InquiryDetailLog", "1. 요청 주소: " + requestUrl);
+                        Log.e("InquiryDetailLog", "2. 응답 코드: " + response.code());
+                        Log.e("InquiryDetailLog", "3. 서버 메시지: " + errorBody);
+                        Log.e("InquiryDetailLog", "======================");
+
+                        Toast.makeText(InquiryWriteActivity.this, "실패: " + response.code(), Toast.LENGTH_SHORT).show();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
                 }
             }
 
             @Override
             public void onFailure(Call<InquiryResponse> call, Throwable t) {
+                Log.e("InquiryDetailLog", "네트워크 통신 아예 실패: " + t.getMessage());
                 handleFailure("네트워크 오류: " + t.getMessage());
             }
         });

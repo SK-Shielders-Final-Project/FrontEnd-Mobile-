@@ -10,8 +10,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.mobility.hack.MainApplication;
 import com.mobility.hack.R;
 import com.mobility.hack.network.ApiService;
-import com.mobility.hack.network.CommonResultResponse;
 import com.mobility.hack.network.InquiryModifyRequest;
+import com.mobility.hack.network.InquiryModifyResponse; // [수정] 이 클래스 사용
 import com.mobility.hack.network.InquiryResponse;
 import com.mobility.hack.security.TokenManager;
 import retrofit2.Call;
@@ -28,33 +28,27 @@ public class InquiryEditActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_inquiry_write);
+        setContentView(R.layout.activity_inquiry_write); // 쓰기 화면 레이아웃 재사용
 
         apiService = ((MainApplication) getApplication()).getApiService();
         tokenManager = ((MainApplication) getApplication()).getTokenManager();
 
-        // [1] 레이아웃 텍스트 변경
+        // [1] UI 텍스트를 '수정' 모드에 맞게 변경
         TextView tvHeaderTitle = findViewById(R.id.tv_header_title);
-        if (tvHeaderTitle != null) {
-            tvHeaderTitle.setText("문의 수정");
-        }
+        if (tvHeaderTitle != null) tvHeaderTitle.setText("문의 수정");
 
         TextView btnSubmit = findViewById(R.id.btn_submit);
-        if (btnSubmit != null) {
-            btnSubmit.setText("수정하기");
-        }
+        if (btnSubmit != null) btnSubmit.setText("수정하기");
 
-        // [4] 체크박스 숨김 처리 (수정 시에는 불필요)
+        // [2] 약관 동의 등 불필요한 UI 숨김
         View layoutAgree = findViewById(R.id.layout_agree);
-        if (layoutAgree != null) {
-            layoutAgree.setVisibility(View.GONE);
-        }
+        if (layoutAgree != null) layoutAgree.setVisibility(View.GONE);
 
         etTitle = findViewById(R.id.et_title);
         etContent = findViewById(R.id.et_content);
 
+        // [3] 이전 화면에서 넘겨받은 데이터 표시
         inquiry = (InquiryResponse) getIntent().getSerializableExtra("inquiry_data");
-
         if (inquiry != null) {
             if (etTitle != null) etTitle.setText(inquiry.getTitle());
             if (etContent != null) etContent.setText(inquiry.getContent());
@@ -70,34 +64,42 @@ public class InquiryEditActivity extends AppCompatActivity {
     private void performUpdate() {
         if (inquiry == null) return;
 
-        String token = "Bearer " + tokenManager.fetchAuthToken();
         long userId = tokenManager.fetchUserId();
+
+        // [수정 전] 에러 원인! (0번 파일은 세상에 없음)
+        // Long currentFileId = inquiry.getFileId();
+        // if (currentFileId == null) currentFileId = 0L;
+
+        // [수정 후] 정답! (파일이 없으면 null을 보내야 백엔드가 통과시켜줌)
+        Long currentFileId = inquiry.getFileId();
 
         InquiryModifyRequest request = new InquiryModifyRequest(
                 userId,
                 inquiry.getInquiryId(),
                 etTitle.getText().toString(),
                 etContent.getText().toString(),
-                0L
+                currentFileId // null 그대로 전송
         );
 
-        apiService.modifyInquiry( request).enqueue(new Callback<CommonResultResponse>() {
+        apiService.modifyInquiry(request).enqueue(new Callback<InquiryModifyResponse>() {
             @Override
-            public void onResponse(Call<CommonResultResponse> call, Response<CommonResultResponse> response) {
+            public void onResponse(Call<InquiryModifyResponse> call, Response<InquiryModifyResponse> response) {
+                // ... (기존 성공 처리 로직 동일) ...
                 if (response.isSuccessful() && response.body() != null && "Y".equals(response.body().getResult())) {
-                    Toast.makeText(InquiryEditActivity.this, "문의사항이 수정되었습니다.", Toast.LENGTH_SHORT).show();
-                    // [2] 성공 결과 전달 후 화면 닫기
+                    Toast.makeText(InquiryEditActivity.this, "수정되었습니다.", Toast.LENGTH_SHORT).show();
                     setResult(RESULT_OK);
                     finish();
                 } else {
-                    Toast.makeText(InquiryEditActivity.this, "수정에 실패했습니다.", Toast.LENGTH_SHORT).show();
+                    // 로그로 에러 코드 확인 (500이면 서버 에러, 404면 주소 에러)
+                    Log.e(TAG, "수정 실패: " + response.code());
+                    Toast.makeText(InquiryEditActivity.this, "수정 실패 (" + response.code() + ")", Toast.LENGTH_SHORT).show();
                 }
             }
 
             @Override
-            public void onFailure(Call<CommonResultResponse> call, Throwable t) {
-                Log.e(TAG, "Update failed: " + t.getMessage());
-                Toast.makeText(InquiryEditActivity.this, "네트워크 오류가 발생했습니다.", Toast.LENGTH_SHORT).show();
+            public void onFailure(Call<InquiryModifyResponse> call, Throwable t) {
+                Log.e(TAG, "통신 에러: " + t.getMessage());
+                Toast.makeText(InquiryEditActivity.this, "네트워크 오류", Toast.LENGTH_SHORT).show();
             }
         });
     }
