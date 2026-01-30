@@ -20,7 +20,7 @@ import retrofit2.Response;
 
 public class EditMyInfoActivity extends AppCompatActivity {
 
-    private EditText etId, etName, etEmail, etPhone, etPassword;
+    private EditText etName, etEmail, etPhone, etPassword;
     private Button btnSave;
     private ApiService apiService;
     private TokenManager tokenManager;
@@ -34,15 +34,14 @@ public class EditMyInfoActivity extends AppCompatActivity {
         tokenManager = new TokenManager(getApplicationContext());
         apiService = RetrofitClient.getClient(tokenManager).create(ApiService.class);
 
-        etId = findViewById(R.id.et_id);
         etName = findViewById(R.id.et_name);
         etEmail = findViewById(R.id.et_email);
         etPhone = findViewById(R.id.et_phone);
         etPassword = findViewById(R.id.et_password);
         btnSave = findViewById(R.id.btn_save);
 
-        // 아이디는 수정 불가능하도록 설정
-        etId.setEnabled(false);
+        // 아이디 필드는 수정 불가능하도록 비활성화
+        etName.setEnabled(false);
 
         loadUserInfo();
 
@@ -56,7 +55,6 @@ public class EditMyInfoActivity extends AppCompatActivity {
             public void onResponse(Call<UserInfoResponse> call, Response<UserInfoResponse> response) {
                 if (response.isSuccessful() && response.body() != null) {
                     currentUserInfo = response.body();
-                    etId.setText(String.valueOf(currentUserInfo.getUserId())); // 유저 ID를 아이디로 사용
                     etName.setText(currentUserInfo.getUsername());
                     etEmail.setText(currentUserInfo.getEmail());
                     etPhone.setText(currentUserInfo.getPhone());
@@ -71,23 +69,24 @@ public class EditMyInfoActivity extends AppCompatActivity {
     }
 
     private void saveUserInfo() {
-        String username = etName.getText().toString(); // 이름 필드의 값을 username으로 사용
-        String name = etName.getText().toString();
-        String email = etEmail.getText().toString();
-        String phone = etPhone.getText().toString();
-        String password = etPassword.getText().toString();
-
-        if (password.isEmpty()) {
-            Toast.makeText(this, "비밀번호를 입력해주세요.", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
         if (currentUserInfo == null) {
             Toast.makeText(this, "기존 사용자 정보를 불러오지 못했습니다. 다시 시도해주세요.", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        UpdateUserRequest request = new UpdateUserRequest(username, name, password, email, phone, currentUserInfo.getAdminLev());
+        // 아이디는 수정하지 않으므로 기존 정보를 그대로 사용
+        String username = currentUserInfo.getUsername();
+        String email = etEmail.getText().toString();
+        String phone = etPhone.getText().toString();
+        String password = etPassword.getText().toString();
+
+        if (password.isEmpty()) {
+            Toast.makeText(this, "현재 비밀번호를 입력해주세요.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // username과 name에는 기존 아이디(수정 불가)를, 나머지 필드에는 새로 입력된 값을 전달
+        UpdateUserRequest request = new UpdateUserRequest(username, username, password, email, phone, currentUserInfo.getAdminLev());
 
         apiService.updateUserInfo(request).enqueue(new Callback<UserInfoResponse>() {
             @Override

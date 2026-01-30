@@ -127,5 +127,7 @@ public class MenuActivity extends AppCompatActivity {
         Toast.makeText(this, "로그아웃 되었습니다.", Toast.LENGTH_SHORT).show();
         Intent intent = new Intent(this, LoginActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+        startActivity(intent);
+        finish(); // 현재 액티비티를 종료하여 뒤로가기 시 다시 돌아오지 않도록 함
     }
 }

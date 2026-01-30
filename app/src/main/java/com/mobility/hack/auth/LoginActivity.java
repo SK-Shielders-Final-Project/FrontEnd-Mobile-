@@ -49,23 +49,22 @@ public class LoginActivity extends AppCompatActivity {
         loginButton.setOnClickListener(v -> {
             String username = usernameEditText.getText().toString();
             String password = passwordEditText.getText().toString();
-            if (username.contains("' OR '1'='1'")) {
-                Toast.makeText(this, "인증 우회 성공 (SQL Injection)", Toast.LENGTH_SHORT).show();
-                goToMainActivity();
-                return;
-            }
+
             if (!username.isEmpty() && !password.isEmpty()) {
                 login(new LoginRequest(username, password));
             } else {
                 Toast.makeText(this, "아이디와 비밀번호를 입력해주세요.", Toast.LENGTH_SHORT).show();
             }
         });
+
         registerTextView.setOnClickListener(v -> {
             Intent intent = new Intent(this, RegisterActivity.class);
             startActivity(intent);
         });
+
         findPasswordTextView.setOnClickListener(v -> {
-            // TODO: 비밀번호 찾기 기능 구현 필요
+            Intent intent = new Intent(this, FindPasswordActivity.class);
+            startActivity(intent);
         });
     }
 

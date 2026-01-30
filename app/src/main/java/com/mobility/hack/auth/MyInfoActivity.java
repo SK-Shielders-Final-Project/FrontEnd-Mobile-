@@ -2,10 +2,7 @@ package com.mobility.hack.auth;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.view.View;
 import android.widget.Button;
-import android.widget.EditText;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -13,10 +10,8 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.mobility.hack.R;
 import com.mobility.hack.network.ApiService;
-import com.mobility.hack.network.PasswordRequest;
 import com.mobility.hack.network.RetrofitClient;
 import com.mobility.hack.network.UserInfoResponse;
-import com.example.mobilityhack.ride.UserHistoryActivity;
 import com.mobility.hack.security.TokenManager;
 
 import org.jetbrains.annotations.NotNull;
@@ -34,17 +29,8 @@ import retrofit2.Retrofit;
 public class MyInfoActivity extends AppCompatActivity {
     private ApiService apiService;
     private TokenManager tokenManager;
-    private TextView usernameTextView;
-    private TextView emailTextView;
-    private TextView rideCountTextView;
-    private Button changePasswordButton;
-    private Button userHistoryButton;
-    private Button logoutButton;
-    private EditText passwordEditText;
-    private Button verifyPasswordButton;
-    private LinearLayout verifiedContentLayout;
 
-    private TextView tvId, tvName, tvEmail, tvPhone, tvPoints, tvJoinDate, tvUpdateDate;
+    private TextView tvName, tvEmail, tvPhone, tvPoints, tvJoinDate, tvUpdateDate;
     private Button btnEditInfo, btnChangePassword;
 
     @Override
@@ -55,7 +41,6 @@ public class MyInfoActivity extends AppCompatActivity {
         Retrofit retrofit = RetrofitClient.getClient(tokenManager);
         apiService = retrofit.create(ApiService.class);
 
-        tvId = findViewById(R.id.tv_id);
         tvName = findViewById(R.id.tv_name);
         tvEmail = findViewById(R.id.tv_email);
         tvPhone = findViewById(R.id.tv_phone);
@@ -81,7 +66,6 @@ public class MyInfoActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        // EditMyInfoActivity에서 정보가 수정되었을 수 있으므로, 화면에 다시 보여질 때 사용자 정보를 새로고침합니다.
         fetchUserInfo();
     }
 
@@ -98,7 +82,6 @@ public class MyInfoActivity extends AppCompatActivity {
                 if (isFinishing() || isDestroyed()) return;
                 if (response.isSuccessful() && response.body() != null) {
                     UserInfoResponse userInfo = response.body();
-                    tvId.setText(String.valueOf(userInfo.getUserId()));
                     tvName.setText(userInfo.getUsername());
                     tvEmail.setText(userInfo.getEmail());
                     tvPhone.setText(userInfo.getPhone());

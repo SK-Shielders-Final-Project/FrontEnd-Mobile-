@@ -29,7 +29,7 @@
         app:layout_constraintTop_toBottomOf="@+id/tv_my_info_title" />
 
     <TextView
-        android:id="@+id/tv_id_label"
+        android:id="@+id/tv_name_label"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
@@ -40,42 +40,10 @@
         app:layout_constraintTop_toBottomOf="@id/divider" />
 
     <TextView
-        android:id="@+id/tv_id"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginEnd="16dp"
-        android:text="test"
-        android:textSize="16sp"
-        app:layout_constraintBaseline_toBaselineOf="@+id/tv_id_label"
-        app:layout_constraintEnd_toEndOf="parent" />
-
-    <View
-        android:id="@+id/divider2"
-        android:layout_width="0dp"
-        android:layout_height="1dp"
-        android:layout_marginTop="16dp"
-        android:background="?android:attr/listDivider"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/tv_id_label" />
-
-    <TextView
-        android:id="@+id/tv_name_label"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="16dp"
-        android:text="이름"
-        android:textSize="16sp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/divider2" />
-
-    <TextView
         android:id="@+id/tv_name"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginEnd="16dp"
-        android:text="test"
         android:textSize="16sp"
         app:layout_constraintBaseline_toBaselineOf="@+id/tv_name_label"
         app:layout_constraintEnd_toEndOf="parent" />
@@ -106,7 +74,6 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginEnd="16dp"
-        android:text="test@naver.com"
         android:textSize="16sp"
         app:layout_constraintBaseline_toBaselineOf="@+id/tv_email_label"
         app:layout_constraintEnd_toEndOf="parent" />
@@ -137,7 +104,6 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginEnd="16dp"
-        android:text="1234"
         android:textSize="16sp"
         app:layout_constraintBaseline_toBaselineOf="@+id/tv_phone_label"
         app:layout_constraintEnd_toEndOf="parent" />
@@ -169,7 +135,6 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginEnd="16dp"
-        android:text="0 P"
         android:textSize="16sp"
         app:layout_constraintBaseline_toBaselineOf="@+id/tv_points_label"
         app:layout_constraintEnd_toEndOf="parent" />
@@ -201,7 +166,6 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginEnd="16dp"
-        android:text="2026. 1. 28."
         android:textSize="16sp"
         app:layout_constraintBaseline_toBaselineOf="@+id/tv_join_date_label"
         app:layout_constraintEnd_toEndOf="parent" />
@@ -232,7 +196,6 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginEnd="16dp"
-        android:text="2026. 1. 29."
         android:textSize="16sp"
         app:layout_constraintBaseline_toBaselineOf="@+id/tv_update_date_label"
         app:layout_constraintEnd_toEndOf="parent" />
