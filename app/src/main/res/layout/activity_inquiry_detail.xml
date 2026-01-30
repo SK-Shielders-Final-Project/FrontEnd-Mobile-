@@ -1,17 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#FFFFFF"
     android:orientation="vertical">
 
-    <!-- 상단 바 -->
     <RelativeLayout
-        android:id="@+id/top_bar"
         android:layout_width="match_parent"
         android:layout_height="56dp"
         android:paddingHorizontal="16dp">
-
         <ImageButton
             android:id="@+id/btn_back"
             android:layout_width="48dp"
@@ -19,140 +17,52 @@
             android:layout_centerVertical="true"
             android:background="?android:attr/selectableItemBackground"
             android:src="@android:drawable/ic_menu_revert"
-            android:rotation="180"
-            android:contentDescription="뒤로가기"/>
+            android:rotation="180" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_centerInParent="true"
-            android:text="신고내역보기"
+            android:text="문의 상세"
             android:textColor="#000000"
             android:textSize="18sp"
             android:textStyle="bold" />
+
+        <Button
+            android:id="@+id/btn_edit"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:text="수정"
+            android:textColor="#2196F3"
+            style="?android:attr/borderlessButtonStyle" />
     </RelativeLayout>
-
-    <!-- 탭 메뉴 (리스트와 동일하게 유지) -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:paddingTop="8dp">
-
-        <TextView
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:gravity="center"
-            android:paddingVertical="12dp"
-            android:text="고장신고"
-            android:textColor="#888888"
-            android:textSize="14sp" />
-
-        <TextView
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:gravity="center"
-            android:paddingVertical="12dp"
-            android:text="방치신고"
-            android:textColor="#888888"
-            android:textSize="14sp" />
-
-        <LinearLayout
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:orientation="vertical">
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center"
-                android:paddingVertical="12dp"
-                android:text="문의하기"
-                android:textColor="#2E7D32"
-                android:textSize="14sp"
-                android:textStyle="bold" />
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="2dp"
-                android:background="#2E7D32" />
-        </LinearLayout>
-    </LinearLayout>
-
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:background="#DDDDDD" />
 
     <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
-
+        android:layout_height="0dp"
+        android:layout_weight="1">
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:padding="20dp">
 
-            <RelativeLayout
+            <TextView
+                android:id="@+id/tv_detail_title"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-                <TextView
-                    android:id="@+id/tv_category"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="대여/반납"
-                    android:textColor="#888888"
-                    android:textSize="14sp" />
-
-                <ImageView
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:layout_alignParentEnd="true"
-                    android:src="@android:drawable/ic_menu_more"
-                    android:contentDescription="더보기" />
-            </RelativeLayout>
+                android:layout_height="wrap_content"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:textColor="#000000" />
 
             <TextView
-                android:id="@+id/tv_title"
-                android:layout_width="match_parent"
+                android:id="@+id/tv_detail_date"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:text="문의는 어떤가용"
-                android:textColor="#000000"
-                android:textSize="18sp"
-                android:textStyle="bold" />
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginTop="8dp">
-
-                <TextView
-                    android:id="@+id/tv_status"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="접수중"
-                    android:textColor="#888888"
-                    android:textSize="14sp" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text=" | "
-                    android:textColor="#DDDDDD"
-                    android:textSize="14sp" />
-
-                <TextView
-                    android:id="@+id/tv_date"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="2026-01-27"
-                    android:textColor="#888888"
-                    android:textSize="14sp" />
-            </LinearLayout>
+                android:layout_marginTop="8dp"
+                android:textColor="#888888" />
 
             <View
                 android:layout_width="match_parent"
@@ -161,50 +71,56 @@
                 android:layout_marginVertical="16dp" />
 
             <TextView
-                android:id="@+id/tv_content"
+                android:id="@+id/tv_detail_content"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="호허러러"
-                android:textColor="#333333"
                 android:textSize="16sp"
-                android:lineSpacingExtra="4dp" />
+                android:lineSpacingExtra="4dp"
+                android:textColor="#333333" />
 
-            <!-- 첨부파일 및 다운로드 영역 (취약점 시연용) -->
+            <!-- [추가] 첨부파일 표시 영역 -->
             <LinearLayout
                 android:id="@+id/layout_attachment"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:layout_marginTop="24dp"
+                android:orientation="horizontal"
+                android:padding="12dp"
+                android:layout_marginTop="16dp"
+                android:background="#F0F0F0"
+                android:gravity="center_vertical"
                 android:visibility="gone">
 
                 <ImageView
-                    android:id="@+id/iv_attachment_preview"
-                    android:layout_width="80dp"
-                    android:layout_height="80dp"
-                    android:background="#F5F5F5"
-                    android:scaleType="centerInside"
-                    android:src="@android:drawable/ic_menu_gallery" />
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:src="@android:drawable/ic_menu_save" />
 
                 <TextView
-                    android:id="@+id/tv_filename"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:textSize="13sp"
-                    android:textColor="#888888" />
-
-                <Button
-                    android:id="@+id/btn_download"
+                    android:id="@+id/tv_file_name"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:text="다운로드 (보안 취약)"
-                    android:textSize="12sp"
-                    style="@style/Widget.AppCompat.Button.Borderless.Colored" />
+                    android:layout_marginStart="8dp"
+                    android:text="파일이름.jpg"
+                    android:textColor="#2196F3"
+                    android:textSize="14sp" />
             </LinearLayout>
 
+            <ImageView
+                android:id="@+id/iv_detail_image"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:adjustViewBounds="true"
+                android:scaleType="fitCenter"
+                android:visibility="gone" />
         </LinearLayout>
     </ScrollView>
 
+    <Button
+        android:id="@+id/btn_delete"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:text="삭제하기"
+        android:backgroundTint="#FF5252"
+        android:textColor="#FFFFFF" />
 </LinearLayout>

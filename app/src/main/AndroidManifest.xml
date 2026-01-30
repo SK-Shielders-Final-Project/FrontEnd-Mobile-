@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.CAMERA" />
@@ -14,16 +15,15 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.Mobile"
-        android:usesCleartextTraffic="true">
+        android:usesCleartextTraffic="true"
+        tools:replace="android:allowBackup">
 
         <meta-data
+
             android:name="com.google.android.geo.API_KEY"
             android:value="${MAPS_API_KEY}" />
 
-        <meta-data
-            android:name="TOSS_CLIENT_KEY"
-            android:value="${TOSS_CLIENT_KEY}" />
-
+        <!-- [M8 보안 강화] MainActivity만 외부 노출 허용, 나머지는 exported="false" -->
         <activity
             android:name=".ride.MainActivity"
             android:exported="true">
@@ -33,53 +33,33 @@
             </intent-filter>
         </activity>
 
-        <activity
-            android:name=".auth.RegisterActivity"
-            android:exported="false" />
+        <!-- 인증 및 사용자 설정 -->
+        <activity android:name=".auth.LoginActivity" android:exported="false" />
+        <activity android:name=".auth.RegisterActivity" android:exported="false" />
+        <activity android:name=".auth.MenuActivity" android:exported="false" />
+        <activity android:name=".auth.MyInfoActivity" android:exported="false" />
 
-        <activity
-            android:name=".auth.LoginActivity"
-            android:exported="false" />
+        <!-- 이용권 및 주행 -->
+        <activity android:name=".ride.PurchaseTicketActivity" android:exported="false" />
+        <activity android:name=".ride.TicketActivity" android:exported="false" />
+        <activity android:name=".ride.PaymentActivity" android:exported="false" />
+        <activity android:name=".ride.UserHistoryActivity" android:exported="false" />
 
-        <activity
-            android:name=".auth.MenuActivity"
-            android:exported="false" />
+        <!-- [커뮤니티] 명확한 패키지 경로 지정 -->
+        <activity android:name=".community.CustomerCenterActivity" android:exported="false" />
+        <activity android:name=".community.InquiryActivity" android:exported="false" />
+        <activity android:name=".community.InquiryListActivity" android:exported="false" />
+        <activity android:name=".community.InquiryWriteActivity" android:exported="false" />
+        <activity android:name=".community.NoticeActivity" android:exported="false" />
 
+        <activity android:name=".chatbot.ChatActivity" android:exported="false" />
         <activity
-            android:name=".auth.MyInfoActivity"
+            android:name=".community.InquiryDetailActivity"
             android:exported="false" />
-
         <activity
-            android:name=".ride.PurchaseTicketActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".ride.TicketActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".ride.PaymentActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".CustomerCenterActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".InquiryListActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".InquiryWriteActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".PaymentHistoryActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".chatbot.ChatActivity"
-            android:exported="false" />
+            android:name=".community.InquiryEditActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
 
     </application>
 
