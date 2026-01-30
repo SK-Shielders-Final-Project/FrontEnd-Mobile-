@@ -12,10 +12,10 @@ public interface ApiService {
     @POST("api/auth/register")
     Call<Void> register(@Body RegisterRequest request);
 
-    @POST("/api/user/auth/login")
+    @POST("api/user/auth/login")
     Call<LoginResponse> login(@Body LoginRequest request);
 
-    @GET("/api/user/info/{userId}")
+    @GET("api/user/info/{userId}")
     Call<UserInfoResponse> getUserInfo(@Path("userId") long userId);
 
     @POST("api/auth/verify-password")
@@ -24,21 +24,21 @@ public interface ApiService {
     // --- [2] 문의사항 처리 (백엔드 스웨거 명세 반영) ---
 
     // 목록 조회: POST /api/user/inquiry (Body에 user_id 포함)
-    @POST("/api/user/inquiry")
+    @GET("api/user/inquiry")
     Call<List<InquiryResponse>> getInquiryList(
             @Header("Authorization") String token,
-            @Body Map<String, Long> params
+            @Query("user_id") long userId  // 백엔드의 @RequestParam("user_id")과 매칭
     );
 
     // 상세 조회: GET /api/user/inquiry/{inquiryId}
-    @GET("/api/user/inquiry/{inquiryId}")
+    @GET("api/user/inquiry/{inquiryId}")
     Call<InquiryResponse> getInquiryDetail(
             @Header("Authorization") String token,
             @Path("inquiryId") long inquiryId
     );
 
     // 문의 작성: POST /api/user/inquiry/write
-    @POST("/api/user/inquiry/write")
+    @POST("api/user/inquiry/write")
     Call<InquiryResponse> writeInquiry(
             @Header("Authorization") String token,
             @Header("User-ID") String userIdHeader,
@@ -46,14 +46,14 @@ public interface ApiService {
     );
 
     // 문의 수정: PUT /api/user/inquiry/modify
-    @PUT("/api/user/inquiry/modify")
+    @PUT("api/user/inquiry/modify")
     Call<CommonResultResponse> modifyInquiry(
             @Header("Authorization") String token,
             @Body InquiryModifyRequest request
     );
 
     // 문의 삭제: POST /api/user/inquiry/delete
-    @POST("/api/user/inquiry/delete")
+    @POST("api/user/inquiry/delete")
     Call<CommonResultResponse> deleteInquiry(
             @Header("Authorization") String token,
             @Body InquiryDeleteRequest request
@@ -61,20 +61,20 @@ public interface ApiService {
 
     // --- [3] 파일 및 기타 서비스 ---
     @Multipart
-    @POST("/api/files/upload")
+    @POST("api/files/upload")
     Call<FileUploadResponse> uploadFile(
             @Header("Authorization") String token,
             @Part MultipartBody.Part file
     );
 
-    @GET("/api/user/files/download")
+    @GET("api/user/files/download")
     @Streaming
     Call<ResponseBody> downloadFile(
             @Header("Authorization") String token,
             @Query("file") String filename
     );
     // 비밀번호 관련 (에러난 메서드들 추가)
-    @POST("/api/user/change-password")
+    @POST("api/user/change-password")
     Call<Void> changePassword(@Body ChangePasswordRequest request);
 
     @POST("/api/user/check-password")

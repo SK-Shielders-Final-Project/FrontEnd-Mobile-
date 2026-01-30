@@ -16,7 +16,7 @@ import com.mobility.hack.network.ApiService;
 import com.mobility.hack.network.PasswordRequest;
 import com.mobility.hack.network.RetrofitClient;
 import com.mobility.hack.network.UserInfoResponse;
-import com.example.mobilityhack.ride.UserHistoryActivity;
+import com.mobility.hack.ride.UserHistoryActivity;
 import com.mobility.hack.security.TokenManager;
 
 import org.jetbrains.annotations.NotNull;

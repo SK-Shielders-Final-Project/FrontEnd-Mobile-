@@ -3,11 +3,9 @@ package com.mobility.hack.network;
 import com.google.gson.annotations.SerializedName;
 import java.io.Serializable;
 
-/**
- * [상세 조회 명세 반영] 문의사항 응답 데이터 모델
- */
 public class InquiryResponse implements Serializable {
-    @SerializedName("inquiryId")
+    // 백엔드: inquiry_id
+    @SerializedName("inquiry_id")
     private long inquiryId;
 
     @SerializedName("title")
@@ -16,39 +14,45 @@ public class InquiryResponse implements Serializable {
     @SerializedName("content")
     private String content;
 
-    @SerializedName("authorName")
+    // 백엔드: author_name (수정됨)
+    @SerializedName("author_name")
     private String authorName;
 
-    @SerializedName("createdAt")
+    // 백엔드: created_at
+    @SerializedName("created_at")
     private String createdAt;
 
-    @SerializedName("adminReply")
+    // 백엔드: admin_reply
+    @SerializedName("admin_reply")
     private String adminReply;
 
-    @SerializedName("updatedAt")
+    // 백엔드: updated_at
+    @SerializedName("updated_at")
     private String updatedAt;
 
     @SerializedName("attachment")
-    private AttachmentDTO attachment; // 명세서의 attachment 객체 매핑
+    private AttachmentDTO attachment;
 
-    // --- Inner Class: AttachmentDTO ---
     public static class AttachmentDTO implements Serializable {
-        @SerializedName("fileId")
+        // 백엔드: file_id
+        @SerializedName("file_id")
         private int fileId;
 
-        @SerializedName("originalFilename")
+        // 백엔드: original_filename
+        @SerializedName("original_filename")
         private String originalFilename;
 
-        @SerializedName("fileDownloadUri")
+        // 백엔드: file_download_uri
+        @SerializedName("file_download_uri")
         private String fileDownloadUri;
 
-        @SerializedName("fileViewUri")
-        private String fileViewUri; // Glide에서 사용할 이미지 경로
+        // 백엔드: file_view_uri
+        @SerializedName("file_view_uri")
+        private String fileViewUri;
 
         @SerializedName("ext")
         private String ext;
 
-        // Getters
         public int getFileId() { return fileId; }
         public String getOriginalFilename() { return originalFilename; }
         public String getFileDownloadUri() { return fileDownloadUri; }
@@ -56,7 +60,6 @@ public class InquiryResponse implements Serializable {
         public String getExt() { return ext; }
     }
 
-    // --- Getters ---
     public long getInquiryId() { return inquiryId; }
     public String getTitle() { return title != null ? title : ""; }
     public String getContent() { return content != null ? content : ""; }

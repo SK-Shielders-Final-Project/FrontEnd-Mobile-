@@ -64,36 +64,28 @@ public class InquiryListActivity extends AppCompatActivity {
             return;
         }
 
-        Map<String, Long> params = new HashMap<>();
-        params.put("user_id", userId);
-
         String token = "Bearer " + authToken;
-        Log.d(TAG, "Request: " + params.toString()); // 요청 데이터 확인 로그
+        Log.d(TAG, "Request UserID: " + userId);
 
-        apiService.getInquiryList(token, params).enqueue(new Callback<List<InquiryResponse>>() {
+        // 수정된 API 호출 (Map을 쓰지 않고 userId만 보냄)
+        apiService.getInquiryList(token, userId).enqueue(new Callback<List<InquiryResponse>>() {
             @Override
             public void onResponse(Call<List<InquiryResponse>> call, Response<List<InquiryResponse>> response) {
                 if (response.isSuccessful() && response.body() != null) {
-                    // 데이터 갱신 로직
                     inquiryList.clear();
                     inquiryList.addAll(response.body());
-                    adapter.notifyDataSetChanged(); // UI 업데이트 강제 실행
-
-                    Log.d(TAG, "Response Success: " + inquiryList.size() + " items");
-
-                    if (inquiryList.isEmpty()) {
-                        Toast.makeText(InquiryListActivity.this, "등록된 문의 내역이 없습니다.", Toast.LENGTH_SHORT).show();
-                    }
+                    adapter.notifyDataSetChanged();
+                    Log.d(TAG, "Success: " + inquiryList.size() + " items");
                 } else {
+                    // 500이나 405 에러가 여기서 찍혔을 것입니다.
                     Log.e(TAG, "Error Code: " + response.code());
-                    Toast.makeText(InquiryListActivity.this, "목록을 가져오지 못했습니다.", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(InquiryListActivity.this, "목록 실패: " + response.code(), Toast.LENGTH_SHORT).show();
                 }
             }
 
             @Override
             public void onFailure(Call<List<InquiryResponse>> call, Throwable t) {
                 Log.e(TAG, "Network Error: " + t.getMessage());
-                Toast.makeText(InquiryListActivity.this, "서버 연결에 실패했습니다.", Toast.LENGTH_SHORT).show();
             }
         });
     }
