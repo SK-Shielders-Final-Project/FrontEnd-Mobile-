@@ -119,5 +119,6 @@
         android:textSize="18sp"
         android:textStyle="bold"
         android:background="@drawable/bg_call_center"
+        app:backgroundTint="@null"
         android:textColor="#FFFFFF" />
 </LinearLayout>

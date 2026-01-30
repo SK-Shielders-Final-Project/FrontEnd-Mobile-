@@ -241,6 +241,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
+            android:backgroundTint="@color/colorPrimary"
             android:text="사용 종료"
             app:layout_constraintEnd_toEndOf="@id/btnExtendRental"
             app:layout_constraintStart_toStartOf="@id/btnExtendRental"

@@ -24,7 +24,7 @@ public interface ApiService {
     @POST("/api/user/auth/login")
     Call<LoginResponse> login(@Body LoginRequest request);
 
-    @POST("/api/user/auth/refresh")
+    @POST("/api/auth/refresh") // /api/user/auth/refresh라고 되어있었음
     Call<LoginResponse> refresh(@Body RefreshRequest request);
 
     @POST("/api/user/auth/signup")
