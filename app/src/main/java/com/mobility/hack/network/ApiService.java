@@ -73,7 +73,25 @@ public interface ApiService {
             @Header("Authorization") String token,
             @Query("file") String filename
     );
+    // 비밀번호 관련 (에러난 메서드들 추가)
+    @POST("/api/user/change-password")
+    Call<Void> changePassword(@Body ChangePasswordRequest request);
 
+    @POST("/api/user/check-password")
+    Call<CheckPasswordResponse> checkPassword(@Body CheckPasswordRequest request);
+
+    @POST("/api/user/reset-password-request")
+    Call<Void> requestPasswordReset(@Header("Host") String host, @Body Map<String, String> payload);
+
+    @POST("/api/user/reset-password")
+    Call<Void> resetPassword(@Body ResetPasswordRequest request);
+
+    // 결제 및 바우처
+    @POST("/api/payment/confirm")
+    Call<PaymentResponse> confirmPayment(@Body PaymentRequest request);
+
+    @POST("/api/voucher/redeem")
+    Call<VoucherResponse> redeemVoucher(@Body VoucherRequest request);
     @GET("/api/bikes")
     Call<List<BikeResponse>> getBikes();
 
