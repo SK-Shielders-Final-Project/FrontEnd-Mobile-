@@ -1,5 +1,7 @@
 package com.mobility.hack.ride;
 
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.Button;
@@ -33,6 +35,25 @@ public class PurchaseSuccessActivity extends AppCompatActivity {
         Log.d(TAG, "onCreate: UI updated with balance: " + formattedBalance);
 
         okButton.setOnClickListener(v -> {
+            Log.d(TAG, "OK button clicked. Saving rental status and returning to MainActivity.");
+
+            // 1. "대여 중" 상태를 SharedPreferences에 저장합니다.
+            // "RentalPrefs"라는 이름의 저장소를 열고, "isRenting" 키에 true 값을 저장합니다.
+            android.content.SharedPreferences prefs = getSharedPreferences("RentalPrefs", MODE_PRIVATE);
+            android.content.SharedPreferences.Editor editor = prefs.edit();
+            editor.putBoolean("isRenting", true);
+            editor.apply(); // 비동기적으로 저장
+
+            // 2. MainActivity로 돌아가는 '목적지 티켓'(Intent)을 생성합니다.
+            Intent mainIntent = new Intent(PurchaseSuccessActivity.this, MainActivity.class);
+
+            // 3. 중간에 거쳐온 모든 다른 화면들을 메모리에서 지우고 MainActivity를 맨 위로 가져옵니다.
+            mainIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+
+            // 4. MainActivity를 시작합니다.
+            startActivity(mainIntent);
+
+            // 5. 현재 화면(PurchaseSuccessActivity)을 종료합니다.
             finish();
         });
     }

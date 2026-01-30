@@ -1,6 +1,7 @@
 package com.mobility.hack.ride;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.TextView;
@@ -84,6 +85,28 @@ public class PurchaseTicketActivity extends AppCompatActivity {
                         PointResponse pointResponse = response.body();
                         // 성공 처리
                         int remainingBalance = pointResponse.getCurrentPoint();
+
+                        // 1. SharedPreferences에서 기존 대여 정보 가져오기
+                        SharedPreferences prefs = getSharedPreferences("RentalPrefs", MODE_PRIVATE);
+                        long existingDuration = prefs.getLong("rental_duration", 0); // 기존에 저장된 총 대여 시간
+                        long rentalStartTime = prefs.getLong("rental_start_time", 0); // 기존 대여 시작 시간
+
+                        // 2. 새로 추가할 대여 시간 계산
+                        long additionalDurationInMillis = (long) selectedHours * 60 * 60 * 1000;
+
+                        // 3. 최종 대여 정보 결정
+                        long newTotalDuration = existingDuration + additionalDurationInMillis; // 기존 시간에 새 시간 더하기
+                        if (rentalStartTime == 0) { // 만약 첫 대여라면 (기존 시작 시간이 없다면), 시작 시간을 지금으로 기록
+                            rentalStartTime = System.currentTimeMillis();
+                        }
+
+                        // 4. 새로운 총 대여 시간과 시작 시간을 SharedPreferences에 저장
+                        SharedPreferences.Editor editor = prefs.edit();
+                        editor.putLong("rental_duration", newTotalDuration);
+                        editor.putLong("rental_start_time", rentalStartTime);
+                        editor.apply();
+
+                        Log.d("PurchaseTicketActivity", "시간 연장/구매 완료 - 새로운 총 시간(ms): " + newTotalDuration);
 
                         Toast.makeText(PurchaseTicketActivity.this, "포인트가 성공적으로 사용되었습니다.", Toast.LENGTH_SHORT).show();
                         Intent intent = new Intent(PurchaseTicketActivity.this, PurchaseSuccessActivity.class);
