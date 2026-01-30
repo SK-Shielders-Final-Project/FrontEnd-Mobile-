@@ -1,16 +1,11 @@
 package com.mobility.hack.network;
 
-import com.google.gson.annotations.SerializedName;
-
 public class InquiryDeleteRequest {
-    @SerializedName("user_id")
-    private Long userId;
+    private Long user_id;    // 삭제 요청자 ID
+    private Long inquiry_id; // 삭제할 글 ID
 
-    @SerializedName("inquiry_id")
-    private Long inquiryId;
-
-    public InquiryDeleteRequest(Long userId, Long inquiryId) {
-        this.userId = userId;
-        this.inquiryId = inquiryId;
+    public InquiryDeleteRequest(Long user_id, Long inquiry_id) {
+        this.user_id = user_id;
+        this.inquiry_id = inquiry_id;
     }
 }

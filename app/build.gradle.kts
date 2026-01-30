@@ -57,13 +57,14 @@ android {
         }
     }
 
+    // JDK 21 사용에 따른 설정 변경
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
     }
 
     kotlinOptions {
-        jvmTarget = "11"
+        jvmTarget = "21"
     }
 
     packaging {
@@ -73,12 +74,12 @@ android {
 
 kapt {
     correctErrorTypes = true
-    // 이거 수정하면 되려나?
+    useBuildCache = false // Kapt 안정성을 위해 비활성화
     arguments {
-        // Hilt가 컴파일 타임에 환경 변수를 놓치는 버그를 강제로 방어합니다.
+        // Hilt 안정성 및 증분 빌드 오류(NPE) 방지 핵심 인자들
         arg("dagger.hilt.disableModulesHaveInstallInCheck", "true")
-        // 증분 빌드를 끔으로써 NullPointerException 발생 경로를 차단합니다.
-        arg("gradle.incremental", "false")
+        arg("kapt.incremental.apt", "false")
+        arg("kapt.use.worker.api", "false")
     }
 }
 
@@ -94,7 +95,7 @@ dependencies {
     implementation(libs.converter.gson)
     implementation(libs.logging.interceptor)
 
-    // [중요 수정] Glide: 경고 해결을 위해 annotationProcessor를 kapt로 변경
+    // Glide
     implementation("com.github.bumptech.glide:glide:4.16.0")
     kapt("com.github.bumptech.glide:compiler:4.16.0")
 

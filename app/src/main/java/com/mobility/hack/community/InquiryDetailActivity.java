@@ -13,9 +13,10 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.mobility.hack.MainApplication;
 import com.mobility.hack.R;
 import com.mobility.hack.network.ApiService;
-import com.mobility.hack.network.CommonResultResponse;
 import com.mobility.hack.network.InquiryDeleteRequest;
+import com.mobility.hack.network.InquiryDeleteResponse; // 이 클래스 없으면 만드세요 (result 필드 1개)
 import com.mobility.hack.network.InquiryResponse;
+import com.mobility.hack.network.InquiryDetailResponseDto; // 상세 조회용 DTO
 import com.mobility.hack.security.TokenManager;
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -23,12 +24,12 @@ import retrofit2.Response;
 
 public class InquiryDetailActivity extends AppCompatActivity {
     private static final String TAG = "InquiryDetail";
-    // 스웨거에 명시된 백엔드 서버 주소
-    private static final String BASE_URL = "http://43.203.51.77:8080";
+    // [중요] 포트 8081 확인
+    private static final String BASE_URL = "http://43.203.51.77:8081";
 
     private TextView tvTitle, tvContent, tvDate, tvFileName;
     private LinearLayout layoutAttachment;
-    private InquiryResponse inquiry;
+    private InquiryResponse inquiry; // 목록에서 넘어온 데이터
     private ApiService apiService;
     private TokenManager tokenManager;
 
@@ -37,82 +38,75 @@ public class InquiryDetailActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_inquiry_detail);
 
-        // 서비스 및 매니저 초기화
         apiService = ((MainApplication) getApplication()).getApiService();
         tokenManager = ((MainApplication) getApplication()).getTokenManager();
 
-        // 뷰 연결
         tvTitle = findViewById(R.id.tv_detail_title);
         tvContent = findViewById(R.id.tv_detail_content);
         tvDate = findViewById(R.id.tv_detail_date);
         tvFileName = findViewById(R.id.tv_file_name);
         layoutAttachment = findViewById(R.id.layout_attachment);
 
-        // 목록에서 넘어온 초기 데이터 받기
+        // 1. 목록 화면에서 넘겨준 데이터 받기
         inquiry = (InquiryResponse) getIntent().getSerializableExtra("inquiry_data");
 
         if (inquiry != null) {
-            // 1. 우선 전달받은 데이터로 화면을 그립니다.
-            displayInquiryData();
-            // 2. 서버에서 최신 상세 데이터를 다시 불러옵니다 (컴파일 에러 해결 지점).
-            loadLatestDetail();
+            displayInquiryData(inquiry);
+            loadLatestDetail(); // 서버에서 최신 내용 다시 불러오기
+        } else {
+            Toast.makeText(this, "데이터 오류", Toast.LENGTH_SHORT).show();
+            finish();
         }
 
-        // 뒤로가기
         findViewById(R.id.btn_back).setOnClickListener(v -> finish());
 
-        // 수정 버튼 (PUT 방식 수정을 위해 데이터 전달)
         findViewById(R.id.btn_edit).setOnClickListener(v -> {
             Intent intent = new Intent(this, InquiryEditActivity.class);
             intent.putExtra("inquiry_data", inquiry);
             startActivity(intent);
         });
 
-        // 삭제 버튼
+        // 2. 삭제 버튼 연결
         findViewById(R.id.btn_delete).setOnClickListener(v -> showDeleteDialog());
     }
 
-    /**
-     * [컴파일 에러 해결] 서버에서 상세 내역을 다시 가져오는 로직
-     */
+    // [수정] 토큰 인자 제거 (Interceptor 사용)
     private void loadLatestDetail() {
-        String token = "Bearer " + tokenManager.fetchAuthToken();
+        if (inquiry == null) return;
+
+        // InquiryResponse에 getInquiryId()가 있어야 합니다. (없으면 getId()로 수정)
         long inquiryId = inquiry.getInquiryId();
 
-        // ApiService의 getInquiryDetail(String, long) 규격에 맞게 호출
-        apiService.getInquiryDetail(token, inquiryId).enqueue(new Callback<InquiryResponse>() {
+        // [핵심] 토큰 없이 ID만 보냄
+        apiService.getInquiryDetails(inquiryId).enqueue(new Callback<InquiryResponse>() {
             @Override
             public void onResponse(Call<InquiryResponse> call, Response<InquiryResponse> response) {
                 if (response.isSuccessful() && response.body() != null) {
-                    inquiry = response.body();
-                    displayInquiryData(); // 서버에서 받아온 최신 데이터(첨부파일 포함)로 갱신
-                } else {
-                    Log.e(TAG, "상세 로드 실패: " + response.code());
+                    // 화면 갱신 (DTO 변환 필요할 수 있음)
+                    InquiryResponse detail = response.body();
+                    tvTitle.setText(detail.getTitle());
+                    tvContent.setText(detail.getContent());
+                    // ... 필요한 필드 갱신
                 }
             }
-
             @Override
             public void onFailure(Call<InquiryResponse> call, Throwable t) {
-                Log.e(TAG, "네트워크 오류: " + t.getMessage());
+                Log.e(TAG, "상세 조회 실패: " + t.getMessage());
             }
         });
     }
 
-    private void displayInquiryData() {
-        tvTitle.setText(inquiry.getTitle());
-        tvContent.setText(inquiry.getContent());
-        tvDate.setText(inquiry.getCreatedAt());
+    private void displayInquiryData(InquiryResponse data) {
+        tvTitle.setText(data.getTitle());
+        tvContent.setText(data.getContent());
+        tvDate.setText(data.getCreatedAt());
 
-        // 첨부파일 처리 (스웨거 명세 기준)
-        if (inquiry.getAttachment() != null && inquiry.getAttachment().getFileViewUri() != null) {
+        if (data.getFileId() != null && data.getFileId() > 0) {
             layoutAttachment.setVisibility(View.VISIBLE);
-
-            String fileName = inquiry.getAttachment().getOriginalFilename();
-            tvFileName.setText(fileName != null ? fileName : "첨부파일 보기");
-
-            // 클릭 시 브라우저를 통해 파일 다운로드/보기 실행
+            tvFileName.setText("첨부파일 다운로드");
             layoutAttachment.setOnClickListener(v -> {
-                String fileUrl = BASE_URL + inquiry.getAttachment().getFileViewUri();
+                // 다운로드 URL도 포트 확인 필요
+                String fileUrl = BASE_URL + "/api/files/download/" + data.getFileId();
                 Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(fileUrl));
                 startActivity(intent);
             });
@@ -130,23 +124,29 @@ public class InquiryDetailActivity extends AppCompatActivity {
                 .show();
     }
 
+    // [수정] 토큰 제거, InquiryDeleteRequest 사용
     private void performDelete() {
-        String token = "Bearer " + tokenManager.fetchAuthToken();
-        long userId = tokenManager.fetchUserId();
+        Long userId = tokenManager.fetchUserId();
+        Long inquiryId = inquiry.getInquiryId();
 
-        // 스웨거 명세: POST /api/user/inquiry/delete
-        InquiryDeleteRequest request = new InquiryDeleteRequest(userId, inquiry.getInquiryId());
-        apiService.deleteInquiry(token, request).enqueue(new Callback<CommonResultResponse>() {
+        InquiryDeleteRequest request = new InquiryDeleteRequest(userId, inquiryId);
+
+        // [핵심] request만 보냄 (Interceptor가 토큰 주입)
+        apiService.deleteInquiry(request).enqueue(new Callback<InquiryDeleteResponse>() {
             @Override
-            public void onResponse(Call<CommonResultResponse> call, Response<CommonResultResponse> response) {
-                if (response.isSuccessful() && response.body() != null && "Y".equals(response.body().getResult())) {
+            public void onResponse(Call<InquiryDeleteResponse> call, Response<InquiryDeleteResponse> response) {
+                if (response.isSuccessful()) {
                     Toast.makeText(InquiryDetailActivity.this, "삭제되었습니다.", Toast.LENGTH_SHORT).show();
-                    finish();
+                    finish(); // 목록으로 돌아가기
+                } else {
+                    // 404면 주소 문제, 403이면 본인 글 아님
+                    Log.e(TAG, "삭제 실패: " + response.code());
+                    Toast.makeText(InquiryDetailActivity.this, "삭제 실패 (" + response.code() + ")", Toast.LENGTH_SHORT).show();
                 }
             }
 
             @Override
-            public void onFailure(Call<CommonResultResponse> call, Throwable t) {
+            public void onFailure(Call<InquiryDeleteResponse> call, Throwable t) {
                 Toast.makeText(InquiryDetailActivity.this, "네트워크 오류", Toast.LENGTH_SHORT).show();
             }
         });

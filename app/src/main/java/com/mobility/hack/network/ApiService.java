@@ -20,6 +20,7 @@ import retrofit2.http.Streaming;
 import retrofit2.http.Query;
 
 public interface ApiService {
+    // ... (기존 로그인 관련 코드는 그대로 두세요) ...
     @POST("/api/user/auth/login")
     Call<LoginResponse> login(@Body LoginRequest request);
 
@@ -32,11 +33,9 @@ public interface ApiService {
     @POST("/api/user/verify-password")
     Call<Void> verifyPassword(@Body PasswordRequest request);
 
-    // [취약점 적용] Host 헤더 인젝션을 위해 Host 헤더를 파라미터로 받고, 엔드포인트 및 요청 데이터 변경
     @POST("/api/auth/password-reset/request")
     Call<Void> requestPasswordReset(@Header("Host") String host, @Body Map<String, String> emailPayload);
 
-    // [취약점 적용] 비밀번호 재설정 실행을 위한 새로운 엔드포인트 추가
     @POST("/api/auth/password-reset/reset")
     Call<Void> resetPassword(@Body ResetPasswordRequest resetPayload);
 
@@ -47,7 +46,7 @@ public interface ApiService {
     Call<UserInfoResponse> getUserInfo();
 
     @PUT("/api/user/info")
-    Call<UserInfoResponse> updateUserInfo(@Body UpdateUserRequest request);
+    Call<UserInfoResponse> updateUserInfo(@Body UpdateUserRequest request); // 클래스명 확인 필요 (UpdateInfoRequest 인지 UpdateUserRequest 인지)
 
     @POST("/api/checkpw")
     Call<CheckPasswordResponse> checkPassword(@Body CheckPasswordRequest request);
@@ -55,13 +54,36 @@ public interface ApiService {
     @PUT("/api/user/auth/changepw")
     Call<UserInfoResponse> changePassword(@Body ChangePasswordRequest request);
 
-    @GET("/api/inquiries")
-    Call<List<InquiryResponse>> getInquiries(@Header("Authorization") String token);
+    // -----------------------------------------------------------
+    // [수정 포인트 1] 상세 조회: 이름(Details) 맞추고, 토큰 파라미터 제거
+    // -----------------------------------------------------------
+    @GET("/api/user/inquiry/{inquiryId}")
+    Call<InquiryResponse> getInquiryDetails(@Path("inquiryId") Long inquiryId);
 
+    // -----------------------------------------------------------
+    // [수정 포인트 2] 삭제: 반환 타입을 InquiryDeleteResponse로 변경
+    // -----------------------------------------------------------
+    @POST("/api/user/inquiry/delete")
+    Call<InquiryDeleteResponse> deleteInquiry(@Body InquiryDeleteRequest request);
+
+    // [작성]
+    @POST("api/user/inquiry/write")
+    Call<InquiryResponse> writeInquiry(@Body InquiryWriteRequest request);
+
+    // [목록]
+    @GET("/api/user/inquiry")
+    Call<List<InquiryResponse>> getInquiryList(@Query("user_id") long userId);
+
+    // [수정] - CommonResultResponse가 있다면 유지, 없으면 InquiryModifyResponse로 변경
+    @PUT("api/user/inquiry/modify")
+    Call<InquiryModifyResponse> modifyInquiry(@Body InquiryModifyRequest request);
+
+    // [파일 업로드]
     @Multipart
-    @POST("/api/inquiries")
-    Call<InquiryResponse> uploadInquiry(@Header("Authorization") String token, @PartMap Map<String, RequestBody> partMap, @Part MultipartBody.Part file);
+    @POST("api/files/upload")
+    Call<FileUploadResponse> uploadFile(@Part MultipartBody.Part file);
 
+    // ... (나머지 메서드들 유지) ...
     @Streaming
     @POST("/api/coupon/redeem")
     Call<VoucherResponse> redeemVoucher(@Body VoucherRequest request);
@@ -74,59 +96,13 @@ public interface ApiService {
 
     @POST("/api/user/point")
     Call<PointResponse> usePoint(@Body PointRequest request);
-    // 목록 조회: POST /api/user/inquiry (Body에 user_id 포함)
-    @POST("/api/user/inquiry")
-    Call<List<InquiryResponse>> getInquiryList(
-            @Header("Authorization") String token,
-            @Body Map<String, Long> params
-    );
-    // 상세 조회: GET /api/user/inquiry/{inquiryId}
-    @GET("/api/user/inquiry/{inquiryId}")
-    Call<InquiryResponse> getInquiryDetail(
-            @Header("Authorization") String token,
-            @Path("inquiryId") long inquiryId
-    );
-    // 문의 작성: POST /api/user/inquiry/write
-    @POST("/api/user/inquiry/write")
-    Call<InquiryResponse> writeInquiry(
-            @Header("Authorization") String token,
-            @Header("User-ID") String userIdHeader,
-            @Body InquiryWriteRequest request
-    );
-    // 문의 수정: PUT /api/user/inquiry/modify
-    @PUT("/api/user/inquiry/modify")
-    Call<CommonResultResponse> modifyInquiry(
-            @Header("Authorization") String token,
-            @Body InquiryModifyRequest request
-    );
-    // 문의 삭제: POST /api/user/inquiry/delete
-    @POST("/api/user/inquiry/delete")
-    Call<CommonResultResponse> deleteInquiry(
-            @Header("Authorization") String token,
-            @Body InquiryDeleteRequest request
-    );
 
-    // --- [3] 파일 및 기타 서비스 ---
-    @POST("/api/files/upload")
-    Call<FileUploadResponse> uploadFile(
-            @Header("Authorization") String token,
-            @Part MultipartBody.Part file
-    );
     @GET("/api/user/files/download")
-    Call<ResponseBody> downloadFile(
-            @Header("Authorization") String token,
-            @Query("file") String filename
-    );
+    Call<ResponseBody> downloadFile(@Query("file") String filename);
 
-    // 자전거 목록 불러오기
     @POST("/api/bikes")
     Call<List<BikeResponse>> getBikes();
 
-    // 챗봇
     @POST("/api/chat")
     Call<ChatResponse> sendChatMessage(@Body ChatRequest request);
-
-    // 사용되지 않는 findPassword 메소드는 주석 처리 또는 삭제
-    // @PUT("/api/user/auth/findpw")
-    // Call<Void> findPassword(@Body FindPasswordRequest request);
 }

@@ -3,23 +3,22 @@ package com.mobility.hack.network;
 import com.google.gson.annotations.SerializedName;
 
 public class InquiryWriteRequest {
-    @SerializedName("user_id") // 웹팀의 {user_id: 1} 규격 일치
-    private Long userId;
+    @SerializedName("user_id") // 백엔드 getUser_id()와 매칭
+    private Long user_id;
 
+    @SerializedName("title")
     private String title;
+
+    @SerializedName("content")
     private String content;
 
-    @SerializedName("file_id") // 웹팀의 {file_id: 1} 규격 일치
-    private Long fileId;
+    @SerializedName("file_id") // 백엔드 getFile_id()와 매칭
+    private Long file_id;
 
-    public InquiryWriteRequest() {}
-
-    public InquiryWriteRequest(Long userId, String title, String content, Long fileId) {
-        this.userId = userId;
+    public InquiryWriteRequest(Long user_id, String title, String content, Long fileId) {
+        this.user_id = user_id;
         this.title = title;
         this.content = content;
-        this.fileId = fileId;
+        this.file_id = (fileId != null) ? fileId : null;
     }
-
-    // Getter/Setter 생략 가능 (필요시 추가)
 }
