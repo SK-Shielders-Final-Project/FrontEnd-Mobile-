@@ -86,6 +86,10 @@ dependencies {
     implementation(libs.converter.gson)
     implementation(libs.logging.interceptor)
 
+    // Glide: 이미지 로딩 라이브러리 (여기에 추가됨)
+    implementation("com.github.bumptech.glide:glide:4.16.0")
+    annotationProcessor("com.github.bumptech.glide:compiler:4.16.0")
+
     // Security
     implementation(libs.security.crypto)
 

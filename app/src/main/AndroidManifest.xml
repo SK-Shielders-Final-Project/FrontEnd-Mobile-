@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.CAMERA" />
@@ -14,7 +15,8 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.Mobile"
-        android:usesCleartextTraffic="true">
+        android:usesCleartextTraffic="true"
+        tools:replace="android:allowBackup">
 
         <meta-data
             android:name="com.google.android.geo.API_KEY"
@@ -83,28 +85,13 @@
             android:exported="false" />
 
         <activity
-            android:name=".CustomerCenterActivity"
+            android:name=".community.InquiryDetailActivity"
             android:exported="false" />
 
         <activity
-            android:name=".InquiryListActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".InquiryWriteActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".PaymentHistoryActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".chatbot.ChatActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".ride.RentEndActivity"
-            android:exported="false" />
+            android:name=".community.InquiryEditActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
 
     </application>
 
