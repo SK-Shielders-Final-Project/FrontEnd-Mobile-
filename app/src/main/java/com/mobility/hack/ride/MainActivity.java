@@ -43,7 +43,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private final ActivityResultLauncher<ScanOptions> qrScannerLauncher = registerForActivityResult(new ScanContract(),
             result -> {
-                if(result.getContents() == null) {
+                if (result.getContents() == null) {
                     Toast.makeText(this, "QR 코드 스캔이 취소되었습니다.", Toast.LENGTH_SHORT).show();
                 } else {
                     String scannedId = result.getContents();
@@ -152,36 +152,44 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
      */
     private void loadBikeData() {
         Toast.makeText(this, "주변 자전거를 찾습니다...", Toast.LENGTH_SHORT).show();
+
         fileCacher.getBikeList(new FileCacher.BikeCallback() {
             @Override
-            public void onSuccess(List<BikeResponse> bikeList) { // [수정] 타입 변경
+            public void onSuccess(List<BikeResponse> bikeList) {
                 mMap.clear();
-                for (BikeResponse bike : bikeList) { // [수정] 타입 변경
-                    try {
-                        // [수정] String 좌표를 Double로 변환
-                        double lat = Double.parseDouble(bike.getLatitude());
-                        double lng = Double.parseDouble(bike.getLongitude());
-                        LatLng position = new LatLng(lat, lng);
 
-                        // [수정] status 문자열 기반 대여 가능 여부 판단
-                        boolean isAvailable = "true".equalsIgnoreCase(bike.getStatus());
+                for (BikeResponse bike : bikeList) {
+                    LatLng position = new LatLng(
+                            bike.getLatitude(),
+                            bike.getLongitude()
+                    );
 
-                        MarkerOptions markerOptions = new MarkerOptions()
-                                .position(position)
-                                .title(bike.getModelName())
-                                .snippet("상태: " + (isAvailable ? "이용가능" : "사용중"))
-                                .icon(BitmapDescriptorFactory.defaultMarker(
-                                        isAvailable ? BitmapDescriptorFactory.HUE_GREEN : BitmapDescriptorFactory.HUE_RED));
-                        mMap.addMarker(markerOptions);
-                    } catch (Exception e) {
-                        e.printStackTrace(); // 파싱 에러 시 해당 마커 무시
-                    }
+                    // status_code 기준: 1 = 이용 가능, 0 = 사용 중
+                    boolean isAvailable = bike.getStatusCode() == 1;
+
+                    float markerColor = isAvailable
+                            ? BitmapDescriptorFactory.HUE_GREEN
+                            : BitmapDescriptorFactory.HUE_RED;
+
+                    MarkerOptions markerOptions = new MarkerOptions()
+                            .position(position)
+                            .title(bike.getSerialNumber())        // serial_number 표시
+                            .snippet("상태: " + bike.getStatus()) // 상태
+                            .icon(BitmapDescriptorFactory.defaultMarker(markerColor));
+
+                    mMap.addMarker(markerOptions);
                 }
             }
+
             @Override
             public void onFailure(String errorMessage) {
-                Toast.makeText(MainActivity.this, "데이터 로드 실패: " + errorMessage, Toast.LENGTH_LONG).show();
+                Toast.makeText(
+                        MainActivity.this,
+                        "데이터 로드 실패: " + errorMessage,
+                        Toast.LENGTH_LONG
+                ).show();
             }
         });
     }
+
 }
