@@ -4,21 +4,18 @@ import com.google.gson.annotations.SerializedName;
 
 public class InquiryModifyRequest {
     @SerializedName("user_id")
-    private Long userId;
+    private long userId;
 
     @SerializedName("inquiry_id")
-    private Long inquiryId;
+    private long inquiryId;
 
-    @SerializedName("title")
     private String title;
-
-    @SerializedName("content")
     private String content;
 
     @SerializedName("file_id")
     private Long fileId;
 
-    public InquiryModifyRequest(Long userId, Long inquiryId, String title, String content, Long fileId) {
+    public InquiryModifyRequest(long userId, long inquiryId, String title, String content, Long fileId) {
         this.userId = userId;
         this.inquiryId = inquiryId;
         this.title = title;
