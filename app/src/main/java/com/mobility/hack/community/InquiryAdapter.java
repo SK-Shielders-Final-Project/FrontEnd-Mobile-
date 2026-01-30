@@ -9,6 +9,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import com.mobility.hack.R;
+// [중요] Activity에서 사용하는 경로와 반드시 일치시켜야 합니다.
 import com.mobility.hack.network.InquiryResponse;
 import java.util.List;
 
@@ -29,23 +30,21 @@ public class InquiryAdapter extends RecyclerView.Adapter<InquiryAdapter.ViewHold
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         InquiryResponse item = inquiryList.get(position);
-        
         holder.tvTitle.setText(item.getTitle());
         holder.tvDate.setText(item.getCreatedAt());
-        
+
         String reply = item.getAdminReply();
         if (reply == null || reply.trim().isEmpty()) {
             holder.tvStatus.setText("접수중");
-            holder.tvStatus.setTextColor(Color.parseColor("#888888"));
+            holder.tvStatus.setTextColor(Color.GRAY);
         } else {
             holder.tvStatus.setText("답변완료");
-            holder.tvStatus.setTextColor(Color.parseColor("#2E7D32"));
+            holder.tvStatus.setTextColor(Color.GREEN);
         }
 
-        // 아이템 클릭 시 상세 페이지로 이동하며 객체 전달
         holder.itemView.setOnClickListener(v -> {
             Intent intent = new Intent(v.getContext(), InquiryDetailActivity.class);
-            intent.putExtra("inquiry_data", item); 
+            intent.putExtra("inquiry_data", item);
             v.getContext().startActivity(intent);
         });
     }
@@ -57,7 +56,6 @@ public class InquiryAdapter extends RecyclerView.Adapter<InquiryAdapter.ViewHold
         TextView tvTitle, tvDate, tvStatus;
         ViewHolder(View v) {
             super(v);
-            // [1] 리소스 ID 수정: item_inquiry.xml의 실제 ID와 매칭
             tvTitle = v.findViewById(R.id.tv_title);
             tvDate = v.findViewById(R.id.tv_date);
             tvStatus = v.findViewById(R.id.tv_item_status);

@@ -25,7 +25,7 @@
             android:layout_centerInParent="true"
             android:text="문의 상세"
             android:textColor="#000000"
-            android:textSize="18sp"
+            android:textSize="20sp"
             android:textStyle="bold" />
 
         <Button
@@ -36,6 +36,7 @@
             android:layout_centerVertical="true"
             android:text="수정"
             android:textColor="#2196F3"
+            android:textStyle="bold"
             style="?android:attr/borderlessButtonStyle" />
     </RelativeLayout>
 
@@ -53,7 +54,7 @@
                 android:id="@+id/tv_detail_title"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textSize="20sp"
+                android:textSize="22sp"
                 android:textStyle="bold"
                 android:textColor="#000000" />
 
@@ -62,6 +63,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
+                android:textSize="14sp"
                 android:textColor="#888888" />
 
             <View
@@ -74,11 +76,10 @@
                 android:id="@+id/tv_detail_content"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textSize="16sp"
-                android:lineSpacingExtra="4dp"
+                android:textSize="18sp"
+                android:lineSpacingExtra="6dp"
                 android:textColor="#333333" />
 
-            <!-- [추가] 첨부파일 표시 영역 -->
             <LinearLayout
                 android:id="@+id/layout_attachment"
                 android:layout_width="match_parent"
@@ -86,7 +87,7 @@
                 android:orientation="horizontal"
                 android:padding="12dp"
                 android:layout_marginTop="16dp"
-                android:background="#F0F0F0"
+                android:background="#F8F8F8"
                 android:gravity="center_vertical"
                 android:visibility="gone">
 
@@ -100,27 +101,23 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="8dp"
-                    android:text="파일이름.jpg"
                     android:textColor="#2196F3"
-                    android:textSize="14sp" />
+                    android:textSize="15sp"
+                    android:textStyle="bold" />
             </LinearLayout>
 
-            <ImageView
-                android:id="@+id/iv_detail_image"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
-                android:adjustViewBounds="true"
-                android:scaleType="fitCenter"
-                android:visibility="gone" />
         </LinearLayout>
     </ScrollView>
 
     <Button
         android:id="@+id/btn_delete"
         android:layout_width="match_parent"
-        android:layout_height="56dp"
+        android:layout_height="65dp"
+        android:layout_marginHorizontal="20dp"
+        android:layout_marginBottom="30dp"
         android:text="삭제하기"
-        android:backgroundTint="#FF5252"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:background="@drawable/bg_call_center"
         android:textColor="#FFFFFF" />
 </LinearLayout>

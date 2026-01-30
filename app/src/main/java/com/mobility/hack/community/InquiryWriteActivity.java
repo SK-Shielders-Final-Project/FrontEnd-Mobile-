@@ -105,7 +105,6 @@ public class InquiryWriteActivity extends AppCompatActivity {
         btnSubmit.setEnabled(false);
         btnSubmit.setAlpha(0.5f);
 
-        // 사진이 있으면 업로드 먼저, 없으면 바로 등록
         if (selectedFileUri != null) {
             uploadFileThenSubmit(title, content);
         } else {
@@ -113,10 +112,8 @@ public class InquiryWriteActivity extends AppCompatActivity {
         }
     }
 
+    // [수정] 토큰 인자 제거
     private void uploadFileThenSubmit(String title, String content) {
-        String token = "Bearer " + tokenManager.fetchAuthToken();
-
-        // [M8] 웹팀 명세 준수: 파트 이름 "file"
         MultipartBody.Part filePart = prepareFilePart("file", selectedFileUri);
 
         if (filePart == null) {
@@ -124,11 +121,11 @@ public class InquiryWriteActivity extends AppCompatActivity {
             return;
         }
 
-        apiService.uploadFile(token, filePart).enqueue(new Callback<FileUploadResponse>() {
+        // [핵심] 토큰 없이 파일 파트만 전달 (Interceptor가 자동 처리)
+        apiService.uploadFile(filePart).enqueue(new Callback<FileUploadResponse>() {
             @Override
             public void onResponse(@NotNull Call<FileUploadResponse> call, @NotNull Response<FileUploadResponse> response) {
                 if (response.isSuccessful() && response.body() != null) {
-                    // [M8] 웹팀 응답 규격 준수: file_id 추출
                     finalWriteInquiry(title, content, response.body().getFile_id());
                 } else {
                     handleFailure("업로드 실패 (" + response.code() + ")");
@@ -142,46 +139,46 @@ public class InquiryWriteActivity extends AppCompatActivity {
         });
     }
 
+    // [수정] 토큰 생성/로깅/전달 코드 모두 삭제
     private void finalWriteInquiry(String title, String content, Long fileId) {
-        String token = "Bearer " + tokenManager.fetchAuthToken();
-        long userId = tokenManager.fetchUserId();
+        // 변수명을 요청하신 대로 user_Id로 변경했습니다.
+        Long user_id = tokenManager.fetchUserId();
 
-        // [M8] 웹팀 요청 규격 준수: user_id, file_id 매핑
-        InquiryWriteRequest request = new InquiryWriteRequest(userId, title, content, fileId);
+        // 생성자 파라미터에 변경된 user_Id를 전달합니다.
+        InquiryWriteRequest request = new InquiryWriteRequest(user_id, title, content, fileId);
 
-        apiService.writeInquiry(token, String.valueOf(userId), request).enqueue(new Callback<InquiryResponse>() {
+        // 인터셉터가 토큰을 자동으로 넣어주므로 request 객체만 보냅니다.
+        apiService.writeInquiry(request).enqueue(new Callback<InquiryResponse>() {
             @Override
-            public void onResponse(@NotNull Call<InquiryResponse> call, @NotNull Response<InquiryResponse> response) {
+            public void onResponse(Call<InquiryResponse> call, Response<InquiryResponse> response) {
                 resetSubmitUI();
                 if (response.isSuccessful()) {
                     Toast.makeText(InquiryWriteActivity.this, "문의가 성공적으로 등록되었습니다!", Toast.LENGTH_SHORT).show();
                     setResult(Activity.RESULT_OK);
                     finish();
                 } else {
-                    // [M8] 500 에러 발생 시 로그 확인 필요
-                    handleFailure("글 등록 실패 (" + response.code() + ")");
+                    // 404가 계속 뜬다면 RetrofitClient의 BASE_URL 끝에 /가 있는지,
+                    // ApiService의 경로 앞에 /가 중복되지 않았는지 확인해야 합니다.
+                    Log.e(TAG, "등록 실패 코드: " + response.code());
+                    Toast.makeText(InquiryWriteActivity.this, "등록 실패 (" + response.code() + ")", Toast.LENGTH_SHORT).show();
                 }
             }
 
             @Override
-            public void onFailure(@NotNull Call<InquiryResponse> call, @NotNull Throwable t) {
-                handleFailure("등록 네트워크 오류: " + t.getMessage());
+            public void onFailure(Call<InquiryResponse> call, Throwable t) {
+                handleFailure("네트워크 오류: " + t.getMessage());
             }
         });
     }
 
     private MultipartBody.Part prepareFilePart(String partName, Uri fileUri) {
         try {
-            // [1] 실제 파일의 MimeType 추출
             String mimeType = getContentResolver().getType(fileUri);
             String extension = MimeTypeMap.getSingleton().getExtensionFromMimeType(mimeType);
 
-            // [2] 백엔드는 소문자 확장자를 비교하므로 소문자로 통일
             if (extension == null) extension = "jpg";
             else extension = extension.toLowerCase(Locale.ROOT);
 
-            // [3] 핵심: 서버의 extractExt() 로직을 위해 마침표(.)가 포함된 파일명 생성
-            // 이 이름이 서버의 originalName으로 전달됩니다.
             String fileName = "upload_" + System.currentTimeMillis() + "." + extension;
             File file = new File(getCacheDir(), fileName);
 
@@ -194,11 +191,9 @@ public class InquiryWriteActivity extends AppCompatActivity {
             inputStream.close();
 
             RequestBody requestFile = RequestBody.create(MediaType.parse(mimeType), file);
-
-            // [4] 명세서 규격에 따라 파트 이름을 "file"로 설정
             return MultipartBody.Part.createFormData(partName, fileName, requestFile);
         } catch (Exception e) {
-            Log.e("InquiryWrite", "파일 준비 실패: " + e.getMessage());
+            Log.e(TAG, "파일 준비 실패: " + e.getMessage());
             return null;
         }
     }

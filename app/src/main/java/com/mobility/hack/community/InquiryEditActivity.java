@@ -81,7 +81,7 @@ public class InquiryEditActivity extends AppCompatActivity {
                 0L
         );
 
-        apiService.modifyInquiry(token, request).enqueue(new Callback<CommonResultResponse>() {
+        apiService.modifyInquiry( request).enqueue(new Callback<CommonResultResponse>() {
             @Override
             public void onResponse(Call<CommonResultResponse> call, Response<CommonResultResponse> response) {
                 if (response.isSuccessful() && response.body() != null && "Y".equals(response.body().getResult())) {

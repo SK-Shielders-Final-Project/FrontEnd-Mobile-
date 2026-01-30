@@ -60,7 +60,7 @@ public interface ApiService {
 
     @Multipart
     @POST("/api/inquiries")
-    Call<InquiryResponse> uploadInquiry(@Header("Authorization") String token, @PartMap Map<String, RequestBody> partMap, @Part MultipartBody.Part file);
+    Call<InquiryResponse> uploadInquiry(@PartMap Map<String, RequestBody> partMap, @Part MultipartBody.Part file);
 
     @Streaming
     @POST("/api/coupon/redeem")
@@ -75,46 +75,45 @@ public interface ApiService {
     @POST("/api/user/point")
     Call<PointResponse> usePoint(@Body PointRequest request);
     // 목록 조회: POST /api/user/inquiry (Body에 user_id 포함)
-    @POST("/api/user/inquiry")
-    Call<List<InquiryResponse>> getInquiryList(
-            @Header("Authorization") String token,
-            @Body Map<String, Long> params
-    );
-    // 상세 조회: GET /api/user/inquiry/{inquiryId}
+
     @GET("/api/user/inquiry/{inquiryId}")
     Call<InquiryResponse> getInquiryDetail(
             @Header("Authorization") String token,
-            @Path("inquiryId") long inquiryId
+            @Path("inquiryId") Long inquiryId
     );
     // 문의 작성: POST /api/user/inquiry/write
     @POST("/api/user/inquiry/write")
     Call<InquiryResponse> writeInquiry(
-            @Header("Authorization") String token,
-            @Header("User-ID") String userIdHeader,
             @Body InquiryWriteRequest request
+    );
+
+    // [목록] GET /api/user/inquiry?user_id={userId}
+    @GET("/api/user/inquiry")
+    Call<List<InquiryResponse>> getInquiryList(
+            @Query("user_id") long userId
     );
     // 문의 수정: PUT /api/user/inquiry/modify
     @PUT("/api/user/inquiry/modify")
     Call<CommonResultResponse> modifyInquiry(
-            @Header("Authorization") String token,
+
             @Body InquiryModifyRequest request
     );
     // 문의 삭제: POST /api/user/inquiry/delete
     @POST("/api/user/inquiry/delete")
     Call<CommonResultResponse> deleteInquiry(
-            @Header("Authorization") String token,
+
             @Body InquiryDeleteRequest request
     );
 
     // --- [3] 파일 및 기타 서비스 ---
     @POST("/api/files/upload")
     Call<FileUploadResponse> uploadFile(
-            @Header("Authorization") String token,
+
             @Part MultipartBody.Part file
     );
     @GET("/api/user/files/download")
     Call<ResponseBody> downloadFile(
-            @Header("Authorization") String token,
+
             @Query("file") String filename
     );
 

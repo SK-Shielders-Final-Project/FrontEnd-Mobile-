@@ -4,10 +4,11 @@ import com.google.gson.annotations.SerializedName;
 import java.io.Serializable;
 
 /**
- * [상세 조회 명세 반영] 문의사항 응답 데이터 모델
+ * 백엔드 InquiryResponse 규격에 맞춘 통합 응답 모델
  */
 public class InquiryResponse implements Serializable {
-    @SerializedName("inquiryId")
+
+    @SerializedName("inquiry_id") // 백엔드 필드명과 일치시켜야 500 에러가 안 납니다.
     private long inquiryId;
 
     @SerializedName("title")
@@ -16,39 +17,41 @@ public class InquiryResponse implements Serializable {
     @SerializedName("content")
     private String content;
 
-    @SerializedName("authorName")
+    @SerializedName("author_name")
     private String authorName;
 
-    @SerializedName("createdAt")
+    @SerializedName("created_at")
     private String createdAt;
 
-    @SerializedName("adminReply")
+    @SerializedName("admin_reply")
     private String adminReply;
 
-    @SerializedName("updatedAt")
+    @SerializedName("updated_at")
     private String updatedAt;
 
+    @SerializedName("file_id") // 문의 작성 직후 반환되는 파일 ID
+    private Long fileId;
+
     @SerializedName("attachment")
-    private AttachmentDTO attachment; // 명세서의 attachment 객체 매핑
+    private AttachmentDTO attachment; // 상세 조회 시 포함되는 첨부파일 정보
 
     // --- Inner Class: AttachmentDTO ---
     public static class AttachmentDTO implements Serializable {
-        @SerializedName("fileId")
+        @SerializedName("file_id")
         private int fileId;
 
-        @SerializedName("originalFilename")
+        @SerializedName("original_filename")
         private String originalFilename;
 
-        @SerializedName("fileDownloadUri")
+        @SerializedName("file_download_uri")
         private String fileDownloadUri;
 
-        @SerializedName("fileViewUri")
-        private String fileViewUri; // Glide에서 사용할 이미지 경로
+        @SerializedName("file_view_uri")
+        private String fileViewUri;
 
         @SerializedName("ext")
         private String ext;
 
-        // Getters
         public int getFileId() { return fileId; }
         public String getOriginalFilename() { return originalFilename; }
         public String getFileDownloadUri() { return fileDownloadUri; }
@@ -64,5 +67,6 @@ public class InquiryResponse implements Serializable {
     public String getCreatedAt() { return createdAt != null ? createdAt : ""; }
     public String getAdminReply() { return adminReply; }
     public String getUpdatedAt() { return updatedAt; }
+    public Long getFileId() { return fileId; }
     public AttachmentDTO getAttachment() { return attachment; }
 }
