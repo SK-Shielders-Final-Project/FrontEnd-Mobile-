@@ -4,11 +4,12 @@ import java.io.FileInputStream
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
+    // Hilt와 Kapt 플러그인이 정상적으로 별칭(alias) 설정되어 있는지 확인 필요
     alias(libs.plugins.hilt)
     alias(libs.plugins.kotlin.kapt)
 }
 
-// Load MAPS_API_KEY from local.properties
+// local.properties 로드 로직
 val localProperties = Properties()
 val localPropertiesFile = rootProject.file("local.properties")
 if (localPropertiesFile.exists()) {
@@ -17,6 +18,7 @@ if (localPropertiesFile.exists()) {
 
 android {
     namespace = "com.mobility.hack"
+    // [수정] 현재 안정 버전인 35로 맞추는 것을 권장합니다. (백엔드 호환성 및 빌드 안정성)
     compileSdk = 36
 
     defaultConfig {
@@ -34,7 +36,6 @@ android {
             }
         }
 
-        // Set the API key as a manifest placeholder
         manifestPlaceholders["MAPS_API_KEY"] = localProperties.getProperty("MAPS_API_KEY") ?: ""
         manifestPlaceholders["TOSS_CLIENT_KEY"] = localProperties.getProperty("toss.clientKey") ?: ""
     }
@@ -70,17 +71,6 @@ android {
     }
 }
 
-kapt {
-    correctErrorTypes = true
-    // 이거 수정하면 되려나?
-    arguments {
-        // Hilt가 컴파일 타임에 환경 변수를 놓치는 버그를 강제로 방어합니다.
-        arg("dagger.hilt.disableModulesHaveInstallInCheck", "true")
-        // 증분 빌드를 끔으로써 NullPointerException 발생 경로를 차단합니다.
-        arg("gradle.incremental", "false")
-    }
-}
-
 dependencies {
     implementation(libs.appcompat)
     implementation(libs.material)
@@ -89,9 +79,10 @@ dependencies {
     implementation("androidx.recyclerview:recyclerview:1.4.0")
 
     // Retrofit & OkHttp
-    implementation(libs.retrofit)
-    implementation(libs.converter.gson)
-    implementation(libs.logging.interceptor)
+    implementation("com.squareup.retrofit2:retrofit:2.11.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.11.0")
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
 
     // [중요 수정] Glide: 경고 해결을 위해 annotationProcessor를 kapt로 변경
     implementation("com.github.bumptech.glide:glide:4.16.0")
@@ -104,16 +95,14 @@ dependencies {
     implementation(libs.hilt.android)
     kapt(libs.hilt.compiler)
 
-    testImplementation(libs.junit)
-    androidTestImplementation(libs.ext.junit)
-    androidTestImplementation(libs.espresso.core)
-
-    // Google Maps SDK
-    implementation("com.google.android.gms:play-services-maps:17.0.0")
-
-    // Google Location SDK
-    implementation("com.google.android.gms:play-services-location:17.0.0")
+    // Google Maps & Location
+    implementation("com.google.android.gms:play-services-maps:18.2.0")
+    implementation("com.google.android.gms:play-services-location:21.1.0")
 
     // Barcode Scanner
     implementation(libs.zxing.embedded)
+
+    testImplementation(libs.junit)
+    androidTestImplementation(libs.ext.junit)
+    androidTestImplementation(libs.espresso.core)
 }

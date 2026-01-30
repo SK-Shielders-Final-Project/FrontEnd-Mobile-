@@ -32,7 +32,7 @@ public class NoticeActivity extends AppCompatActivity {
             btnWrite.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    Intent intent = new Intent(NoticeActivity.this, com.mobility.hack.community.InquiryWriteActivity.class);
+                    Intent intent = new Intent(NoticeActivity.this, InquiryWriteActivity.class);
                     startActivity(intent);
                 }
             });

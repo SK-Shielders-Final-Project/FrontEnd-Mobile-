@@ -16,15 +16,10 @@ import com.mobility.hack.network.ApiService;
 import com.mobility.hack.network.PasswordRequest;
 import com.mobility.hack.network.RetrofitClient;
 import com.mobility.hack.network.UserInfoResponse;
-import com.example.mobilityhack.ride.UserHistoryActivity;
+import com.mobility.hack.ride.UserHistoryActivity;
 import com.mobility.hack.security.TokenManager;
 
 import org.jetbrains.annotations.NotNull;
-
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Locale;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -39,13 +34,9 @@ public class MyInfoActivity extends AppCompatActivity {
     private TextView rideCountTextView;
     private Button changePasswordButton;
     private Button userHistoryButton;
-    private Button logoutButton;
     private EditText passwordEditText;
     private Button verifyPasswordButton;
     private LinearLayout verifiedContentLayout;
-
-    private TextView tvId, tvName, tvEmail, tvPhone, tvPoints, tvJoinDate, tvUpdateDate;
-    private Button btnEditInfo, btnChangePassword;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,34 +46,35 @@ public class MyInfoActivity extends AppCompatActivity {
         Retrofit retrofit = RetrofitClient.getClient(tokenManager);
         apiService = retrofit.create(ApiService.class);
 
-        tvId = findViewById(R.id.tv_id);
-        tvName = findViewById(R.id.tv_name);
-        tvEmail = findViewById(R.id.tv_email);
-        tvPhone = findViewById(R.id.tv_phone);
-        tvPoints = findViewById(R.id.tv_points);
-        tvJoinDate = findViewById(R.id.tv_join_date);
-        tvUpdateDate = findViewById(R.id.tv_update_date);
-        btnEditInfo = findViewById(R.id.btn_edit_info);
-        btnChangePassword = findViewById(R.id.btn_change_password);
+        usernameTextView = findViewById(R.id.textViewUsername);
+        emailTextView = findViewById(R.id.textViewEmail);
+        rideCountTextView = findViewById(R.id.textViewRideCount);
+        changePasswordButton = findViewById(R.id.buttonChangePassword);
+        userHistoryButton = findViewById(R.id.buttonUserHistory);
+        passwordEditText = findViewById(R.id.editTextPassword);
+        verifyPasswordButton = findViewById(R.id.buttonVerifyPassword);
+        verifiedContentLayout = findViewById(R.id.layoutVerifiedContent);
 
         fetchUserInfo();
 
-        btnEditInfo.setOnClickListener(v -> {
-            Intent intent = new Intent(this, EditMyInfoActivity.class);
-            startActivity(intent);
+        verifyPasswordButton.setOnClickListener(v -> {
+            String password = passwordEditText.getText().toString();
+            if (password.isEmpty()) {
+                Toast.makeText(MyInfoActivity.this, "비밀번호를 입력해주세요.", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            verifyPassword(new PasswordRequest(password));
         });
 
-        btnChangePassword.setOnClickListener(v -> {
+        changePasswordButton.setOnClickListener(v -> {
             Intent intent = new Intent(this, ChangePasswordActivity.class);
             startActivity(intent);
         });
-    }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        // EditMyInfoActivity에서 정보가 수정되었을 수 있으므로, 화면에 다시 보여질 때 사용자 정보를 새로고침합니다.
-        fetchUserInfo();
+        userHistoryButton.setOnClickListener(v -> {
+            Intent intent = new Intent(this, UserHistoryActivity.class);
+            startActivity(intent);
+        });
     }
 
     private void fetchUserInfo() {
@@ -98,13 +90,9 @@ public class MyInfoActivity extends AppCompatActivity {
                 if (isFinishing() || isDestroyed()) return;
                 if (response.isSuccessful() && response.body() != null) {
                     UserInfoResponse userInfo = response.body();
-                    tvId.setText(String.valueOf(userInfo.getUserId()));
-                    tvName.setText(userInfo.getUsername());
-                    tvEmail.setText(userInfo.getEmail());
-                    tvPhone.setText(userInfo.getPhone());
-                    tvPoints.setText(String.valueOf(userInfo.getTotalPoint()) + " P");
-                    tvJoinDate.setText(formatDate(userInfo.getCreatedAt()));
-                    tvUpdateDate.setText(formatDate(userInfo.getUpdatedAt()));
+                    usernameTextView.setText(userInfo.getUsername());
+                    emailTextView.setText(userInfo.getEmail());
+                    rideCountTextView.setText(String.valueOf(userInfo.getRideCount()));
                 } else {
                     Toast.makeText(MyInfoActivity.this, "사용자 정보를 불러오는 데 실패했습니다.", Toast.LENGTH_SHORT).show();
                 }
@@ -118,18 +106,24 @@ public class MyInfoActivity extends AppCompatActivity {
         });
     }
 
-    private String formatDate(String dateString) {
-        if (dateString == null) {
-            return "";
-        }
-        try {
-            SimpleDateFormat originalFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
-            SimpleDateFormat targetFormat = new SimpleDateFormat("yyyy. MM. dd.", Locale.getDefault());
-            Date date = originalFormat.parse(dateString);
-            return date != null ? targetFormat.format(date) : "";
-        } catch (ParseException e) {
-            e.printStackTrace();
-            return dateString; // 파싱 실패 시 원본 문자열 반환
-        }
+    private void verifyPassword(PasswordRequest passwordRequest) {
+        apiService.verifyPassword(passwordRequest).enqueue(new Callback<Void>() {
+            @Override
+            public void onResponse(Call<Void> call, Response<Void> response) {
+                if (response.isSuccessful()) {
+                    verifiedContentLayout.setVisibility(View.VISIBLE);
+                    verifyPasswordButton.setVisibility(View.GONE);
+                    passwordEditText.setVisibility(View.GONE);
+                    Toast.makeText(MyInfoActivity.this, "비밀번호 확인 성공", Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(MyInfoActivity.this, "비밀번호가 일치하지 않습니다.", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Void> call, Throwable t) {
+                Toast.makeText(MyInfoActivity.this, "네트워크 오류: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 }

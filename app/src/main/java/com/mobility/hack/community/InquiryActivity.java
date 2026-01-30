@@ -22,7 +22,7 @@ public class InquiryActivity extends AppCompatActivity {
         TextView btnRentalReturn = findViewById(R.id.menu_rent_return);
         if (btnRentalReturn != null) {
             btnRentalReturn.setOnClickListener(v -> {
-                Intent intent = new Intent(this, com.mobility.hack.community.NoticeActivity.class);
+                Intent intent = new Intent(this, NoticeActivity.class);
                 startActivity(intent);
             });
         }
@@ -31,7 +31,7 @@ public class InquiryActivity extends AppCompatActivity {
         TextView btnMyInquiries = findViewById(R.id.menu_my_inquiries);
         if (btnMyInquiries != null) {
             btnMyInquiries.setOnClickListener(v -> {
-                Intent intent = new Intent(this, com.mobility.hack.community.InquiryListActivity.class);
+                Intent intent = new Intent(this, InquiryListActivity.class);
                 startActivity(intent);
             });
         }

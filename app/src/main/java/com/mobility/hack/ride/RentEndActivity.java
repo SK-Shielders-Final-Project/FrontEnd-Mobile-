@@ -19,8 +19,8 @@ public class RentEndActivity extends AppCompatActivity {
         requestPaymentButton.setOnClickListener(v -> {
             Intent intent = new Intent(RentEndActivity.this, PaymentActivity.class);
             // 실제 결제 금액과 주문명은 이 곳에서 설정해야 합니다.
-            intent.putExtra(PaymentActivity.EXTRA_AMOUNT, 1000); // 예: 1000원
-            intent.putExtra(PaymentActivity.EXTRA_ORDER_NAME, "포인트 충전");
+            intent.putExtra(PurchaseTicketActivity.EXTRA_AMOUNT, 1000); // 예: 1000원
+            intent.putExtra(PurchaseTicketActivity.EXTRA_ORDER_NAME, "포인트 충전");
             startActivity(intent);
         });
     }

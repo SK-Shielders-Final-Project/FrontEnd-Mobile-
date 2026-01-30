@@ -67,7 +67,7 @@ public class ChatActivity extends AppCompatActivity {
     }
 
     private void loadWelcomeMessage() {
-        String welcomeText = "안녕하세요,\n🌲복잡한 도심 속, 원하는 곳 어디든 자유롭게 이동하세요.\n스마트한 자전거 공유 서비스 작당모빌 🚲 입니다.";
+        String welcomeText = "안녕하세요,\n🌲서울을 즐기는 가장 친환경적인 방법\n서울자전거 작당모빌 🚲 입니다.";
         addMessageToChat(welcomeText, ChatMessage.VIEW_TYPE_BOT);
     }
 

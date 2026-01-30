@@ -3,7 +3,6 @@ package com.mobility.hack.auth;
 import android.content.Intent;
 import android.os.Bundle;
 import android.widget.Button;
-import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -28,24 +27,23 @@ import retrofit2.Retrofit;
 public class LoginActivity extends AppCompatActivity {
     private ApiService apiService;
     private TokenManager tokenManager;
-    private CheckBox autoLoginCheckBox;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_login);
-
         tokenManager = new TokenManager(getApplicationContext());
+        if (tokenManager.fetchAuthToken() != null) {
+            goToMainActivity();
+            return;
+        }
+        setContentView(R.layout.activity_login);
         Retrofit retrofit = RetrofitClient.getClient(tokenManager);
         apiService = retrofit.create(ApiService.class);
-
         EditText usernameEditText = findViewById(R.id.editTextId);
         EditText passwordEditText = findViewById(R.id.editTextPassword);
         Button loginButton = findViewById(R.id.buttonLogin);
         TextView registerTextView = findViewById(R.id.textViewRegister);
         TextView findPasswordTextView = findViewById(R.id.textViewFindPassword);
-        autoLoginCheckBox = findViewById(R.id.checkbox_auto_login);
-
         loginButton.setOnClickListener(v -> {
             String username = usernameEditText.getText().toString();
             String password = passwordEditText.getText().toString();
@@ -65,7 +63,8 @@ public class LoginActivity extends AppCompatActivity {
             startActivity(intent);
         });
         findPasswordTextView.setOnClickListener(v -> {
-            // TODO: 비밀번호 찾기 기능 구현 필요
+            Intent intent = new Intent(this, FindPasswordActivity.class);
+            startActivity(intent);
         });
     }
 
@@ -75,19 +74,10 @@ public class LoginActivity extends AppCompatActivity {
             public void onResponse(@NotNull Call<LoginResponse> call, @NotNull Response<LoginResponse> response) {
                 if (isFinishing() || isDestroyed()) return;
                 LoginResponse loginResponse = response.body();
-
+                // [수정] 토큰 유효성 검사 강화
                 if (response.isSuccessful() && loginResponse != null && loginResponse.getAccessToken() != null && !loginResponse.getAccessToken().isEmpty()) {
                     tokenManager.saveAuthToken(loginResponse.getAccessToken());
                     tokenManager.saveUserId(loginResponse.getUserId());
-
-                    if (autoLoginCheckBox.isChecked()) {
-                        tokenManager.saveRefreshToken(loginResponse.getRefreshToken());
-                        tokenManager.saveAutoLogin(true);
-                    } else {
-                        tokenManager.saveRefreshToken(null);
-                        tokenManager.saveAutoLogin(false);
-                    }
-
                     Toast.makeText(LoginActivity.this, "로그인 성공!", Toast.LENGTH_SHORT).show();
                     goToMainActivity();
                 } else {
@@ -105,8 +95,6 @@ public class LoginActivity extends AppCompatActivity {
 
     private void goToMainActivity() {
         Intent intent = new Intent(this, MainActivity.class);
-        // 기존의 모든 액티비티를 스택에서 제거하고, 새로운 태스크를 시작합니다.
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);
         finish();
     }

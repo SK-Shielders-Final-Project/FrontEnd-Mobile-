@@ -21,7 +21,7 @@ public class CustomerCenterActivity extends AppCompatActivity {
         TextView btnGoInquiry = findViewById(R.id.menu_inquiry);
         if (btnGoInquiry != null) {
             btnGoInquiry.setOnClickListener(v -> {
-                Intent intent = new Intent(CustomerCenterActivity.this, com.mobility.hack.community.InquiryActivity.class);
+                Intent intent = new Intent(CustomerCenterActivity.this, InquiryActivity.class);
                 startActivity(intent);
             });
         }
@@ -30,7 +30,7 @@ public class CustomerCenterActivity extends AppCompatActivity {
         TextView btnGoInquiryList = findViewById(R.id.menu_inquiry_list);
         if (btnGoInquiryList != null) {
             btnGoInquiryList.setOnClickListener(v -> {
-                Intent intent = new Intent(CustomerCenterActivity.this, com.mobility.hack.community.InquiryListActivity.class);
+                Intent intent = new Intent(CustomerCenterActivity.this, InquiryListActivity.class);
                 startActivity(intent);
             });
         }
