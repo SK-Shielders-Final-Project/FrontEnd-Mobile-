@@ -18,6 +18,7 @@ if (localPropertiesFile.exists()) {
 android {
     namespace = "com.mobility.hack"
     compileSdk = 36
+    ndkVersion = "26.1.10909125"
 
     defaultConfig {
         applicationId = "com.mobility.hack"
@@ -70,6 +71,17 @@ android {
     }
 }
 
+kapt {
+    correctErrorTypes = true
+    // 이거 수정하면 되려나?
+    arguments {
+        // Hilt가 컴파일 타임에 환경 변수를 놓치는 버그를 강제로 방어합니다.
+        arg("dagger.hilt.disableModulesHaveInstallInCheck", "true")
+        // 증분 빌드를 끔으로써 NullPointerException 발생 경로를 차단합니다.
+        arg("gradle.incremental", "false")
+    }
+}
+
 dependencies {
     implementation(libs.appcompat)
     implementation(libs.material)
@@ -81,6 +93,10 @@ dependencies {
     implementation(libs.retrofit)
     implementation(libs.converter.gson)
     implementation(libs.logging.interceptor)
+
+    // [중요 수정] Glide: 경고 해결을 위해 annotationProcessor를 kapt로 변경
+    implementation("com.github.bumptech.glide:glide:4.16.0")
+    kapt("com.github.bumptech.glide:compiler:4.16.0")
 
     // Security
     implementation(libs.security.crypto)

@@ -33,7 +33,7 @@
             android:layout_width="56dp"
             android:layout_height="56dp"
             android:layout_gravity="center_horizontal"
-            android:src="@drawable/ic_devil_bike" />
+            android:src="@drawable/logo_circle" />
 
         <TextView
             android:layout_marginTop="8dp"
@@ -49,7 +49,7 @@
             android:layout_marginTop="4dp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="서울을 즐기는 가장 친환경적인 방법"
+            android:text="도시를 달리는 새로운 방법, 작당모빌"
             android:textColor="#AAAAAA"
             android:textSize="13sp"
             android:layout_gravity="center_horizontal"/>
@@ -149,5 +149,6 @@
             android:src="@drawable/ic_send"
             android:contentDescription="전송"/>
     </LinearLayout>
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>

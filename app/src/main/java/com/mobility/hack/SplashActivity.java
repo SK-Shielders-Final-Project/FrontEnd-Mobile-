@@ -61,13 +61,18 @@ public class SplashActivity extends AppCompatActivity {
             @Override
             public void onResponse(@NotNull Call<LoginResponse> call, @NotNull Response<LoginResponse> response) {
                 if (response.isSuccessful() && response.body() != null) {
-                    // 새 액세스 토큰 저장
-                    tokenManager.saveAuthToken(response.body().getAccessToken());
-                    // 메인 화면으로 이동
+                    LoginResponse loginResponse = response.body();
+                    // 새로운 액세스 토큰 저장
+                    tokenManager.saveAuthToken(loginResponse.getAccessToken());
+
+                    // 서버로부터 새로운 리프레시 토큰을 받았을 경우에만 갱신
+                    if (loginResponse.getRefreshToken() != null && !loginResponse.getRefreshToken().isEmpty()) {
+                        tokenManager.saveRefreshToken(loginResponse.getRefreshToken());
+                    }
+
                     goToMainActivity();
                 } else {
-                    // 리프레시 토큰이 만료되었거나 유효하지 않음
-                    tokenManager.clearData(); // 모든 토큰 정보 삭제
+                    tokenManager.clearData();
                     goToLoginActivity();
                 }
             }
@@ -82,12 +87,16 @@ public class SplashActivity extends AppCompatActivity {
     }
 
     private void goToMainActivity() {
-        startActivity(new Intent(SplashActivity.this, MainActivity.class));
+        Intent intent = new Intent(SplashActivity.this, MainActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
         finish();
     }
 
     private void goToLoginActivity() {
-        startActivity(new Intent(SplashActivity.this, LoginActivity.class));
+        Intent intent = new Intent(SplashActivity.this, LoginActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
         finish();
     }
 }
