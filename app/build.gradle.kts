@@ -70,6 +70,10 @@ android {
     }
 }
 
+kapt {
+    correctErrorTypes = true
+}
+
 dependencies {
     implementation(libs.appcompat)
     implementation(libs.material)

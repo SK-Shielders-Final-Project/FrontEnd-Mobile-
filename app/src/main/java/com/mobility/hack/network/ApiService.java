@@ -46,13 +46,13 @@ public interface ApiService {
     Call<UserInfoResponse> getUserInfo();
 
     @PUT("/api/user/info")
-    Call<UpdateInfoResponse> updateUserInfo(@Body UpdateInfoRequest request);
+    Call<UserInfoResponse> updateUserInfo(@Body UpdateUserRequest request);
 
     @POST("/api/checkpw")
     Call<CheckPasswordResponse> checkPassword(@Body CheckPasswordRequest request);
 
     @PUT("/api/user/auth/changepw")
-    Call<Void> changePassword(@Body ChangePasswordRequest request);
+    Call<UserInfoResponse> changePassword(@Body ChangePasswordRequest request);
 
     @GET("/api/inquiries")
     Call<List<InquiryResponse>> getInquiries(@Header("Authorization") String token);
