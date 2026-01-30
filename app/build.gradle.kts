@@ -18,6 +18,7 @@ if (localPropertiesFile.exists()) {
 android {
     namespace = "com.mobility.hack"
     compileSdk = 36
+    ndkVersion = "26.1.10909125"
 
     defaultConfig {
         applicationId = "com.mobility.hack"

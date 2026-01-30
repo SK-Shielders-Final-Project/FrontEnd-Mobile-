@@ -15,12 +15,9 @@ public class UserInfoResponse {
 
     @SerializedName("phone")
     private String phone;
-    private int rideCount;
-    private int total_point;
 
     @SerializedName("name")
     private String name;
-
 
     @SerializedName("admin_lev")
     private int adminLev;

@@ -60,12 +60,15 @@ public class LoginActivity extends AppCompatActivity {
                 Toast.makeText(this, "아이디와 비밀번호를 입력해주세요.", Toast.LENGTH_SHORT).show();
             }
         });
+
         registerTextView.setOnClickListener(v -> {
             Intent intent = new Intent(this, RegisterActivity.class);
             startActivity(intent);
         });
+
         findPasswordTextView.setOnClickListener(v -> {
-            // TODO: 비밀번호 찾기 기능 구현 필요
+            Intent intent = new Intent(this, FindPasswordActivity.class);
+            startActivity(intent);
         });
     }
 
