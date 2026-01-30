@@ -55,6 +55,14 @@
             android:exported="false" />
 
         <activity
+            android:name=".auth.EditMyInfoActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".auth.ChangePasswordActivity"
+            android:exported="false" />
+
+        <activity
             android:name=".ride.PurchaseTicketActivity"
             android:exported="true" />
 
