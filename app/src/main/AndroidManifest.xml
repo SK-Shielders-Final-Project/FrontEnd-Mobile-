@@ -59,9 +59,21 @@
         <activity
             android:name=".auth.EditMyInfoActivity"
             android:exported="false" />
+        <activity
+            android:name=".auth.FindPasswordActivity"
+            android:exported="false" />
+
 
         <activity
             android:name=".auth.ChangePasswordActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".auth.CheckPasswordActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".auth.ResetPasswordActivity"
             android:exported="false" />
 
         <activity
@@ -106,6 +118,26 @@
 
         <activity
             android:name=".community.NoticeActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".chatbot.ChatActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".ride.QrScanActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".ride.RentEndActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".ride.UserHistoryActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".PaymentHistoryActivity"
             android:exported="false" />
 
         <activity
