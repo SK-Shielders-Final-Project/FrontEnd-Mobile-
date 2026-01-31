@@ -20,15 +20,21 @@ import com.mobility.hack.network.PaymentResponse;
 import com.mobility.hack.network.RetrofitClient;
 import com.mobility.hack.security.TokenManager;
 
+import java.io.IOException;
+
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
 public class PaymentActivity extends AppCompatActivity {
 
+    public static final String EXTRA_AMOUNT = "EXTRA_AMOUNT";
+    public static final String EXTRA_ORDER_NAME = "EXTRA_ORDER_NAME";
+
     private static final String TAG = "PaymentActivity";
     private WebView webView;
     private ApiService apiService;
+    private TokenManager tokenManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,7 +43,7 @@ public class PaymentActivity extends AppCompatActivity {
 
         webView = findViewById(R.id.webView);
 
-        TokenManager tokenManager = new TokenManager(this);
+        tokenManager = new TokenManager(this);
         apiService = RetrofitClient.getApiService(tokenManager);
 
         // 1. 웹뷰 설정
@@ -96,8 +102,8 @@ public class PaymentActivity extends AppCompatActivity {
             return;
         }
 
-        int amount = getIntent().getIntExtra(PurchaseTicketActivity.EXTRA_AMOUNT, 0);
-        String orderName = getIntent().getStringExtra(PurchaseTicketActivity.EXTRA_ORDER_NAME);
+        int amount = getIntent().getIntExtra(EXTRA_AMOUNT, 0);
+        String orderName = getIntent().getStringExtra(EXTRA_ORDER_NAME);
 
         if (amount <= 0 || orderName == null) {
             Toast.makeText(this, "결제 정보가 올바르지 않습니다.", Toast.LENGTH_SHORT).show();
@@ -113,7 +119,8 @@ public class PaymentActivity extends AppCompatActivity {
     }
 
     private void requestPaymentConfirmToServer(String paymentKey, String orderId, Long amount) {
-        PaymentRequest paymentRequest = new PaymentRequest(paymentKey, orderId, amount);
+        long userId = tokenManager.fetchUserId();
+        PaymentRequest paymentRequest = new PaymentRequest(paymentKey, orderId, amount, userId);
         apiService.confirmPayment(paymentRequest).enqueue(new Callback<PaymentResponse>() {
             @Override
             public void onResponse(Call<PaymentResponse> call, Response<PaymentResponse> response) {
@@ -121,12 +128,18 @@ public class PaymentActivity extends AppCompatActivity {
                     Toast.makeText(PaymentActivity.this, "포인트가 충전되었습니다.", Toast.LENGTH_LONG).show();
                     finish();
                 } else {
+                    try {
+                        Log.e(TAG, "Payment failed: " + response.errorBody().string());
+                    } catch (IOException e) {
+                        Log.e(TAG, "Error reading error body", e);
+                    }
                     Toast.makeText(PaymentActivity.this, "포인트 충전에 실패했습니다.", Toast.LENGTH_LONG).show();
                 }
             }
 
             @Override
             public void onFailure(Call<PaymentResponse> call, Throwable t) {
+                Log.e(TAG, "Payment API call failed", t);
                 Toast.makeText(PaymentActivity.this, "서버 통신에 실패했습니다.", Toast.LENGTH_LONG).show();
             }
         });

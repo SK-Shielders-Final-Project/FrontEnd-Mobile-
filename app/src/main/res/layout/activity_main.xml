@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -34,92 +33,102 @@
             android:id="@+id/btnMenu"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:gravity="center"
+            android:background="?attr/selectableItemBackground"
             android:clickable="true"
             android:focusable="true"
-            android:background="?attr/selectableItemBackground">
+            android:gravity="center"
+            android:orientation="vertical">
+
             <ImageView
                 android:layout_width="24dp"
                 android:layout_height="24dp"
+                android:contentDescription="메뉴"
                 android:src="@drawable/ic_stat_menu"
-                app:tint="@color/text_primary"
-                android:contentDescription="메뉴"/>
+                app:tint="@color/text_primary" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="메뉴"
-                android:textSize="10sp"
-                android:textColor="@color/text_primary"/>
+                android:textColor="@color/text_primary"
+                android:textSize="10sp" />
         </LinearLayout>
 
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:layout_marginStart="16dp">
+            android:layout_marginStart="32dp"
+            android:orientation="vertical">
+
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:includeFontPadding="false"
                 android:text="GO"
                 android:textColor="@color/brand_primary"
-                android:textStyle="bold"
                 android:textSize="12sp"
-                android:includeFontPadding="false"/>
+                android:textStyle="bold" />
+
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:includeFontPadding="false"
                 android:text="EQST"
                 android:textColor="@color/brand_primary"
-                android:textStyle="bold"
                 android:textSize="16sp"
-                android:includeFontPadding="false"/>
+                android:textStyle="bold" />
         </LinearLayout>
 
-        <Space android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1"/>
+        <Space
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1" />
 
         <LinearLayout
             android:id="@+id/btnSearch"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
+            android:layout_marginEnd="32dp"
             android:gravity="center"
-            android:layout_marginEnd="16dp">
+            android:orientation="vertical">
+
             <ImageView
                 android:layout_width="24dp"
                 android:layout_height="24dp"
+                android:contentDescription="검색"
                 android:src="@android:drawable/ic_menu_search"
-                app:tint="@color/text_primary"
-                android:contentDescription="검색"/>
+                app:tint="@color/text_primary" />
+
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="검색"
-                android:textSize="10sp"
-                android:textColor="@color/text_primary"/>
+                android:textColor="@color/text_primary"
+                android:textSize="10sp" />
         </LinearLayout>
 
         <LinearLayout
             android:id="@+id/btnMyInfo"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
             android:clickable="true"
             android:focusable="true"
-            android:gravity="center">
+            android:gravity="center"
+            android:orientation="vertical">
+
             <ImageView
                 android:layout_width="24dp"
                 android:layout_height="24dp"
+                android:contentDescription="내 정보"
                 android:src="@drawable/ic_stat_account_box"
-                app:tint="@color/text_primary"
-                android:contentDescription="내 정보"/>
+                app:tint="@color/text_primary" />
+
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="내 정보"
-                android:textSize="10sp"
-                android:textColor="@color/text_primary"/>
+                android:textColor="@color/text_primary"
+                android:textSize="10sp" />
         </LinearLayout>
     </LinearLayout>
 
@@ -128,12 +137,12 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="20dp"
         android:background="@drawable/bg_edittext_rounded"
+        android:elevation="6dp"
         android:paddingHorizontal="20dp"
         android:paddingVertical="8dp"
         android:text="모든 자전거"
         android:textColor="@color/text_primary"
         android:textStyle="bold"
-        android:elevation="6dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/topBar" />
@@ -145,8 +154,8 @@
         android:layout_marginEnd="16dp"
         android:layout_marginBottom="16dp"
         android:background="@drawable/bg_edittext_rounded"
-        android:src="@android:drawable/ic_popup_sync"
         android:elevation="6dp"
+        android:src="@android:drawable/ic_popup_sync"
         app:layout_constraintBottom_toTopOf="@+id/bottomNavigation"
         app:layout_constraintEnd_toEndOf="parent" />
 
@@ -156,10 +165,10 @@
         android:layout_height="60dp"
         android:layout_marginEnd="11dp"
         android:layout_marginBottom="12dp"
-        android:src="@drawable/ic_chatbot"
-        android:scaleType="centerInside"
         android:background="@drawable/bg_circle_primary"
         android:elevation="6dp"
+        android:scaleType="centerInside"
+        android:src="@drawable/ic_chatbot"
         app:layout_constraintBottom_toTopOf="@+id/btnRefresh"
         app:layout_constraintEnd_toEndOf="parent" />
 
@@ -169,14 +178,76 @@
         android:layout_width="60dp"
         android:layout_height="60dp"
         android:layout_marginBottom="12dp"
-        android:src="@drawable/ic_stat_camera_alt"
-        android:scaleType="centerInside"
         android:background="@drawable/bg_circle_primary"
         android:elevation="6dp"
-        app:tint="@color/white"
+        android:scaleType="centerInside"
+        android:src="@drawable/ic_stat_camera_alt"
         app:layout_constraintBottom_toTopOf="@+id/bottomNavigation"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
+        app:layout_constraintStart_toStartOf="parent"
+        app:tint="@color/white" />
+
+    <!-- 대여 중인 정보 박스 -->
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/rentalStatusLayout"
+        android:layout_width="300dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="24dp"
+        android:layout_marginBottom="16dp"
+        android:background="@drawable/bg_edittext_rounded"
+        android:elevation="6dp"
+        android:padding="16dp"
+        android:visibility="gone"
+        app:layout_constraintBottom_toTopOf="@+id/bottomNavigation"
+        app:layout_constraintStart_toStartOf="parent"
+        tools:visibility="visible">
+
+        <!-- 1. 남은 시간 표시 -->
+        <TextView
+            android:id="@+id/tvRentalTimeLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="남은 시간"
+            android:textColor="@color/text_primary"
+            android:textSize="14sp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/tvRentalTimeValue"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:textColor="@color/brand_primary"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/tvRentalTimeLabel"
+            tools:text="02:42:14" />
+
+        <!-- 2. 시간 연장 버튼 (상단) -->
+        <Button
+            android:id="@+id/btnExtendRental"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            android:layout_width="110dp"
+            android:layout_height="wrap_content"
+            android:text="시간 연장"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <!-- 3. 사용 종료 버튼 (하단) -->
+        <Button
+            android:id="@+id/btnEndRental"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:backgroundTint="@color/colorPrimary"
+            android:text="사용 종료"
+            app:layout_constraintEnd_toEndOf="@id/btnExtendRental"
+            app:layout_constraintStart_toStartOf="@id/btnExtendRental"
+            app:layout_constraintTop_toBottomOf="@id/btnExtendRental" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
     <LinearLayout
         android:id="@+id/bottomNavigation"
@@ -184,8 +255,8 @@
         android:layout_height="70dp"
         android:background="@color/white"
         android:elevation="16dp"
-        android:orientation="horizontal"
         android:gravity="center_vertical"
+        android:orientation="horizontal"
         app:layout_constraintBottom_toBottomOf="parent">
 
         <LinearLayout
@@ -194,18 +265,20 @@
             android:layout_weight="1"
             android:gravity="center"
             android:orientation="vertical">
+
             <ImageView
                 android:layout_width="24dp"
                 android:layout_height="24dp"
                 android:src="@android:drawable/ic_dialog_map"
-                app:tint="@color/brand_primary"/>
+                app:tint="@color/brand_primary" />
+
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="지도"
                 android:textColor="@color/brand_primary"
-                android:textStyle="bold"
-                android:textSize="12sp"/>
+                android:textSize="12sp"
+                android:textStyle="bold" />
         </LinearLayout>
 
         <LinearLayout
@@ -226,18 +299,19 @@
                 <ImageView
                     android:layout_width="20dp"
                     android:layout_height="20dp"
+                    android:layout_marginEnd="8dp"
                     android:src="@drawable/ic_stat_confirmation_number"
-                    app:tint="@color/white"
-                    android:layout_marginEnd="8dp"/>
+                    app:tint="@color/white" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="이용권 구매"
                     android:textColor="@color/white"
-                    android:textSize="15sp"
-                    android:textStyle="bold"/>
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
             </LinearLayout>
+
         </LinearLayout>
 
         <LinearLayout
@@ -246,18 +320,21 @@
             android:layout_weight="1"
             android:gravity="center"
             android:orientation="vertical">
+
             <ImageView
                 android:layout_width="24dp"
                 android:layout_height="24dp"
                 android:src="@android:drawable/btn_star_big_off"
-                app:tint="@color/text_primary"/>
+                app:tint="@color/text_primary" />
+
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="즐겨찾기"
                 android:textColor="@color/text_primary"
-                android:textSize="12sp"/>
+                android:textSize="12sp" />
         </LinearLayout>
+
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

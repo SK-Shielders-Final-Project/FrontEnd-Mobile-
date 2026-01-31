@@ -11,6 +11,8 @@ import android.widget.Toast;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
 import com.mobility.hack.network.ApiService;
 import com.mobility.hack.network.RetrofitClient;
 import com.mobility.hack.network.VoucherRequest;
@@ -86,16 +88,21 @@ public class TicketActivity extends AppCompatActivity {
                     );
                     Toast.makeText(getApplicationContext(), successMessage, Toast.LENGTH_LONG).show();
                 } else {
-                    String errorBody = "";
-                    if(response.errorBody() != null) {
+                    String errorMsg = "이용권 등록에 실패했습니다."; // 기본 오류 메시지
+                    if (response.errorBody() != null) {
                         try {
-                            errorBody = response.errorBody().string();
-                        } catch (java.io.IOException e) {
-                            Log.e(TAG, "Error reading error body: " + e.getMessage());
+                            String errorBodyString = response.errorBody().string();
+                            Log.e(TAG, "onResponse: failed, code: " + response.code() + " body: " + errorBodyString);
+                            // 오류 응답 본문을 VoucherResponse 형식으로 파싱하여 서버 메시지 추출
+                            VoucherResponse errorResponse = new Gson().fromJson(errorBodyString, VoucherResponse.class);
+                            if (errorResponse != null && errorResponse.getMessage() != null && !errorResponse.getMessage().isEmpty()) {
+                                errorMsg = errorResponse.getMessage(); // 서버가 보낸 오류 메시지 사용 (예: "중복된 코드입니다")
+                            }
+                        } catch (java.io.IOException | JsonSyntaxException e) {
+                            Log.e(TAG, "Error parsing error body: " + e.getMessage());
+                            errorMsg = "이용권 등록 실패 (응답 코드: " + response.code() + ")";
                         }
                     }
-                    Log.e(TAG, "onResponse: failed, code: " + response.code() + " body: " + errorBody);
-                    String errorMsg = "이용권 등록 실패. 서버 응답 코드: " + response.code();
                     Toast.makeText(getApplicationContext(), errorMsg, Toast.LENGTH_LONG).show();
                 }
             }

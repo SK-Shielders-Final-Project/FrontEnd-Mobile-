@@ -1,25 +1,32 @@
 package com.mobility.hack;
 
 public class Payment {
-    private final String amount;
-    private final String orderId;
-    private final String status;
+    private int amount;
+    private String paymentMethod;
+    private String status;
 
-    public Payment(String amount, String orderId, String status) {
-        this.amount = amount;
-        this.orderId = orderId;
-        this.status = status;
-    }
-
-    public String getAmount() {
+    // Getters and setters for each field
+    public int getAmount() {
         return amount;
     }
 
-    public String getOrderId() {
-        return orderId;
+    public void setAmount(int amount) {
+        this.amount = amount;
+    }
+
+    public String getPaymentMethod() {
+        return paymentMethod;
+    }
+
+    public void setPaymentMethod(String paymentMethod) {
+        this.paymentMethod = paymentMethod;
     }
 
     public String getStatus() {
         return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
     }
 }

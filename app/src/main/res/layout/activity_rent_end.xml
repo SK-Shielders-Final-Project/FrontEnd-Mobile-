@@ -19,6 +19,7 @@
         android:id="@+id/request_payment_button"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:backgroundTint="@color/colorPrimary"
         android:text="결제 요청"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"

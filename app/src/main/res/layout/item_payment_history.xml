@@ -15,12 +15,12 @@
         tools:text="1,000원" />
 
     <TextView
-        android:id="@+id/order_id_text"
+        android:id="@+id/payment_method_text"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="4dp"
         android:textColor="@android:color/darker_gray"
-        tools:text="주문 ID: ORDER_1769403772511" />
+        tools:text="결제 수단: 카드" />
 
     <TextView
         android:id="@+id/status_text"

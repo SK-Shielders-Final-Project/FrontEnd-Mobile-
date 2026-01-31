@@ -2,9 +2,12 @@ package com.mobility.hack.network;
 
 import com.google.gson.annotations.SerializedName;
 
+/**
+ * [API 최적화] 문의하기 요청 DTO
+ */
 public class InquiryRequest {
     @SerializedName("user_id")
-    private Long userId;
+    private long userId;
 
     @SerializedName("title")
     private String title;
@@ -13,12 +16,13 @@ public class InquiryRequest {
     private String content;
 
     @SerializedName("file_id")
-    private Long fileId;
+    private Integer fileId; // null 허용을 위해 Integer 사용
 
-    public InquiryRequest(Long userId, String title, String content, Long fileId) {
+    public InquiryRequest(long userId, String title, String content, Integer fileId) {
         this.userId = userId;
         this.title = title;
         this.content = content;
-        this.fileId = fileId;
+        // 파일이 없으면 0을 기본값으로 설정
+        this.fileId = (fileId != null) ? fileId : 0;
     }
 }
