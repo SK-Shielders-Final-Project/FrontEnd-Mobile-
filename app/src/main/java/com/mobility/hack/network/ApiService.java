@@ -3,6 +3,7 @@ package com.mobility.hack.network;
 import java.util.List;
 import java.util.Map;
 
+
 import okhttp3.MultipartBody;
 import okhttp3.RequestBody;
 import okhttp3.ResponseBody;
@@ -57,8 +58,9 @@ public interface ApiService {
     // -----------------------------------------------------------
     // [수정 포인트 1] 상세 조회: 이름(Details) 맞추고, 토큰 파라미터 제거
     // -----------------------------------------------------------
-    @GET("/api/user/inquiry/{inquiryId}")
-    Call<InquiryResponse> getInquiryDetails(@Path("inquiryId") Long inquiryId);
+    // ApiService 인터페이스 내부
+    @GET("api/user/inquiry/{inquiry_id}")
+    Call<InquiryDetailResponseDto> getInquiryDetails(@Path("inquiry_id") long inquiryId);
 
     // -----------------------------------------------------------
     // [수정 포인트 2] 삭제: 반환 타입을 InquiryDeleteResponse로 변경

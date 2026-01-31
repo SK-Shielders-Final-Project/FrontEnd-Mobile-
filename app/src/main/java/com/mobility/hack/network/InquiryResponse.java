@@ -8,7 +8,7 @@ import java.io.Serializable;
  */
 public class InquiryResponse implements Serializable {
 
-    @SerializedName("inquiry_id") // 백엔드 필드명과 일치시켜야 500 에러가 안 납니다.
+    @SerializedName("inquiry_id")
     private long inquiryId;
 
     @SerializedName("title")
@@ -29,44 +29,56 @@ public class InquiryResponse implements Serializable {
     @SerializedName("updated_at")
     private String updatedAt;
 
-    @SerializedName("file_id") // 문의 작성 직후 반환되는 파일 ID
+    @SerializedName("file_id")
     private Long fileId;
 
     @SerializedName("attachment")
-    private AttachmentDTO attachment; // 상세 조회 시 포함되는 첨부파일 정보
+    private AttachmentDTO attachment;
 
     // --- Inner Class: AttachmentDTO ---
     public static class AttachmentDTO implements Serializable {
-        @SerializedName("file_id")
+        @SerializedName("fileId")
         private int fileId;
 
-        @SerializedName("original_filename")
-        private String originalFilename;
+        @SerializedName("path") // [중요] 서버가 주는 경로 (예: INQUIRY/20260130)
+        private String path;
 
-        @SerializedName("file_download_uri")
-        private String fileDownloadUri;
+        @SerializedName("fileName") // [중요] 서버 저장 파일명 (예: f5b03f...)
+        private String fileName;
 
-        @SerializedName("file_view_uri")
-        private String fileViewUri;
-
-        @SerializedName("ext")
+        @SerializedName("ext") // [중요] 확장자 (예: jpg)
         private String ext;
 
+        @SerializedName("originalName") // 원본 파일명
+        private String originalName;
+
         public int getFileId() { return fileId; }
-        public String getOriginalFilename() { return originalFilename; }
-        public String getFileDownloadUri() { return fileDownloadUri; }
-        public String getFileViewUri() { return fileViewUri; }
+        public String getPath() { return path; }
+        public String getFileName() { return fileName; }
         public String getExt() { return ext; }
+        public String getOriginalName() { return originalName; }
+    }
+
+    // --- [핵심] 다운로드 URL 생성 (8080 포트 강제 사용) ---
+    public String getDownloadUrl() {
+        if (attachment == null) return null;
+
+        // 규칙: path + "/" + fileName + "." + ext
+        String fullPath = attachment.getPath() + "/" + attachment.getFileName() + "." + attachment.getExt();
+
+        // 다운로드 서버 포트인 8080으로 주소 완성
+        return "http://43.203.51.77:8080/api/user/files/download?file=" + fullPath;
     }
 
     // --- Getters ---
     public long getInquiryId() { return inquiryId; }
-    public String getTitle() { return title != null ? title : ""; }
-    public String getContent() { return content != null ? content : ""; }
+    public String getTitle() { return title; }
+    public String getContent() { return content; }
     public String getAuthorName() { return authorName; }
-    public String getCreatedAt() { return createdAt != null ? createdAt : ""; }
+    public String getCreatedAt() { return createdAt; }
     public String getAdminReply() { return adminReply; }
     public String getUpdatedAt() { return updatedAt; }
     public Long getFileId() { return fileId; }
     public AttachmentDTO getAttachment() { return attachment; }
 }
+
