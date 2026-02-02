@@ -139,6 +139,9 @@
         <activity
             android:name=".PaymentHistoryActivity"
             android:exported="false" />
+        <activity
+            android:name=".PointGiftActivity"
+            android:exported="false" />
 
         <activity
             android:name=".community.InquiryEditActivity"

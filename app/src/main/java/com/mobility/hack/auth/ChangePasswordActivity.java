@@ -10,10 +10,10 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
+import com.mobility.hack.MainApplication;
 import com.mobility.hack.R;
 import com.mobility.hack.network.ApiService;
 import com.mobility.hack.network.ChangePasswordRequest;
-import com.mobility.hack.network.RetrofitClient;
 import com.mobility.hack.network.UserInfoResponse;
 import com.mobility.hack.security.TokenManager;
 
@@ -22,7 +22,6 @@ import org.jetbrains.annotations.NotNull;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
-import retrofit2.Retrofit;
 
 public class ChangePasswordActivity extends AppCompatActivity {
     private ApiService apiService;
@@ -32,10 +31,11 @@ public class ChangePasswordActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_change_password);
-        tokenManager = new TokenManager(getApplicationContext());
-        // 수정된 접근 방식
-        Retrofit retrofit = RetrofitClient.getClient(tokenManager);
-        apiService = retrofit.create(ApiService.class);
+
+        // MainApplication에서 ApiService 및 TokenManager 인스턴스 가져오기
+        apiService = ((MainApplication) getApplication()).getApiService();
+        tokenManager = ((MainApplication) getApplication()).getTokenManager();
+
         TextInputLayout currentPasswordLayout = findViewById(R.id.textInputLayoutCurrentPassword);
         TextInputLayout newPasswordLayout = findViewById(R.id.textInputLayoutNewPassword);
         TextInputLayout newPasswordConfirmLayout = findViewById(R.id.textInputLayoutNewPasswordConfirm);
@@ -43,14 +43,17 @@ public class ChangePasswordActivity extends AppCompatActivity {
         TextInputEditText newPasswordEditText = findViewById(R.id.editTextNewPassword);
         TextInputEditText newPasswordConfirmEditText = findViewById(R.id.editTextNewPasswordConfirm);
         Button changePasswordButton = findViewById(R.id.buttonChangePassword);
+
         addTextWatcher(currentPasswordEditText, currentPasswordLayout);
         addTextWatcher(newPasswordEditText, newPasswordLayout);
         addTextWatcher(newPasswordConfirmEditText, newPasswordConfirmLayout);
+
         changePasswordButton.setOnClickListener(v -> {
             String currentPassword = currentPasswordEditText.getText().toString();
             String newPassword = newPasswordEditText.getText().toString();
             String newPasswordConfirm = newPasswordConfirmEditText.getText().toString();
             boolean hasError = false;
+
             if (currentPassword.isEmpty()) {
                 currentPasswordLayout.setError("현재 비밀번호를 입력해주세요.");
                 hasError = true;
@@ -64,11 +67,13 @@ public class ChangePasswordActivity extends AppCompatActivity {
                 hasError = true;
             }
             if (hasError) return;
+
             if (!newPassword.equals(newPasswordConfirm)) {
                 newPasswordLayout.setError("새로운 비밀번호가 일치하지 않습니다.");
                 newPasswordConfirmLayout.setError("새로운 비밀번호가 일치하지 않습니다.");
                 return;
             }
+
             ChangePasswordRequest request = new ChangePasswordRequest(currentPassword, newPassword);
             changePassword(request, currentPasswordLayout);
         });

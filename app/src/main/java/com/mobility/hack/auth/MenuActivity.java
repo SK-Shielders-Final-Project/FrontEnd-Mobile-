@@ -12,6 +12,7 @@ import com.google.gson.annotations.SerializedName;
 import com.mobility.hack.community.CustomerCenterActivity;
 import com.mobility.hack.MainApplication;
 import com.mobility.hack.PaymentHistoryActivity;
+import com.mobility.hack.PointGiftActivity;
 import com.mobility.hack.R;
 import com.mobility.hack.network.ApiService;
 import com.mobility.hack.network.UserInfoResponse;
@@ -48,6 +49,7 @@ public class MenuActivity extends AppCompatActivity {
         TextView btnCoupon = findViewById(R.id.btnCoupon);
         TextView btnCustomerCenter = findViewById(R.id.btnCustomerCenter);
         TextView btnPaymentHistory = findViewById(R.id.btnPaymentHistory);
+        TextView btnPointGift = findViewById(R.id.btnPointGift);
 
         btnClose.setOnClickListener(v -> finish());
         btnLogout.setOnClickListener(v -> performLogout());
@@ -69,6 +71,11 @@ public class MenuActivity extends AppCompatActivity {
 
         btnPaymentHistory.setOnClickListener(v -> {
             Intent intent = new Intent(MenuActivity.this, PaymentHistoryActivity.class);
+            startActivity(intent);
+        });
+
+        btnPointGift.setOnClickListener(v -> {
+            Intent intent = new Intent(MenuActivity.this, PointGiftActivity.class);
             startActivity(intent);
         });
 

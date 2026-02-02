@@ -13,11 +13,11 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.mobility.hack.MainApplication;
 import com.mobility.hack.R;
 import com.mobility.hack.network.ApiService;
 import com.mobility.hack.network.PaymentRequest;
 import com.mobility.hack.network.PaymentResponse;
-import com.mobility.hack.network.RetrofitClient;
 import com.mobility.hack.security.TokenManager;
 
 import java.io.IOException;
@@ -43,8 +43,9 @@ public class PaymentActivity extends AppCompatActivity {
 
         webView = findViewById(R.id.webView);
 
-        tokenManager = new TokenManager(this);
-        apiService = RetrofitClient.getApiService(tokenManager);
+        // MainApplication에서 ApiService 및 TokenManager 인스턴스 가져오기
+        apiService = ((MainApplication) getApplication()).getApiService();
+        tokenManager = ((MainApplication) getApplication()).getTokenManager();
 
         // 1. 웹뷰 설정
         WebSettings settings = webView.getSettings();

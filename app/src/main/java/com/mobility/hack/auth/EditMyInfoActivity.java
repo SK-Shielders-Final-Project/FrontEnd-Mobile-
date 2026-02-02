@@ -7,9 +7,9 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.mobility.hack.MainApplication;
 import com.mobility.hack.R;
 import com.mobility.hack.network.ApiService;
-import com.mobility.hack.network.RetrofitClient;
 import com.mobility.hack.network.UpdateUserRequest;
 import com.mobility.hack.network.UserInfoResponse;
 import com.mobility.hack.security.TokenManager;
@@ -31,8 +31,9 @@ public class EditMyInfoActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_edit_my_info);
 
-        tokenManager = new TokenManager(getApplicationContext());
-        apiService = RetrofitClient.getClient(tokenManager).create(ApiService.class);
+        // MainApplication에서 ApiService 및 TokenManager 인스턴스 가져오기
+        apiService = ((MainApplication) getApplication()).getApiService();
+        tokenManager = ((MainApplication) getApplication()).getTokenManager();
 
         etName = findViewById(R.id.et_name);
         etEmail = findViewById(R.id.et_email);

@@ -10,12 +10,12 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.mobility.hack.ride.MainActivity;
+import com.mobility.hack.MainApplication;
 import com.mobility.hack.R;
 import com.mobility.hack.network.ApiService;
 import com.mobility.hack.network.LoginRequest;
 import com.mobility.hack.network.LoginResponse;
-import com.mobility.hack.network.RetrofitClient;
+import com.mobility.hack.ride.MainActivity;
 import com.mobility.hack.security.TokenManager;
 
 import org.jetbrains.annotations.NotNull;
@@ -23,7 +23,6 @@ import org.jetbrains.annotations.NotNull;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
-import retrofit2.Retrofit;
 
 public class LoginActivity extends AppCompatActivity {
     private ApiService apiService;
@@ -35,9 +34,9 @@ public class LoginActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
-        tokenManager = new TokenManager(getApplicationContext());
-        Retrofit retrofit = RetrofitClient.getClient(tokenManager);
-        apiService = retrofit.create(ApiService.class);
+        // MainApplication에서 ApiService 및 TokenManager 인스턴스 가져오기
+        apiService = ((MainApplication) getApplication()).getApiService();
+        tokenManager = ((MainApplication) getApplication()).getTokenManager();
 
         EditText usernameEditText = findViewById(R.id.editTextId);
         EditText passwordEditText = findViewById(R.id.editTextPassword);

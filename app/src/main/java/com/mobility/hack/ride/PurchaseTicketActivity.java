@@ -12,11 +12,11 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.button.MaterialButtonToggleGroup;
+import com.mobility.hack.MainApplication;
 import com.mobility.hack.R;
 import com.mobility.hack.network.ApiService;
 import com.mobility.hack.network.PointRequest;
 import com.mobility.hack.network.PointResponse;
-import com.mobility.hack.network.RetrofitClient;
 import com.mobility.hack.security.TokenManager;
 
 import java.io.IOException;
@@ -49,8 +49,9 @@ public class PurchaseTicketActivity extends AppCompatActivity {
         planDetailsText = findViewById(R.id.plan_details_text);
         MaterialButton nextButton = findViewById(R.id.next_button);
 
-        tokenManager = new TokenManager(this);
-        apiService = RetrofitClient.getApiService(tokenManager);
+        // MainApplication에서 ApiService 및 TokenManager 인스턴스 가져오기
+        apiService = ((MainApplication) getApplication()).getApiService();
+        tokenManager = ((MainApplication) getApplication()).getTokenManager();
 
         // 툴바 뒤로가기 설정
         if (toolbar != null) {

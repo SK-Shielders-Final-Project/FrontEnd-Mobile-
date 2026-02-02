@@ -35,10 +35,12 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.journeyapps.barcodescanner.ScanContract;
 import com.journeyapps.barcodescanner.ScanOptions;
+import com.mobility.hack.MainApplication;
 import com.mobility.hack.R;
 import com.mobility.hack.auth.MenuActivity;
 import com.mobility.hack.auth.MyInfoActivity;
 import com.mobility.hack.chatbot.ChatActivity;
+import com.mobility.hack.network.ApiService;
 import com.mobility.hack.network.BikeResponse; // [수정] BikeResponse 임포트 추가
 
 import java.util.List;
@@ -123,7 +125,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             mapFragment.getMapAsync(this);
         }
 
-        fileCacher = new FileCacher(this);
+        // MainApplication에서 ApiService 인스턴스를 가져와 FileCacher 초기화
+        ApiService apiService = ((MainApplication) getApplication()).getApiService();
+        fileCacher = new FileCacher(apiService);
 
         ImageButton btnChatBot = findViewById(R.id.btnChatBot);
         btnChatBot.setOnClickListener(v -> {
