@@ -12,7 +12,7 @@ okhttp = "5.3.2"
 hilt = "2.51.1"
 securityCrypto = "1.1.0"
 zxing-embedded = "4.3.0"
-kotlin = "1.9.0"
+kotlin = "1.9.22"
 
 [libraries]
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -32,6 +32,6 @@ zxing-embedded = { group = "com.journeyapps", name = "zxing-android-embedded", v
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
-hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-kapt = { id = "org.jetbrains.kotlin.kapt", version.ref = "kotlin" }
+hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }

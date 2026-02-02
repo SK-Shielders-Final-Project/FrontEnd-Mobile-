@@ -14,6 +14,7 @@ import com.mobility.hack.R;
 import com.mobility.hack.network.ApiService;
 import com.mobility.hack.network.ChangePasswordRequest;
 import com.mobility.hack.network.RetrofitClient;
+import com.mobility.hack.network.UserInfoResponse;
 import com.mobility.hack.security.TokenManager;
 
 import org.jetbrains.annotations.NotNull;
@@ -74,9 +75,9 @@ public class ChangePasswordActivity extends AppCompatActivity {
     }
 
     private void changePassword(ChangePasswordRequest request, TextInputLayout currentPasswordLayout) {
-        apiService.changePassword(request).enqueue(new Callback<Void>() {
+        apiService.changePassword(request).enqueue(new Callback<UserInfoResponse>() {
             @Override
-            public void onResponse(@NotNull Call<Void> call, @NotNull Response<Void> response) {
+            public void onResponse(@NotNull Call<UserInfoResponse> call, @NotNull Response<UserInfoResponse> response) {
                 if (isFinishing() || isDestroyed()) return;
                 if (response.isSuccessful()) {
                     Toast.makeText(ChangePasswordActivity.this, "비밀번호가 성공적으로 변경되었습니다.", Toast.LENGTH_SHORT).show();
@@ -87,7 +88,7 @@ public class ChangePasswordActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onFailure(@NotNull Call<Void> call, @NotNull Throwable t) {
+            public void onFailure(@NotNull Call<UserInfoResponse> call, @NotNull Throwable t) {
                 if (isFinishing() || isDestroyed()) return;
                 Toast.makeText(ChangePasswordActivity.this, "네트워크 오류: " + t.getMessage(), Toast.LENGTH_SHORT).show();
             }

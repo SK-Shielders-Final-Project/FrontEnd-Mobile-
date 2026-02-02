@@ -1,28 +1,17 @@
 package com.mobility.hack.network;
 
-import com.google.gson.annotations.SerializedName;
-
 public class InquiryModifyRequest {
-    @SerializedName("user_id")
-    private Long userId;
-
-    @SerializedName("inquiry_id")
-    private Long inquiryId;
-
-    @SerializedName("title")
+    private Long user_id;
+    private Long inquiry_id;
     private String title;
-
-    @SerializedName("content")
     private String content;
+    private Long file_id; // [중요] long 대신 Long 사용 (null 허용)
 
-    @SerializedName("file_id")
-    private Long fileId;
-
-    public InquiryModifyRequest(Long userId, Long inquiryId, String title, String content, Long fileId) {
-        this.userId = userId;
-        this.inquiryId = inquiryId;
+    public InquiryModifyRequest(Long user_id, Long inquiry_id, String title, String content, Long file_id) {
+        this.user_id = user_id;
+        this.inquiry_id = inquiry_id;
         this.title = title;
         this.content = content;
-        this.fileId = fileId;
+        this.file_id = file_id;
     }
 }
