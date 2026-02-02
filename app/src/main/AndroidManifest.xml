@@ -95,6 +95,9 @@
         <activity
             android:name=".ride.PurchaseSuccessActivity"
             android:exported="false" />
+        <activity
+            android:name=".ride.PaymentSuccessActivity"
+            android:exported="false" />
 
         <activity
             android:name=".community.InquiryDetailActivity"

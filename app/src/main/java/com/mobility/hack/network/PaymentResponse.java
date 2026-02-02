@@ -1,5 +1,7 @@
 package com.mobility.hack.network;
 
+import com.google.gson.annotations.SerializedName;
+
 public class PaymentResponse {
 
     private long userId;
@@ -8,6 +10,9 @@ public class PaymentResponse {
     private String paymentKey;
     private String paymentMethod;
     private String status;
+
+    @SerializedName("totalPoint")
+    private long totalPoint;
 
     // Getters
     public long getUserId() {
@@ -32,5 +37,9 @@ public class PaymentResponse {
 
     public String getStatus() {
         return status;
+    }
+
+    public long getTotalPoint() {
+        return totalPoint;
     }
 }
