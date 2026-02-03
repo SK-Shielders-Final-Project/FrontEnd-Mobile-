@@ -147,6 +147,10 @@
             android:exported="false" />
 
         <activity
+            android:name=".GiftConfirmationActivity"
+            android:exported="false" />
+
+        <activity
             android:name=".community.InquiryEditActivity"
             android:exported="false"
             android:windowSoftInputMode="adjustResize" />

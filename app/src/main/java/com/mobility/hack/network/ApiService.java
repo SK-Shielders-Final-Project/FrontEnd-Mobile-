@@ -112,4 +112,12 @@ public interface ApiService {
     @POST("/api/app/verify-integrity")
     Call<IntegrityResponse> checkIntegrity(@Body IntegrityRequest request);
 
+    @GET("/api/user/crypto/public-key")
+    Call<PublicKeyResponse> getPublicKey();
+
+    @POST("/api/user/crypto/exchange-key")
+    Call<Void> exchangeKeys(@Body ExchangeRequest request);
+
+    @POST("/api/user/point/gift")
+    Call<PointGiftResponse> giftPoint(@Body PointGiftRequest request);
 }
