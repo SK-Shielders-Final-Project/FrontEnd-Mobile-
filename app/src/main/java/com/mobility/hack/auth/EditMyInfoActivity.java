@@ -4,6 +4,7 @@ import android.os.Bundle;
 import android.util.Base64;
 import android.util.TypedValue;
 import android.view.Gravity;
+import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.GridLayout;
@@ -24,6 +25,7 @@ import java.security.KeyFactory;
 import java.security.PublicKey;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -92,61 +94,71 @@ public class EditMyInfoActivity extends AppCompatActivity {
     private void setupVirtualKeypad() {
         GridLayout keypadLayout = findViewById(R.id.keypad_layout);
         keypadLayout.setColumnCount(10);
-        keypadLayout.setUseDefaultMargins(false);
         keypadLayout.removeAllViews();
 
-        List<String> keyValues = new ArrayList<>();
-        // Numbers
-        for (int i = 0; i <= 9; i++) {
-            keyValues.add(String.valueOf(i));
-        }
-        // Alphabets
+        // 1. 키 종류별 리스트 생성
+        List<String> specialChars = new ArrayList<>(Arrays.asList("!", "@", "#", "$", "%", "^", "&", "*", "(", ")"));
+        List<String> numbers = new ArrayList<>(Arrays.asList("1", "2", "3", "4", "5", "6", "7", "8", "9", "0"));
+        List<String> alphabets = new ArrayList<>();
         for (char c = 'a'; c <= 'z'; c++) {
-            keyValues.add(String.valueOf(c));
+            alphabets.add(String.valueOf(c));
         }
-        // Special Characters
-        String[] specialChars = {"@", "#", "$", "%", "^", "&", "*", "(", ")", "-", "_", "+", "=", "!", "?"};
-        Collections.addAll(keyValues, specialChars);
 
-        Collections.shuffle(keyValues);
-        keyValues.add("<-"); // Add backspace key
+        // 2. 각 타입별로 랜덤화
+        Collections.shuffle(specialChars);
+        Collections.shuffle(numbers);
+        Collections.shuffle(alphabets);
 
-        for (String value : keyValues) {
-            TextView key = new TextView(this, null, 0);
-            key.setText(value);
-            key.setTextSize(TypedValue.COMPLEX_UNIT_SP, 10);
-            key.setGravity(Gravity.CENTER);
-            key.setPadding(0, 8, 0, 8);
-            key.setClickable(true);
-            key.setIncludeFontPadding(false);
+        // 3. 요청된 순서대로 키 리스트 조합
+        List<String> allKeys = new ArrayList<>();
+        allKeys.addAll(specialChars);
+        allKeys.addAll(numbers);
+        allKeys.addAll(alphabets);
+        allKeys.add("←");
 
+        // 4. TextView를 사용한 기본 키패드 UI 생성
+        for (String key : allKeys) {
+            TextView keyView = new TextView(this);
+            keyView.setText(key);
+            keyView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 20); // 텍스트 크기 증가
+            keyView.setGravity(Gravity.CENTER);
+
+            // 충분한 패딩으로 터치 영역 확보
+            int padding = (int) (16 * getResources().getDisplayMetrics().density);
+            keyView.setPadding(0, padding, 0, padding);
+
+            // 기본 터치 피드백 적용
             TypedValue outValue = new TypedValue();
             getTheme().resolveAttribute(android.R.attr.selectableItemBackground, outValue, true);
-            key.setBackgroundResource(outValue.resourceId);
+            keyView.setBackgroundResource(outValue.resourceId);
+            keyView.setClickable(true);
 
-            if (value.equals("<-")) {
-                key.setOnClickListener(view -> {
+            if (key.equals("←")) {
+                keyView.setOnClickListener(v -> {
                     if (passwordBuilder.length() > 0) {
                         passwordBuilder.deleteCharAt(passwordBuilder.length() - 1);
                         updatePasswordView();
                     }
                 });
             } else {
-                key.setOnClickListener(view -> {
-                    passwordBuilder.append(value);
+                keyView.setOnClickListener(v -> {
+                    passwordBuilder.append(key);
                     updatePasswordView();
                 });
             }
 
-            GridLayout.Spec colSpec = GridLayout.spec(GridLayout.UNDEFINED, 1f);
             GridLayout.LayoutParams params = new GridLayout.LayoutParams();
-            params.columnSpec = colSpec;
             params.width = 0;
-            params.height = GridLayout.LayoutParams.WRAP_CONTENT;
-            key.setLayoutParams(params);
-            keypadLayout.addView(key);
+            params.height = ViewGroup.LayoutParams.WRAP_CONTENT;
+            params.columnSpec = GridLayout.spec(GridLayout.UNDEFINED, 1f);
+            int margin = (int) (2 * getResources().getDisplayMetrics().density);
+            params.setMargins(margin, margin, margin, margin);
+
+            keyView.setLayoutParams(params);
+            keypadLayout.addView(keyView);
         }
     }
+
 
     private void updatePasswordView() {
         StringBuilder maskedPassword = new StringBuilder();
