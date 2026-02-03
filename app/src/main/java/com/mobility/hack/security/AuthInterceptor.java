@@ -18,13 +18,16 @@ public class AuthInterceptor implements Interceptor {
     @NonNull
     @Override
     public Response intercept(@NonNull Chain chain) throws IOException {
-        Request.Builder requestBuilder = chain.request().newBuilder();
+        Request originalRequest = chain.request();
+        Request.Builder requestBuilder = originalRequest.newBuilder();
 
         String token = tokenManager.fetchAuthToken();
         if (token != null) {
-            requestBuilder.addHeader("Authorization", "Bearer " + token);
+            // .header()를 사용하여 기존 헤더를 덮어쓰고, 없으면 추가합니다.
+            requestBuilder.header("Authorization", "Bearer " + token);
         }
 
-        return chain.proceed(requestBuilder.build());
+        Request newRequest = requestBuilder.build();
+        return chain.proceed(newRequest);
     }
 }

@@ -1,5 +1,8 @@
 package com.mobility.hack.network;
 
+import com.mobility.hack.GiftHistory;
+import com.mobility.hack.UsageHistory;
+
 import java.util.List;
 import java.util.Map;
 
@@ -98,6 +101,12 @@ public interface ApiService {
 
     @POST("/api/user/point")
     Call<PointResponse> usePoint(@Body PointRequest request);
+
+    @GET("/api/user/point")
+    Call<List<UsageHistory>> getUsageHistory();
+
+    @GET("/api/user/point/gift/history")
+    Call<List<GiftHistory>> getGiftHistory();
 
     @GET("/api/user/files/download")
     Call<ResponseBody> downloadFile(@Query("file") String filename);
