@@ -21,7 +21,7 @@ import com.mobility.hack.network.RetrofitClient;
 import com.mobility.hack.security.SecurityEngine;
 import com.mobility.hack.ride.MainActivity;
 import com.mobility.hack.security.TokenManager;
-// [추가] 무결성 검증을 위한 클래스 임포트 (패키지명 본인 프로젝트에 맞게 수정 필요)
+
 import com.mobility.hack.network.IntegrityRequest;
 import com.mobility.hack.network.IntegrityResponse;
 
@@ -49,7 +49,7 @@ public class LoginActivity extends AppCompatActivity {
         // ---------------------------------------------------------
         // [보안 로직 추가] 화면 진입 즉시 무결성 검사 실행
         // ---------------------------------------------------------
-        performIntegrityCheck();
+        performIntegrityCheck(); //무결성 끄고싶으면 이 줄만 주석처리!
 
         EditText usernameEditText = findViewById(R.id.editTextId);
         EditText passwordEditText = findViewById(R.id.editTextPassword);
