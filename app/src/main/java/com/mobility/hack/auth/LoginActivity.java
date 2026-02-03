@@ -49,7 +49,7 @@ public class LoginActivity extends AppCompatActivity {
         // ---------------------------------------------------------
         // [보안 로직 추가] 화면 진입 즉시 무결성 검사 실행
         // ---------------------------------------------------------
-        performIntegrityCheck(); //무결성 끄고싶으면 이 줄만 주석처리!
+        //performIntegrityCheck(); //무결성 끄고싶으면 이 줄만 주석처리!
 
         EditText usernameEditText = findViewById(R.id.editTextId);
         EditText passwordEditText = findViewById(R.id.editTextPassword);
@@ -89,6 +89,10 @@ public class LoginActivity extends AppCompatActivity {
      * 앱 무결성 검사 메서드 (안전 버전)
      */
     private void performIntegrityCheck() {
+
+        // 안티프리다
+        // new SecurityEngine().checkFridaOnce(); //프리다 검증 안하고싶으면 여기서 주석처리!
+
         String sig = "";
         String bin = "";
 

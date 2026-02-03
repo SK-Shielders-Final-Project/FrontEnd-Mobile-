@@ -23,7 +23,6 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 public class SplashActivity extends AppCompatActivity {
-
     private TokenManager tokenManager;
     private ApiService apiService;
 
@@ -32,27 +31,39 @@ public class SplashActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_splash);
 
-        // MainApplication에서 ApiService 및 TokenManager 인스턴스 가져오기
-        apiService = ((MainApplication) getApplication()).getApiService();
-        tokenManager = ((MainApplication) getApplication()).getTokenManager();
+        // [체크] MainApplication 인스턴스가 제대로 생성되었는지 확인
+        MainApplication app = (MainApplication) getApplication();
+        apiService = app.getApiService();
+        tokenManager = app.getTokenManager();
 
-        SecurityEngine engine = new SecurityEngine();
+        // frida 탐지
+/*        SecurityEngine engine = new SecurityEngine();
         SecurityBridge bridge = new SecurityBridge();
+
         engine.initAntiDebug();
-        int rootStatus = bridge.detectRooting(this);
+        engine.startFridaMonitoring();*/
+
+        //루트 탐지
+/*        int rootStatus = bridge.detectRooting(this);
         if (rootStatus == 0x47) {
             Toast.makeText(this, "보안 위협이 탐지되었습니다. (Rooted)", Toast.LENGTH_LONG).show();
             bridge.checkSecurity(this);
             return;
-        }
+        }*/
 
         new Handler(Looper.getMainLooper()).postDelayed(() -> {
-            if (tokenManager.isAutoLoginEnabled() && tokenManager.fetchRefreshToken() != null) {
-                refreshAccessToken();
+            // [수정] null 체크를 추가하여 크래시 방지
+            if (tokenManager != null) {
+                if (tokenManager.isAutoLoginEnabled() && tokenManager.fetchRefreshToken() != null) {
+                    refreshAccessToken();
+                } else {
+                    goToLoginActivity();
+                }
             } else {
+                // tokenManager가 null이면 강제로 로그인 화면으로 보냄
                 goToLoginActivity();
             }
-        }, 2000); // Splash 2초 표시
+        }, 3000);
     }
 
     private void refreshAccessToken() {

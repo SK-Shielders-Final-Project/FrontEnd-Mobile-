@@ -50,4 +50,12 @@ public class SecurityEngine {
      * 안티 디버깅 초기화 (Frida, GDB 탐지)
      */
     public native void initAntiDebug();
+
+    // ▼ Frida 탐지 모니터링 시작 메서드
+    public native void startFridaMonitoring();
+
+    // 즉시 검사 함수 선언
+    public native void checkFridaOnce();
+
+    public native boolean wasFridaDetectedEarly();
 }

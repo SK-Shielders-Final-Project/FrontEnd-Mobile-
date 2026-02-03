@@ -15,6 +15,10 @@ import java.security.GeneralSecurityException;
 
 public class MainApplication extends Application {
 
+    static {
+        System.loadLibrary("mobile");
+    }
+
     private TokenManager tokenManager;
     private ApiService apiService;
 
