@@ -99,6 +99,7 @@ dependencies {
     implementation(libs.retrofit)
     implementation(libs.converter.gson)
     implementation(libs.logging.interceptor)
+    implementation(libs.okhttp.urlconnection) // ⭐️ JavaNetCookieJar를 위한 의존성 추가
 
     // Glide
     implementation("com.github.bumptech.glide:glide:4.16.0")

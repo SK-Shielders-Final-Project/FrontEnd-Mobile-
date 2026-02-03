@@ -89,7 +89,7 @@ public class MenuActivity extends AppCompatActivity {
             return;
         }
 
-        apiService.getUserInfoById(userId).enqueue(new Callback<UserInfoResponse>() {
+        apiService.getUserInfo(userId).enqueue(new Callback<UserInfoResponse>() {
             @Override
             public void onResponse(Call<UserInfoResponse> call, Response<UserInfoResponse> response) {
                 if (response.isSuccessful() && response.body() != null) {

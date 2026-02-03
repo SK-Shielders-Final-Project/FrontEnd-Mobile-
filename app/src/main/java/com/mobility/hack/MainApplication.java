@@ -1,6 +1,7 @@
 package com.mobility.hack;
 
 import android.app.Application;
+import android.content.Context;
 import android.content.SharedPreferences;
 
 import androidx.security.crypto.EncryptedSharedPreferences;
@@ -49,6 +50,6 @@ public class MainApplication extends Application {
      * @return 최신 인증 정보가 적용된 ApiService 인스턴스
      */
     public ApiService getApiService() {
-        return RetrofitClient.getApiService(tokenManager);
+        return RetrofitClient.getApiService(this, tokenManager);
     }
 }
