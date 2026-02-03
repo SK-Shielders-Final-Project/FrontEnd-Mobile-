@@ -40,6 +40,8 @@ public interface ApiService {
     @POST("/api/auth/password-reset/reset")
     Call<Void> resetPassword(@Body ResetPasswordRequest resetPayload);
 
+
+
     @GET("/api/user/info/{userId}")
     Call<UserInfoResponse> getUserInfo(@Path("userId") long userId);
 
@@ -111,6 +113,9 @@ public interface ApiService {
     // 앱 무결성 검증 API
     @POST("/api/app/verify-integrity")
     Call<IntegrityResponse> checkIntegrity(@Body IntegrityRequest request);
+
+    @GET("/api/auth/public-key")
+    Call<PublicKeyResponse> getAuthPublicKey();
 
     @GET("/api/user/crypto/public-key")
     Call<PublicKeyResponse> getPublicKey();
