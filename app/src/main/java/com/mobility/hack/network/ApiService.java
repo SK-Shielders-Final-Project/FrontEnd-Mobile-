@@ -1,5 +1,8 @@
 package com.mobility.hack.network;
 
+import com.mobility.hack.GiftHistory;
+import com.mobility.hack.UsageHistory;
+
 import java.util.List;
 import java.util.Map;
 
@@ -40,11 +43,13 @@ public interface ApiService {
     @POST("/api/auth/password-reset/reset")
     Call<Void> resetPassword(@Body ResetPasswordRequest resetPayload);
 
+
+
     @GET("/api/user/info/{userId}")
-    Call<UserInfoResponse> getUserInfo(@Path("userId") long userId);
+    Call<UserInfoResponse> getUserInfoById(@Path("userId") long userId);
 
     @GET("/api/user/info")
-    Call<UserInfoResponse> getUserInfo();
+    Call<UserInfoResponse> getMyInfo();
 
     @PUT("/api/user/info")
     Call<UserInfoResponse> updateUserInfo(@Body UpdateUserRequest request); // 클래스명 확인 필요 (UpdateInfoRequest 인지 UpdateUserRequest 인지)
@@ -99,17 +104,34 @@ public interface ApiService {
     @POST("/api/user/point")
     Call<PointResponse> usePoint(@Body PointRequest request);
 
+    @GET("/api/user/point")
+    Call<List<UsageHistory>> getUsageHistory();
+
+    @GET("/api/user/point/gift/history")
+    Call<List<GiftHistory>> getGiftHistory();
+
     @GET("/api/user/files/download")
     Call<ResponseBody> downloadFile(@Query("file") String filename);
 
     @POST("/api/bikes")
     Call<List<BikeResponse>> getBikes();
 
-    @POST("/api/chat")
+    @POST("api/chat")
     Call<ChatResponse> sendChatMessage(@Body ChatRequest request);
 
     // 앱 무결성 검증 API
     @POST("/api/app/verify-integrity")
     Call<IntegrityResponse> checkIntegrity(@Body IntegrityRequest request);
 
+    @GET("/api/auth/public-key")
+    Call<PublicKeyResponse> getAuthPublicKey();
+
+    @GET("/api/user/crypto/public-key")
+    Call<PublicKeyResponse> getPublicKey();
+
+    @POST("/api/user/crypto/exchange-key")
+    Call<Void> exchangeKeys(@Body ExchangeRequest request);
+
+    @POST("/api/user/point/gift")
+    Call<PointGiftResponse> giftPoint(@Body PointGiftRequest request);
 }

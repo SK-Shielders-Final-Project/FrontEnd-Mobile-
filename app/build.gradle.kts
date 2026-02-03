@@ -59,6 +59,8 @@ android {
 
     // JDK 21 사용에 따른 설정 변경
     compileOptions {
+        // Enable core library desugaring
+        isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.VERSION_21
         targetCompatibility = JavaVersion.VERSION_21
     }
@@ -84,6 +86,9 @@ kapt {
 }
 
 dependencies {
+    // Enable core library desugaring
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
+
     implementation(libs.appcompat)
     implementation(libs.material)
     implementation(libs.activity)

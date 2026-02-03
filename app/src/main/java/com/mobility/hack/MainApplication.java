@@ -20,7 +20,7 @@ public class MainApplication extends Application {
     }
 
     private TokenManager tokenManager;
-    private ApiService apiService;
+    // private ApiService apiService; // ApiService 인스턴스 캐싱 제거
 
     @Override
     public void onCreate() {
@@ -39,14 +39,20 @@ public class MainApplication extends Application {
             throw new RuntimeException("Could not create EncryptedSharedPreferences", e);
         }
 
-        apiService = RetrofitClient.getApiService(tokenManager);
+        // 앱 시작 시 ApiService를 미리 생성하지 않음
+        // apiService = RetrofitClient.getApiService(tokenManager);
     }
 
     public TokenManager getTokenManager() {
         return tokenManager;
     }
 
+    /**
+     * ApiService 인스턴스를 요청할 때마다 새로 생성하여 반환합니다.
+     * 이렇게 하면 AuthInterceptor가 항상 최신 토큰을 사용하여 API를 요청하게 됩니다.
+     * @return 최신 인증 정보가 적용된 ApiService 인스턴스
+     */
     public ApiService getApiService() {
-        return apiService;
+        return RetrofitClient.getApiService(tokenManager);
     }
 }

@@ -89,12 +89,12 @@ public class MenuActivity extends AppCompatActivity {
             return;
         }
 
-        apiService.getUserInfo(userId).enqueue(new Callback<UserInfoResponse>() {
+        apiService.getUserInfoById(userId).enqueue(new Callback<UserInfoResponse>() {
             @Override
             public void onResponse(Call<UserInfoResponse> call, Response<UserInfoResponse> response) {
                 if (response.isSuccessful() && response.body() != null) {
                     UserInfoResponse userInfo = response.body();
-                    updateUserInterface(userInfo.getUsername(), userInfo.getTotalPoint());
+                    updateUserInterface(userInfo.getName(), userInfo.getTotalPoint());
                 } else {
                     // 서버가 보낸 응용답 코드와 메시지를 로그로 자세히 출력
                     String errorBody = "내용 없음";

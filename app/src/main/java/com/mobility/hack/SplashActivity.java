@@ -71,8 +71,9 @@ public class SplashActivity extends AppCompatActivity {
         apiService.refresh(new RefreshRequest(refreshToken)).enqueue(new Callback<LoginResponse>() {
             @Override
             public void onResponse(@NotNull Call<LoginResponse> call, @NotNull Response<LoginResponse> response) {
-                if (response.isSuccessful() && response.body() != null) {
-                    LoginResponse loginResponse = response.body();
+                LoginResponse loginResponse = response.body();
+                // ✨ [수정] 토큰이 유효한지 명확하게 확인
+                if (response.isSuccessful() && loginResponse != null && loginResponse.getAccessToken() != null && !loginResponse.getAccessToken().isEmpty()) {
                     // 새로운 액세스 토큰 저장
                     tokenManager.saveAuthToken(loginResponse.getAccessToken());
 
@@ -80,10 +81,10 @@ public class SplashActivity extends AppCompatActivity {
                     if (loginResponse.getRefreshToken() != null && !loginResponse.getRefreshToken().isEmpty()) {
                         tokenManager.saveRefreshToken(loginResponse.getRefreshToken());
                     }
-
                     goToMainActivity();
                 } else {
-                    tokenManager.clearData();
+                    // 응답은 성공했으나 토큰이 없거나, 응답 자체가 실패한 경우 모두 로그인 화면으로 보냄
+                    tokenManager.clearData(); // 만료된 토큰 정보 삭제
                     goToLoginActivity();
                 }
             }

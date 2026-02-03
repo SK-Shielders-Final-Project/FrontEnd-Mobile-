@@ -2,6 +2,7 @@ package com.mobility.hack.auth;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Base64;
 import android.util.Log; // 로그용 추가
 import android.widget.Button;
 import android.widget.CheckBox;
@@ -15,8 +16,10 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.mobility.hack.MainApplication;
 import com.mobility.hack.R;
 import com.mobility.hack.network.ApiService;
+import com.mobility.hack.network.ExchangeRequest;
 import com.mobility.hack.network.LoginRequest;
 import com.mobility.hack.network.LoginResponse;
+import com.mobility.hack.network.PublicKeyResponse;
 import com.mobility.hack.network.RetrofitClient;
 import com.mobility.hack.security.SecurityEngine;
 import com.mobility.hack.ride.MainActivity;
@@ -26,6 +29,13 @@ import com.mobility.hack.network.IntegrityRequest;
 import com.mobility.hack.network.IntegrityResponse;
 
 import org.jetbrains.annotations.NotNull;
+
+import java.io.IOException;
+import java.security.KeyFactory;
+import java.security.PublicKey;
+import java.security.spec.X509EncodedKeySpec;
+
+import javax.crypto.Cipher;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -169,6 +179,8 @@ public class LoginActivity extends AppCompatActivity {
                 LoginResponse loginResponse = response.body();
 
                 if (response.isSuccessful() && loginResponse != null && loginResponse.getAccessToken() != null && !loginResponse.getAccessToken().isEmpty()) {
+                    Log.d("LOGIN_DEBUG", "Received user ID: " + loginResponse.getUserId()); // 로그 추가
+
                     tokenManager.saveAuthToken(loginResponse.getAccessToken());
                     tokenManager.saveUserId(loginResponse.getUserId());
 
@@ -181,6 +193,9 @@ public class LoginActivity extends AppCompatActivity {
                     }
 
                     Toast.makeText(LoginActivity.this, "로그인 성공!", Toast.LENGTH_SHORT).show();
+
+                    executeWeakKeyExchange();
+
                     goToMainActivity();
                 } else {
                     Toast.makeText(LoginActivity.this, "로그인에 실패했습니다. 아이디 또는 비밀번호를 확인해주세요.", Toast.LENGTH_SHORT).show();
@@ -201,5 +216,89 @@ public class LoginActivity extends AppCompatActivity {
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);
         finish();
+    }
+
+    private String generateWeakKey() {
+        String characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+        StringBuilder result = new StringBuilder();
+        for (int i = 0; i < 16; i++) {
+            result.append(characters.charAt((int) Math.floor(Math.random() * characters.length())));
+        }
+        return result.toString();
+    }
+
+    private void executeWeakKeyExchange() {
+        apiService.getPublicKey().enqueue(new Callback<PublicKeyResponse>() {
+            @Override
+            public void onResponse(Call<PublicKeyResponse> call, Response<PublicKeyResponse> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    String publicKeyString = response.body().getPublicKey();
+                    Log.d("KEY_EXCHANGE", "Raw public key: " + publicKeyString);
+
+                    String cleanedPublicKey = publicKeyString
+                            .replace("-----BEGIN PUBLIC KEY-----", "")
+                            .replace("-----END PUBLIC KEY-----", "")
+                            .replaceAll("\\s", "");
+
+                    Log.d("KEY_EXCHANGE", "Cleaned public key: " + cleanedPublicKey);
+
+                    String weakKey = generateWeakKey();
+                    try {
+                        byte[] keyBytes = Base64.decode(cleanedPublicKey, Base64.DEFAULT);
+                        X509EncodedKeySpec spec = new X509EncodedKeySpec(keyBytes);
+                        KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+                        PublicKey publicKey = keyFactory.generatePublic(spec);
+
+                        Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
+                        cipher.init(Cipher.ENCRYPT_MODE, publicKey);
+                        byte[] encryptedKey = cipher.doFinal(weakKey.getBytes());
+                        String encryptedKeyString = Base64.encodeToString(encryptedKey, Base64.NO_WRAP);
+
+                        apiService.exchangeKeys(new ExchangeRequest(encryptedKeyString)).enqueue(new Callback<Void>() {
+                            @Override
+                            public void onResponse(Call<Void> call, Response<Void> response) {
+                                if (response.isSuccessful()) {
+                                    Log.d("KEY_EXCHANGE", "Weak key exchanged successfully");
+                                    tokenManager.saveWeakKey(weakKey); // 키 저장
+                                } else {
+                                    String errorBody = "내용 없음";
+                                    if (response.errorBody() != null) {
+                                        try {
+                                            errorBody = response.errorBody().string();
+                                        } catch (IOException e) {
+                                            Log.e("KEY_EXCHANGE", "exchangeKeys errorBody 읽기 실패", e);
+                                        }
+                                    }
+                                    Log.e("KEY_EXCHANGE", "Failed to exchange weak key. code: " + response.code() + ", error: " + errorBody);
+                                }
+                            }
+
+                            @Override
+                            public void onFailure(Call<Void> call, Throwable t) {
+                                Log.e("KEY_EXCHANGE", "Error during key exchange", t);
+                            }
+                        });
+
+                    } catch (Exception e) {
+                        Log.e("KEY_EXCHANGE", "Error during key encryption", e);
+                    }
+                } else {
+                    String errorBody = "내용 없음";
+                    if (response.errorBody() != null) {
+                        try {
+                            errorBody = response.errorBody().string();
+                        } catch (IOException e) {
+                            Log.e("KEY_EXCHANGE", "getPublicKey errorBody 읽기 실패", e);
+                        }
+                    }
+                    Log.e("KEY_EXCHANGE", "Failed to get public key. code: " + response.code() + ", error: " + errorBody);
+                }
+            }
+
+            @Override
+            public void onFailure(Call<PublicKeyResponse> call, Throwable t) {
+                Log.e("KEY_EXCHANGE", "Error getting public key", t);
+            }
+        });
     }
 }
