@@ -107,4 +107,9 @@ public interface ApiService {
 
     @POST("/api/chat")
     Call<ChatResponse> sendChatMessage(@Body ChatRequest request);
+
+    // 앱 무결성 검증 API
+    @POST("/api/app/verify-integrity")
+    Call<IntegrityResponse> checkIntegrity(@Body IntegrityRequest request);
+
 }
