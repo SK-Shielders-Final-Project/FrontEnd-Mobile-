@@ -46,10 +46,10 @@ public interface ApiService {
 
 
     @GET("/api/user/info/{userId}")
-    Call<UserInfoResponse> getUserInfoById(@Path("userId") long userId);
+    Call<UserInfoResponse> getUserInfo(@Path("userId") long userId);
 
     @GET("/api/user/info")
-    Call<UserInfoResponse> getMyInfo();
+    Call<UserInfoResponse> getUserInfo();
 
     @PUT("/api/user/info")
     Call<UserInfoResponse> updateUserInfo(@Body UpdateUserRequest request); // 클래스명 확인 필요 (UpdateInfoRequest 인지 UpdateUserRequest 인지)

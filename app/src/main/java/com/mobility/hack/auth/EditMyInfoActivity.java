@@ -1,6 +1,5 @@
 package com.mobility.hack.auth;
 
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Base64;
 import android.util.TypedValue;
@@ -17,7 +16,6 @@ import com.mobility.hack.MainApplication;
 import com.mobility.hack.R;
 import com.mobility.hack.network.ApiService;
 import com.mobility.hack.network.PublicKeyResponse;
-import com.mobility.hack.network.RetrofitClient;
 import com.mobility.hack.network.UpdateUserRequest;
 import com.mobility.hack.network.UserInfoResponse;
 import com.mobility.hack.security.TokenManager;
@@ -30,9 +28,6 @@ import java.util.Collections;
 import java.util.List;
 
 import javax.crypto.Cipher;
-import javax.crypto.spec.OAEPParameterSpec;
-import javax.crypto.spec.PSource;
-import java.security.spec.MGF1ParameterSpec;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -73,12 +68,12 @@ public class EditMyInfoActivity extends AppCompatActivity {
 
     private void loadUserInfo() {
         long userId = tokenManager.fetchUserId();
-        apiService.getUserInfoById(userId).enqueue(new Callback<UserInfoResponse>() {
+        apiService.getUserInfo(userId).enqueue(new Callback<UserInfoResponse>() {
             @Override
             public void onResponse(Call<UserInfoResponse> call, Response<UserInfoResponse> response) {
                 if (response.isSuccessful() && response.body() != null) {
                     currentUserInfo = response.body();
-                    etName.setText(currentUserInfo.getName());
+                    etName.setText(currentUserInfo.getName()); // 실제 이름으로 설정
                     etEmail.setText(currentUserInfo.getEmail());
                     etPhone.setText(currentUserInfo.getPhone());
                 } else {
@@ -234,9 +229,8 @@ public class EditMyInfoActivity extends AppCompatActivity {
         KeyFactory keyFactory = KeyFactory.getInstance("RSA");
         PublicKey publicKey = keyFactory.generatePublic(keySpec);
 
-        Cipher cipher = Cipher.getInstance("RSA/ECB/OAEPWithSHA-256AndMGF1Padding");
-        OAEPParameterSpec oaepParams = new OAEPParameterSpec("SHA-256", "MGF1", MGF1ParameterSpec.SHA1, PSource.PSpecified.DEFAULT);
-        cipher.init(Cipher.ENCRYPT_MODE, publicKey, oaepParams);
+        Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
+        cipher.init(Cipher.ENCRYPT_MODE, publicKey);
 
         byte[] encryptedBytes = cipher.doFinal(plainText.getBytes());
         return Base64.encodeToString(encryptedBytes, Base64.DEFAULT);
