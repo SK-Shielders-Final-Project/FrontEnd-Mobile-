@@ -10,10 +10,10 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
+import com.mobility.hack.MainApplication;
 import com.mobility.hack.R;
 import com.mobility.hack.network.ApiService;
 import com.mobility.hack.network.ResetPasswordRequest;
-import com.mobility.hack.network.RetrofitClient;
 import com.mobility.hack.security.TokenManager;
 
 import org.jetbrains.annotations.NotNull;
@@ -21,7 +21,6 @@ import org.jetbrains.annotations.NotNull;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
-import retrofit2.Retrofit;
 
 public class ResetPasswordActivity extends AppCompatActivity {
     private ApiService apiService;
@@ -31,9 +30,11 @@ public class ResetPasswordActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_reset_password);
-        tokenManager = new TokenManager(getApplicationContext());
-        Retrofit retrofit = RetrofitClient.getClient(tokenManager);
-        apiService = retrofit.create(ApiService.class);
+
+        // MainApplication에서 ApiService 및 TokenManager 인스턴스 가져오기
+        apiService = ((MainApplication) getApplication()).getApiService();
+        tokenManager = ((MainApplication) getApplication()).getTokenManager();
+
         TextInputLayout newPasswordLayout = findViewById(R.id.textInputLayoutNewPassword);
         TextInputLayout newPasswordConfirmLayout = findViewById(R.id.textInputLayoutNewPasswordConfirm);
         TextInputEditText newPasswordEditText = findViewById(R.id.editTextNewPassword);

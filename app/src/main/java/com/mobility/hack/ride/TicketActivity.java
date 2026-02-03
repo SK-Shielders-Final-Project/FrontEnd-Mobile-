@@ -13,11 +13,10 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
+import com.mobility.hack.MainApplication;
 import com.mobility.hack.network.ApiService;
-import com.mobility.hack.network.RetrofitClient;
 import com.mobility.hack.network.VoucherRequest;
 import com.mobility.hack.network.VoucherResponse;
-import com.mobility.hack.security.TokenManager;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -32,8 +31,8 @@ public class TicketActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        TokenManager tokenManager = new TokenManager(this);
-        apiService = RetrofitClient.getApiService(tokenManager);
+        // MainApplication에서 ApiService 인스턴스 가져오기
+        apiService = ((MainApplication) getApplication()).getApiService();
 
         showVoucherInputDialog();
     }

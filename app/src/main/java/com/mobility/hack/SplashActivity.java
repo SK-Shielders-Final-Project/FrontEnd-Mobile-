@@ -11,7 +11,6 @@ import com.mobility.hack.auth.LoginActivity;
 import com.mobility.hack.network.ApiService;
 import com.mobility.hack.network.LoginResponse;
 import com.mobility.hack.network.RefreshRequest;
-import com.mobility.hack.network.RetrofitClient;
 import com.mobility.hack.ride.MainActivity;
 import com.mobility.hack.security.SecurityBridge;
 import com.mobility.hack.security.SecurityEngine;
@@ -33,8 +32,9 @@ public class SplashActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_splash);
 
-        tokenManager = new TokenManager(this);
-        apiService = RetrofitClient.getClient(tokenManager).create(ApiService.class);
+        // MainApplication에서 ApiService 및 TokenManager 인스턴스 가져오기
+        apiService = ((MainApplication) getApplication()).getApiService();
+        tokenManager = ((MainApplication) getApplication()).getTokenManager();
 
         SecurityEngine engine = new SecurityEngine();
         SecurityBridge bridge = new SecurityBridge();

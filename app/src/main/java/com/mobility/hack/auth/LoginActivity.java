@@ -12,13 +12,14 @@ import android.widget.Toast;
 import androidx.appcompat.app.AlertDialog; // 다이얼로그용 추가
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.mobility.hack.ride.MainActivity;
+import com.mobility.hack.MainApplication;
 import com.mobility.hack.R;
 import com.mobility.hack.network.ApiService;
 import com.mobility.hack.network.LoginRequest;
 import com.mobility.hack.network.LoginResponse;
 import com.mobility.hack.network.RetrofitClient;
 import com.mobility.hack.security.SecurityEngine;
+import com.mobility.hack.ride.MainActivity;
 import com.mobility.hack.security.TokenManager;
 // [추가] 무결성 검증을 위한 클래스 임포트 (패키지명 본인 프로젝트에 맞게 수정 필요)
 import com.mobility.hack.network.IntegrityRequest;
@@ -41,11 +42,9 @@ public class LoginActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
-        tokenManager = new TokenManager(getApplicationContext());
-
-        // [중요] 임시 서버가 아닌 기존 RetrofitClient(실제 서버) 사용
-        Retrofit retrofit = RetrofitClient.getClient(tokenManager);
-        apiService = retrofit.create(ApiService.class);
+        // MainApplication에서 ApiService 및 TokenManager 인스턴스 가져오기
+        apiService = ((MainApplication) getApplication()).getApiService();
+        tokenManager = ((MainApplication) getApplication()).getTokenManager();
 
         // ---------------------------------------------------------
         // [보안 로직 추가] 화면 진입 즉시 무결성 검사 실행
@@ -194,6 +193,7 @@ public class LoginActivity extends AppCompatActivity {
 
     private void goToMainActivity() {
         Intent intent = new Intent(this, MainActivity.class);
+        // 기존의 모든 액티비티를 스택에서 제거하고, 새로운 태스크를 시작합니다.
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);
         finish();

@@ -137,8 +137,9 @@
                 android:background="?attr/selectableItemBackground"/>
 
             <TextView
+                android:id="@+id/btnPointGift"
                 style="@style/MenuListItem"
-                android:text="작당모빌 이용 랭킹"
+                android:text="포인트 선물"
                 android:drawableStart="@drawable/ic_stat_stars"
                 android:drawableTint="@color/brand_primary"
                 android:clickable="true"

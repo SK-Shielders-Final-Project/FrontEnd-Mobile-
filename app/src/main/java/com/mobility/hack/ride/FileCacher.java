@@ -1,11 +1,7 @@
 package com.mobility.hack.ride;
 
-import android.content.Context;
-
 import com.mobility.hack.network.ApiService;
 import com.mobility.hack.network.BikeResponse;
-import com.mobility.hack.network.RetrofitClient;
-import com.mobility.hack.security.TokenManager;
 
 import java.util.List;
 
@@ -17,13 +13,8 @@ public class FileCacher {
 
     private ApiService apiService;
 
-    public FileCacher(Context context) {
-        TokenManager tokenManager =
-                new TokenManager(context.getApplicationContext());
-
-        this.apiService = RetrofitClient
-                .getClient(tokenManager)
-                .create(ApiService.class);
+    public FileCacher(ApiService apiService) {
+        this.apiService = apiService;
     }
 
     public interface BikeCallback {

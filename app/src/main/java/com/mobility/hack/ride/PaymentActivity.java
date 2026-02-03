@@ -1,5 +1,6 @@
 package com.mobility.hack.ride;
 
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
@@ -13,12 +14,13 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.mobility.hack.MainApplication;
 import com.mobility.hack.R;
 import com.mobility.hack.network.ApiService;
 import com.mobility.hack.network.PaymentRequest;
 import com.mobility.hack.network.PaymentResponse;
-import com.mobility.hack.network.RetrofitClient;
 import com.mobility.hack.security.TokenManager;
+import com.mobility.hack.ride.PaymentSuccessActivity; // Import 추가
 
 import java.io.IOException;
 
@@ -43,8 +45,9 @@ public class PaymentActivity extends AppCompatActivity {
 
         webView = findViewById(R.id.webView);
 
-        tokenManager = new TokenManager(this);
-        apiService = RetrofitClient.getApiService(tokenManager);
+        // MainApplication에서 ApiService 및 TokenManager 인스턴스 가져오기
+        apiService = ((MainApplication) getApplication()).getApiService();
+        tokenManager = ((MainApplication) getApplication()).getTokenManager();
 
         // 1. 웹뷰 설정
         WebSettings settings = webView.getSettings();
@@ -65,9 +68,9 @@ public class PaymentActivity extends AppCompatActivity {
                     } else if ("/fail".equals(uri.getPath())) {
                         String message = uri.getQueryParameter("message");
                         Toast.makeText(PaymentActivity.this, "결제 실패: " + message, Toast.LENGTH_SHORT).show();
+                        finish();
                     }
-                    finish();
-                    return true;
+                    return true; // localhost로 시작하는 URL 처리가 끝나면 웹뷰 로딩을 중단합니다.
                 }
                 return super.shouldOverrideUrlLoading(view, url);
             }
@@ -82,8 +85,7 @@ public class PaymentActivity extends AppCompatActivity {
                         + consoleMessage.sourceId();
                 Log.e("WebViewConsole", logMessage);
 
-                // 오류 메시지를 화면에 토스트로 보여줌
-                Toast.makeText(PaymentActivity.this, "WebConsole: " + consoleMessage.message(), Toast.LENGTH_LONG).show();
+                // 오류 메시지를 화면에 토스트로 보여주지 않도록 수정
                 return true;
             }
         });
@@ -124,9 +126,13 @@ public class PaymentActivity extends AppCompatActivity {
         apiService.confirmPayment(paymentRequest).enqueue(new Callback<PaymentResponse>() {
             @Override
             public void onResponse(Call<PaymentResponse> call, Response<PaymentResponse> response) {
-                if (response.isSuccessful()) {
-                    Toast.makeText(PaymentActivity.this, "포인트가 충전되었습니다.", Toast.LENGTH_LONG).show();
-                    finish();
+                if (response.isSuccessful() && response.body() != null) {
+                    // 성공 시 PaymentSuccessActivity로 이동
+                    Intent intent = new Intent(PaymentActivity.this, PaymentSuccessActivity.class);
+                    intent.putExtra(PaymentSuccessActivity.EXTRA_CHARGED_AMOUNT, amount);
+                    intent.putExtra(PaymentSuccessActivity.EXTRA_TOTAL_BALANCE, response.body().getTotalPoint());
+                    startActivity(intent);
+                    finish(); // 현재 결제 진행 액티비티 종료
                 } else {
                     try {
                         Log.e(TAG, "Payment failed: " + response.errorBody().string());
@@ -134,6 +140,7 @@ public class PaymentActivity extends AppCompatActivity {
                         Log.e(TAG, "Error reading error body", e);
                     }
                     Toast.makeText(PaymentActivity.this, "포인트 충전에 실패했습니다.", Toast.LENGTH_LONG).show();
+                    finish();
                 }
             }
 
@@ -141,6 +148,7 @@ public class PaymentActivity extends AppCompatActivity {
             public void onFailure(Call<PaymentResponse> call, Throwable t) {
                 Log.e(TAG, "Payment API call failed", t);
                 Toast.makeText(PaymentActivity.this, "서버 통신에 실패했습니다.", Toast.LENGTH_LONG).show();
+                finish();
             }
         });
     }
