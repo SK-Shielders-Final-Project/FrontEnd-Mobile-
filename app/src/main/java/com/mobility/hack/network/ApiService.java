@@ -46,10 +46,10 @@ public interface ApiService {
 
 
     @GET("/api/user/info/{userId}")
-    Call<UserInfoResponse> getUserInfo(@Path("userId") long userId);
+    Call<UserInfoResponse> getUserInfoById(@Path("userId") long userId);
 
     @GET("/api/user/info")
-    Call<UserInfoResponse> getUserInfo();
+    Call<UserInfoResponse> getMyInfo();
 
     @PUT("/api/user/info")
     Call<UserInfoResponse> updateUserInfo(@Body UpdateUserRequest request); // 클래스명 확인 필요 (UpdateInfoRequest 인지 UpdateUserRequest 인지)
@@ -116,7 +116,7 @@ public interface ApiService {
     @POST("/api/bikes")
     Call<List<BikeResponse>> getBikes();
 
-    @POST("/api/chat")
+    @POST("api/chat")
     Call<ChatResponse> sendChatMessage(@Body ChatRequest request);
 
     // 앱 무결성 검증 API

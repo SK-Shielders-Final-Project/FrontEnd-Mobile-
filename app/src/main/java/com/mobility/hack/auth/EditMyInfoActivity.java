@@ -13,6 +13,7 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.mobility.hack.MainApplication;
 import com.mobility.hack.R;
 import com.mobility.hack.network.ApiService;
 import com.mobility.hack.network.PublicKeyResponse;
@@ -52,9 +53,9 @@ public class EditMyInfoActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_edit_my_info);
 
-        SharedPreferences sharedPreferences = getSharedPreferences("user_prefs", MODE_PRIVATE);
-        tokenManager = new TokenManager(sharedPreferences);
-        apiService = RetrofitClient.getClient(tokenManager).create(ApiService.class);
+        // MainApplication에서 싱글톤 인스턴스 가져오기
+        apiService = ((MainApplication) getApplication()).getApiService();
+        tokenManager = ((MainApplication) getApplication()).getTokenManager();
 
         etName = findViewById(R.id.et_name);
         etEmail = findViewById(R.id.et_email);
@@ -72,20 +73,23 @@ public class EditMyInfoActivity extends AppCompatActivity {
 
     private void loadUserInfo() {
         long userId = tokenManager.fetchUserId();
-        apiService.getUserInfo(userId).enqueue(new Callback<UserInfoResponse>() {
+        apiService.getUserInfoById(userId).enqueue(new Callback<UserInfoResponse>() {
             @Override
             public void onResponse(Call<UserInfoResponse> call, Response<UserInfoResponse> response) {
                 if (response.isSuccessful() && response.body() != null) {
                     currentUserInfo = response.body();
-                    etName.setText(currentUserInfo.getUsername());
+                    etName.setText(currentUserInfo.getName());
                     etEmail.setText(currentUserInfo.getEmail());
                     etPhone.setText(currentUserInfo.getPhone());
+                } else {
+                    String errorMsg = "사용자 정보를 가져오지 못했습니다. 코드: " + response.code();
+                    Toast.makeText(EditMyInfoActivity.this, errorMsg, Toast.LENGTH_SHORT).show();
                 }
             }
 
             @Override
             public void onFailure(Call<UserInfoResponse> call, Throwable t) {
-                Toast.makeText(EditMyInfoActivity.this, "사용자 정보 로딩 실패: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+                Toast.makeText(EditMyInfoActivity.this, "네트워크 오류: " + t.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -188,6 +192,7 @@ public class EditMyInfoActivity extends AppCompatActivity {
             return;
         }
 
+        String name = currentUserInfo.getName();
         String username = currentUserInfo.getUsername();
         String email = etEmail.getText().toString();
         String phone = etPhone.getText().toString();
@@ -195,7 +200,7 @@ public class EditMyInfoActivity extends AppCompatActivity {
 
         try {
             String encryptedPassword = encrypt(password, publicKey);
-            UpdateUserRequest request = new UpdateUserRequest(username, username, encryptedPassword, email, phone, currentUserInfo.getAdminLev());
+            UpdateUserRequest request = new UpdateUserRequest(name, username, encryptedPassword, email, phone, currentUserInfo.getAdminLev());
 
             apiService.updateUserInfo(request).enqueue(new Callback<UserInfoResponse>() {
                 @Override

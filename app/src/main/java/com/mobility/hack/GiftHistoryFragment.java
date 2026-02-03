@@ -50,11 +50,11 @@ public class GiftHistoryFragment extends Fragment {
             return;
         }
 
-        apiService.getUserInfo(userId).enqueue(new Callback<UserInfoResponse>() {
+        apiService.getUserInfoById(userId).enqueue(new Callback<UserInfoResponse>() {
             @Override
             public void onResponse(Call<UserInfoResponse> call, Response<UserInfoResponse> response) {
                 if (response.isSuccessful() && response.body() != null) {
-                    String currentUsername = response.body().getUsername();
+                    String currentUsername = response.body().getName();
                     fetchGiftHistory(currentUsername);
                 } else {
                     Toast.makeText(getContext(), "사용자 정보 조회 실패", Toast.LENGTH_SHORT).show();

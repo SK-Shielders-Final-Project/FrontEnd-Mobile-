@@ -76,13 +76,13 @@ public class MyInfoActivity extends AppCompatActivity {
             return;
         }
 
-        apiService.getUserInfo(userId).enqueue(new Callback<UserInfoResponse>() {
+        apiService.getUserInfoById(userId).enqueue(new Callback<UserInfoResponse>() {
             @Override
             public void onResponse(@NotNull Call<UserInfoResponse> call, @NotNull Response<UserInfoResponse> response) {
                 if (isFinishing() || isDestroyed()) return;
                 if (response.isSuccessful() && response.body() != null) {
                     UserInfoResponse userInfo = response.body();
-                    tvName.setText(userInfo.getUsername());
+                    tvName.setText(userInfo.getName());
                     tvEmail.setText(userInfo.getEmail());
                     tvPhone.setText(userInfo.getPhone());
                     tvPoints.setText(String.valueOf(userInfo.getTotalPoint()) + " P");

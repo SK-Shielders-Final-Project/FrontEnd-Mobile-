@@ -103,13 +103,13 @@ public class PointGiftActivity extends AppCompatActivity {
             return;
         }
 
-        apiService.getUserInfo(userId).enqueue(new Callback<UserInfoResponse>() {
+        apiService.getUserInfoById(userId).enqueue(new Callback<UserInfoResponse>() {
             @Override
             public void onResponse(Call<UserInfoResponse> call, Response<UserInfoResponse> response) {
                 if (response.isSuccessful() && response.body() != null) {
                     UserInfoResponse userInfo = response.body();
                     currentUserPoint = userInfo.getTotalPoint();
-                    currentUserName = userInfo.getUsername(); // 사용자 이름 저장
+                    currentUserName = userInfo.getName(); // 사용자 이름 저장
 
                     DecimalFormat formatter = new DecimalFormat("###,###");
                     String formattedPoint = formatter.format(currentUserPoint);
