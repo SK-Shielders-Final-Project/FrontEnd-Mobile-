@@ -31,40 +31,7 @@ public class SecurityEngine {
     public static native String getNativeBinaryHash(Context context);
 
 
-    // =========================================================
-    // 2. [구 SecurityEngine] 보안 로직 및 탐지 (Instance 유지)
-    // =========================================================
-    /**
-     * 네이티브에 숨겨진 API Key 가져오기
-     */
-    public native String getApiKey();
-
-    /**
-     * 종합 무결성 검사 (루팅 + 서명 등)
-     */
-    public native boolean checkIntegrity();
-
-    /**
-     * KernelSU 등 최신 루팅 툴 탐지
-     */
-    public native boolean isKernelSuDetected();
-
-    /**
-     * 안티 디버깅 초기화 (Frida, GDB 탐지)
-     */
-    public native void initAntiDebug();
-
-    /**
-     * [Root Check] 시스템 무결성 검사를 시작합니다.
-     * @param activity : 검사 결과에 따라 콜백 함수(onNetworkError 등)를 호출할 대상 액티비티
-     */
-    public native void startSystemCheck(Object activity);
-
-    // ▼ Frida 탐지 모니터링 시작 메서드
-    public native void startFridaMonitoring();
-
     // 즉시 검사 함수 선언
     public native void checkFridaOnce();
 
-    public native boolean wasFridaDetectedEarly();
 }

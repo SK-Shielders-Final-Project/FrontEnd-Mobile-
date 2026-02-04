@@ -29,22 +29,36 @@ import retrofit2.Response;
 public class SplashActivity extends AppCompatActivity {
     private TokenManager tokenManager;
     private ApiService apiService;
+    private SecurityBridge bridge;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_splash);
 
+        bridge = new SecurityBridge();
+
         MainApplication app = (MainApplication) getApplication();
         apiService = app.getApiService();
         tokenManager = app.getTokenManager();
 
         // ---------------------------------------------------------
-        // [보안 단계 1] C++ 레벨 탐지 시작
+        // [보안 단계 1] Java 레벨 명시적 호출 (Context 기반 탐지)
         // ---------------------------------------------------------
-        SecurityEngine engine = new SecurityEngine();
-        SecurityBridge bridge = new SecurityBridge();
+        // native_init에서 파일 검사를 통과했더라도,
+        // 패키지 매니저상에 루팅 앱이 존재하는지 2차 검증
+/*        int rootResult = bridge.detectRooting(this);
 
+        if (rootResult == 0x47) { // ERR_CODE_ROOTED
+            Log.e("SECURITY", "Rooting Detected by Package Manager");
+            showKillAppDialog();
+            return; // 이후 로직 실행 차단
+        }*/
+
+        // ---------------------------------------------------------
+        // [보안 단계 2] 무결성 검사 수행 (비동기)
+        // ---------------------------------------------------------
         //performIntegrityCheck();
 
         // [수정] 보안 검사 없이 1.5초 뒤 강제 이동 (테스트용)
@@ -57,6 +71,8 @@ public class SplashActivity extends AppCompatActivity {
      * [보안 단계 3] 서버 연동 무결성 검사
      */
     private void performIntegrityCheck() {
+
+        new SecurityEngine().checkFridaOnce(); //Frida 1회성 추가
 
         String sig = "";
         String bin = "";
