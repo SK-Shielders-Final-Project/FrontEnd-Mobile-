@@ -35,6 +35,7 @@ import com.mobility.hack.network.FileUploadResponse;
 import com.mobility.hack.network.InquiryModifyRequest;
 import com.mobility.hack.network.InquiryModifyResponse;
 import com.mobility.hack.network.InquiryResponse;
+import com.mobility.hack.network.LinkPreviewResponse;
 import com.mobility.hack.security.TokenManager;
 
 import org.jetbrains.annotations.NotNull;
@@ -45,6 +46,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Matcher;
 

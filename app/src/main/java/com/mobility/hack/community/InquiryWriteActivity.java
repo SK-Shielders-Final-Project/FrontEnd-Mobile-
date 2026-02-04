@@ -11,6 +11,7 @@ import android.text.TextWatcher;
 import android.text.style.ForegroundColorSpan;
 import android.util.Log;
 import android.util.Patterns;
+import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.MimeTypeMap;
 import android.widget.CheckBox;
@@ -32,6 +33,7 @@ import com.mobility.hack.network.ApiService;
 import com.mobility.hack.network.FileUploadResponse;
 import com.mobility.hack.network.InquiryResponse;
 import com.mobility.hack.network.InquiryWriteRequest;
+import com.mobility.hack.network.LinkPreviewResponse;
 import com.mobility.hack.security.TokenManager;
 
 import org.jetbrains.annotations.NotNull;

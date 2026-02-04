@@ -2,6 +2,7 @@ package com.mobility.hack.network;
 
 import com.mobility.hack.GiftHistory;
 import com.mobility.hack.UsageHistory;
+import com.mobility.hack.network.LinkPreviewResponse;
 
 import java.util.List;
 import java.util.Map;

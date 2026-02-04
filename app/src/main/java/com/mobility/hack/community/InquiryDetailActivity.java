@@ -29,6 +29,7 @@ import com.mobility.hack.network.InquiryDeleteRequest;
 import com.mobility.hack.network.InquiryDeleteResponse;
 import com.mobility.hack.network.InquiryDetailResponseDto;
 import com.mobility.hack.network.InquiryResponse;
+import com.mobility.hack.network.LinkPreviewResponse;
 import com.mobility.hack.security.TokenManager;
 
 import java.util.regex.Matcher;
