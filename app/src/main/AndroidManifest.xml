@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.CAMERA" />
@@ -14,7 +15,8 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.Mobile"
-        android:usesCleartextTraffic="true">
+        android:usesCleartextTraffic="true"
+        tools:replace="android:allowBackup">
 
         <meta-data
             android:name="com.google.android.geo.API_KEY"
@@ -55,7 +57,31 @@
             android:exported="false" />
 
         <activity
+            android:name=".auth.EditMyInfoActivity"
+            android:exported="false" />
+        <activity
+            android:name=".auth.FindPasswordActivity"
+            android:exported="false" />
+
+
+        <activity
+            android:name=".auth.ChangePasswordActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".auth.CheckPasswordActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".auth.ResetPasswordActivity"
+            android:exported="false" />
+
+        <activity
             android:name=".ride.PurchaseTicketActivity"
+            android:exported="true" />
+
+        <activity
+            android:name=".ride.PointChargeActivity"
             android:exported="false" />
 
         <activity
@@ -67,24 +93,67 @@
             android:exported="false" />
 
         <activity
-            android:name=".CustomerCenterActivity"
+            android:name=".ride.PurchaseSuccessActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ride.PaymentSuccessActivity"
             android:exported="false" />
 
         <activity
-            android:name=".InquiryListActivity"
+            android:name=".community.InquiryDetailActivity"
             android:exported="false" />
 
         <activity
-            android:name=".InquiryWriteActivity"
+            android:name=".community.InquiryListActivity"
             android:exported="false" />
 
         <activity
-            android:name=".PaymentHistoryActivity"
+            android:name=".community.InquiryWriteActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".community.InquiryActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".community.CustomerCenterActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".community.NoticeActivity"
             android:exported="false" />
 
         <activity
             android:name=".chatbot.ChatActivity"
             android:exported="false" />
+
+        <activity
+            android:name=".ride.QrScanActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".ride.RentEndActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".ride.UserHistoryActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".PaymentHistoryActivity"
+            android:exported="false" />
+        <activity
+            android:name=".PointGiftActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".GiftConfirmationActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".community.InquiryEditActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
 
     </application>
 

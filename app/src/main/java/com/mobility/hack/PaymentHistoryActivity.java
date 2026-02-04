@@ -2,10 +2,9 @@ package com.mobility.hack;
 
 import android.os.Bundle;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-import java.util.ArrayList;
-import java.util.List;
+import androidx.viewpager2.widget.ViewPager2;
+import com.google.android.material.tabs.TabLayout;
+import com.google.android.material.tabs.TabLayoutMediator;
 
 public class PaymentHistoryActivity extends AppCompatActivity {
 
@@ -14,15 +13,24 @@ public class PaymentHistoryActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_payment_history);
 
-        RecyclerView rvPaymentHistory = findViewById(R.id.rv_payment_history);
-        rvPaymentHistory.setLayoutManager(new LinearLayoutManager(this));
+        TabLayout tabLayout = findViewById(R.id.tab_layout);
+        ViewPager2 viewPager = findViewById(R.id.view_pager);
 
-        // Create dummy data
-        List<Payment> payments = new ArrayList<>();
-        payments.add(new Payment("1,000원", "ORDER_12345", "DONE"));
-        payments.add(new Payment("2,500원", "ORDER_67890", "CANCELLED"));
+        HistoryFragmentAdapter adapter = new HistoryFragmentAdapter(this);
+        viewPager.setAdapter(adapter);
 
-        PaymentHistoryAdapter adapter = new PaymentHistoryAdapter(payments);
-        rvPaymentHistory.setAdapter(adapter);
+        new TabLayoutMediator(tabLayout, viewPager, (tab, position) -> {
+            switch (position) {
+                case 0:
+                    tab.setText("결제내역");
+                    break;
+                case 1:
+                    tab.setText("이용내역");
+                    break;
+                case 2:
+                    tab.setText("선물내역");
+                    break;
+            }
+        }).attach();
     }
 }

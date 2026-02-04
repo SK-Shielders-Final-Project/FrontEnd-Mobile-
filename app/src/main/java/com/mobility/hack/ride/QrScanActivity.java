@@ -1,4 +1,4 @@
-package com.example.mobilityhack.ride; // 패키지 이름 변경
+package com.mobility.hack.ride;
 
 import com.journeyapps.barcodescanner.CaptureActivity;
 

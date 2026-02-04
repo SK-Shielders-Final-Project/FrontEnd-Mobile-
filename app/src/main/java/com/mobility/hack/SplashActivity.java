@@ -11,7 +11,6 @@ import com.mobility.hack.auth.LoginActivity;
 import com.mobility.hack.network.ApiService;
 import com.mobility.hack.network.LoginResponse;
 import com.mobility.hack.network.RefreshRequest;
-import com.mobility.hack.network.RetrofitClient;
 import com.mobility.hack.ride.MainActivity;
 import com.mobility.hack.security.SecurityBridge;
 import com.mobility.hack.security.SecurityEngine;
@@ -24,7 +23,6 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 public class SplashActivity extends AppCompatActivity {
-
     private TokenManager tokenManager;
     private ApiService apiService;
 
@@ -33,26 +31,39 @@ public class SplashActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_splash);
 
-        tokenManager = new TokenManager(this);
-        apiService = RetrofitClient.getClient(tokenManager).create(ApiService.class);
+        // [체크] MainApplication 인스턴스가 제대로 생성되었는지 확인
+        MainApplication app = (MainApplication) getApplication();
+        apiService = app.getApiService();
+        tokenManager = app.getTokenManager();
 
-        SecurityEngine engine = new SecurityEngine();
+        // frida 탐지
+/*        SecurityEngine engine = new SecurityEngine();
         SecurityBridge bridge = new SecurityBridge();
+
         engine.initAntiDebug();
-        int rootStatus = bridge.detectRooting(this);
+        engine.startFridaMonitoring();*/
+
+        //루트 탐지
+/*        int rootStatus = bridge.detectRooting(this);
         if (rootStatus == 0x47) {
             Toast.makeText(this, "보안 위협이 탐지되었습니다. (Rooted)", Toast.LENGTH_LONG).show();
             bridge.checkSecurity(this);
             return;
-        }
+        }*/
 
         new Handler(Looper.getMainLooper()).postDelayed(() -> {
-            if (tokenManager.isAutoLoginEnabled() && tokenManager.fetchRefreshToken() != null) {
-                refreshAccessToken();
+            // [수정] null 체크를 추가하여 크래시 방지
+            if (tokenManager != null) {
+                if (tokenManager.isAutoLoginEnabled() && tokenManager.fetchRefreshToken() != null) {
+                    refreshAccessToken();
+                } else {
+                    goToLoginActivity();
+                }
             } else {
+                // tokenManager가 null이면 강제로 로그인 화면으로 보냄
                 goToLoginActivity();
             }
-        }, 2000); // Splash 2초 표시
+        }, 3000);
     }
 
     private void refreshAccessToken() {
@@ -60,14 +71,20 @@ public class SplashActivity extends AppCompatActivity {
         apiService.refresh(new RefreshRequest(refreshToken)).enqueue(new Callback<LoginResponse>() {
             @Override
             public void onResponse(@NotNull Call<LoginResponse> call, @NotNull Response<LoginResponse> response) {
-                if (response.isSuccessful() && response.body() != null) {
-                    // 새 액세스 토큰 저장
-                    tokenManager.saveAuthToken(response.body().getAccessToken());
-                    // 메인 화면으로 이동
+                LoginResponse loginResponse = response.body();
+                // ✨ [수정] 토큰이 유효한지 명확하게 확인
+                if (response.isSuccessful() && loginResponse != null && loginResponse.getAccessToken() != null && !loginResponse.getAccessToken().isEmpty()) {
+                    // 새로운 액세스 토큰 저장
+                    tokenManager.saveAuthToken(loginResponse.getAccessToken());
+
+                    // 서버로부터 새로운 리프레시 토큰을 받았을 경우에만 갱신
+                    if (loginResponse.getRefreshToken() != null && !loginResponse.getRefreshToken().isEmpty()) {
+                        tokenManager.saveRefreshToken(loginResponse.getRefreshToken());
+                    }
                     goToMainActivity();
                 } else {
-                    // 리프레시 토큰이 만료되었거나 유효하지 않음
-                    tokenManager.clearData(); // 모든 토큰 정보 삭제
+                    // 응답은 성공했으나 토큰이 없거나, 응답 자체가 실패한 경우 모두 로그인 화면으로 보냄
+                    tokenManager.clearData(); // 만료된 토큰 정보 삭제
                     goToLoginActivity();
                 }
             }
@@ -82,12 +99,16 @@ public class SplashActivity extends AppCompatActivity {
     }
 
     private void goToMainActivity() {
-        startActivity(new Intent(SplashActivity.this, MainActivity.class));
+        Intent intent = new Intent(SplashActivity.this, MainActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
         finish();
     }
 
     private void goToLoginActivity() {
-        startActivity(new Intent(SplashActivity.this, LoginActivity.class));
+        Intent intent = new Intent(SplashActivity.this, LoginActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
         finish();
     }
 }

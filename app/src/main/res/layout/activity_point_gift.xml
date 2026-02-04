@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="20dp">
+
+    <TextView
+        android:id="@+id/tv_current_points"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="보유 포인트: 로딩 중..."
+        android:textSize="16sp"
+        android:layout_marginBottom="16dp"/>
+
+    <EditText
+        android:id="@+id/etReceiver"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="받는 사람" />
+
+    <EditText
+        android:id="@+id/etPoint"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="보낼 포인트"
+        android:inputType="number" />
+
+    <Button
+        android:id="@+id/btnSend"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="보내기" />
+
+</LinearLayout>

@@ -14,7 +14,7 @@
         android:background="@color/colorPrimaryDark"
         app:title="이용권 선택"
         app:titleTextColor="@color/white"
-        app:navigationIcon="@android:drawable/ic_menu_close_clear_cancel"
+        app:navigationIcon="@drawable/ic_close"
         android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
         app:layout_constraintTop_toTopOf="parent" />
 

@@ -18,6 +18,7 @@ if (localPropertiesFile.exists()) {
 android {
     namespace = "com.mobility.hack"
     compileSdk = 36
+    ndkVersion = "26.1.10909125"
 
     defaultConfig {
         applicationId = "com.mobility.hack"
@@ -41,7 +42,7 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -56,13 +57,16 @@ android {
         }
     }
 
+    // JDK 21 사용에 따른 설정 변경
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        // Enable core library desugaring
+        isCoreLibraryDesugaringEnabled = true
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
     }
 
     kotlinOptions {
-        jvmTarget = "11"
+        jvmTarget = "21"
     }
 
     packaging {
@@ -70,7 +74,21 @@ android {
     }
 }
 
+kapt {
+    correctErrorTypes = true
+    useBuildCache = false // Kapt 안정성을 위해 비활성화
+    arguments {
+        // Hilt 안정성 및 증분 빌드 오류(NPE) 방지 핵심 인자들
+        arg("dagger.hilt.disableModulesHaveInstallInCheck", "true")
+        arg("kapt.incremental.apt", "false")
+        arg("kapt.use.worker.api", "false")
+    }
+}
+
 dependencies {
+    // Enable core library desugaring
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
+
     implementation(libs.appcompat)
     implementation(libs.material)
     implementation(libs.activity)
@@ -81,6 +99,11 @@ dependencies {
     implementation(libs.retrofit)
     implementation(libs.converter.gson)
     implementation(libs.logging.interceptor)
+    implementation(libs.okhttp.urlconnection) // ⭐️ JavaNetCookieJar를 위한 의존성 추가
+
+    // Glide
+    implementation("com.github.bumptech.glide:glide:4.16.0")
+    kapt("com.github.bumptech.glide:compiler:4.16.0")
 
     // Security
     implementation(libs.security.crypto)

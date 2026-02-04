@@ -2,7 +2,6 @@ package com.mobility.hack.community;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.view.View;
 import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 import com.mobility.hack.R;
@@ -12,33 +11,29 @@ public class InquiryActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        
+        // [중요] Rebuild Project 후 이 코드는 com.mobility.hack.community 패키지의 
+        // layout.activity_inquiry를 정확히 참조하게 됩니다.
         setContentView(R.layout.activity_inquiry);
 
-        // 상단 뒤로가기 버튼
-        findViewById(R.id.btn_back).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                finish();
-            }
-        });
+        findViewById(R.id.btn_back).setOnClickListener(v -> finish());
 
-        // '대여 및 반납' 클릭 시 공지사항(Path Traversal 실습) 화면으로 이동
-        TextView tvRentReturn = findViewById(R.id.menu_rent_return);
-        tvRentReturn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(InquiryActivity.this, NoticeActivity.class);
+        // '대여 및 반납' 클릭 시 NoticeActivity로 이동
+        TextView btnRentalReturn = findViewById(R.id.menu_rent_return);
+        if (btnRentalReturn != null) {
+            btnRentalReturn.setOnClickListener(v -> {
+                Intent intent = new Intent(this, com.mobility.hack.community.NoticeActivity.class);
                 startActivity(intent);
-            }
-        });
+            });
+        }
 
-        // '내가 문의한 내역' 클릭 시 신고내역보기(InquiryListActivity) 화면으로 이동
-        findViewById(R.id.menu_my_inquiries).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(InquiryActivity.this, InquiryListActivity.class);
+        // '내가 문의한 내역' 클릭 시 InquiryListActivity로 이동
+        TextView btnMyInquiries = findViewById(R.id.menu_my_inquiries);
+        if (btnMyInquiries != null) {
+            btnMyInquiries.setOnClickListener(v -> {
+                Intent intent = new Intent(this, com.mobility.hack.community.InquiryListActivity.class);
                 startActivity(intent);
-            }
-        });
+            });
+        }
     }
 }

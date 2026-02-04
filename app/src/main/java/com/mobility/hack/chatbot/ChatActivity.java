@@ -9,12 +9,12 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.mobility.hack.MainApplication;
 import com.mobility.hack.R;
 import com.mobility.hack.network.ApiService;
 import com.mobility.hack.network.ChatRequest;
 import com.mobility.hack.network.ChatResponse;
-import com.mobility.hack.network.RetrofitClient;
-import com.mobility.hack.security.TokenManager; // 1. TokenManager 임포트 추가
+import com.mobility.hack.security.TokenManager;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -33,17 +33,16 @@ public class ChatActivity extends AppCompatActivity {
     private ImageButton buttonClose;
 
     private ApiService apiService;
+    private TokenManager tokenManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_chat);
 
-        // 2. [수정] TokenManager 인스턴스를 생성합니다.
-        TokenManager tokenManager = new TokenManager(this);
-
-        // 3. [수정] getClient에 tokenManager를 전달하여 서비스 초기화 (에러 해결)
-        apiService = RetrofitClient.getClient(tokenManager).create(ApiService.class);
+        // MainApplication에서 ApiService 및 TokenManager 인스턴스 가져오기
+        apiService = ((MainApplication) getApplication()).getApiService();
+        tokenManager = ((MainApplication) getApplication()).getTokenManager();
 
         initViews();
         setupRecyclerView();
@@ -67,7 +66,7 @@ public class ChatActivity extends AppCompatActivity {
     }
 
     private void loadWelcomeMessage() {
-        String welcomeText = "안녕하세요,\n🌲서울을 즐기는 가장 친환경적인 방법\n서울자전거 작당모빌 🚲 입니다.";
+        String welcomeText = "안녕하세요,\n🌲복잡한 도심 속, 원하는 곳 어디든 자유롭게 이동하세요.\n스마트한 자전거 공유 서비스 작당모빌 🚲 입니다.";
         addMessageToChat(welcomeText, ChatMessage.VIEW_TYPE_BOT);
     }
 
@@ -83,8 +82,7 @@ public class ChatActivity extends AppCompatActivity {
     }
 
     private void requestBotResponse(String userMessage) {
-        SharedPreferences prefs = getSharedPreferences("secure_auth_prefs", Context.MODE_PRIVATE);
-        long userId = prefs.getLong("user_id", 0);
+        long userId = tokenManager.fetchUserId();
 
         ChatRequest request = new ChatRequest(userId, userMessage);
 
