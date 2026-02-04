@@ -2,19 +2,30 @@ package com.mobility.hack.community;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.Spannable;
+import android.text.TextWatcher;
+import android.text.style.ForegroundColorSpan;
 import android.util.Log;
+import android.util.Patterns;
+import android.view.ViewGroup;
 import android.webkit.MimeTypeMap;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.cardview.widget.CardView;
 
+import com.bumptech.glide.Glide;
 import com.mobility.hack.MainApplication;
 import com.mobility.hack.R;
 import com.mobility.hack.network.ApiService;
@@ -24,10 +35,16 @@ import com.mobility.hack.network.InquiryWriteRequest;
 import com.mobility.hack.security.TokenManager;
 
 import org.jetbrains.annotations.NotNull;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.regex.Matcher;
 
 import okhttp3.MediaType;
 import okhttp3.MultipartBody;
@@ -47,6 +64,10 @@ public class InquiryWriteActivity extends AppCompatActivity {
     private Uri selectedFileUri;
     private boolean isSubmitting = false;
 
+    // [다중 미리보기] 컨테이너 및 캐시
+    private LinearLayout previewContainer;
+    private Map<String, LinkPreviewResponse> previewCache = new HashMap<>();
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -61,6 +82,7 @@ public class InquiryWriteActivity extends AppCompatActivity {
         cbAgree = findViewById(R.id.cb_agree);
         ivAddImage = findViewById(R.id.iv_add_image);
         btnSubmit = findViewById(R.id.btn_submit);
+        previewContainer = findViewById(R.id.preview_container);
 
         findViewById(R.id.btn_back).setOnClickListener(v -> finish());
 
@@ -75,6 +97,150 @@ public class InquiryWriteActivity extends AppCompatActivity {
                 if (!isSubmitting) startSubmitProcess();
             });
         }
+
+        etContent.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {}
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                // 1. 파란색 링크 처리
+                highlightLinks(s);
+
+                // 2. "줄바꿈(Enter)"이 발생했을 때만 미리보기 로딩!
+                if (s.length() > 0 && s.charAt(s.length() - 1) == '\n') {
+                    List<String> urls = extractAllUrls(s.toString());
+                    updatePreviews(urls);
+                }
+            }
+        });
+    } // <--- onCreate가 여기서 닫혀야 합니다!
+
+    // ==========================================================
+    // 여기서부터는 onCreate 밖입니다.
+    // ==========================================================
+
+    private void highlightLinks(Editable s) {
+        ForegroundColorSpan[] spans = s.getSpans(0, s.length(), ForegroundColorSpan.class);
+        for (ForegroundColorSpan span : spans) {
+            s.removeSpan(span);
+        }
+
+        Matcher matcher = Patterns.WEB_URL.matcher(s);
+        while (matcher.find()) {
+            s.setSpan(new ForegroundColorSpan(Color.BLUE), matcher.start(), matcher.end(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+        }
+    }
+
+    private List<String> extractAllUrls(String input) {
+        List<String> urls = new ArrayList<>();
+        Matcher matcher = Patterns.WEB_URL.matcher(input);
+        while (matcher.find()) {
+            urls.add(matcher.group());
+        }
+        return urls;
+    }
+
+    private void updatePreviews(List<String> urls) {
+        previewContainer.removeAllViews();
+
+        for (String url : urls) {
+            String fullUrl = url.startsWith("http") ? url : "https://" + url;
+
+            if (previewCache.containsKey(fullUrl)) {
+                addPreviewCardToLayout(fullUrl, previewCache.get(fullUrl));
+            } else {
+                requestServerSidePreview(fullUrl);
+            }
+        }
+    }
+
+    private void requestServerSidePreview(String url) {
+        apiService.getLinkPreview(url).enqueue(new Callback<LinkPreviewResponse>() {
+            @Override
+            public void onResponse(Call<LinkPreviewResponse> call, Response<LinkPreviewResponse> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    previewCache.put(url, response.body());
+                    if (etContent.getText().toString().contains(url.replace("https://", "").replace("http://", ""))) {
+                        addPreviewCardToLayout(url, response.body());
+                    }
+                }
+            }
+
+            @Override
+            public void onFailure(Call<LinkPreviewResponse> call, Throwable t) {
+                Log.e("SSRF", "Fail: " + t.getMessage());
+            }
+        });
+    }
+
+    private void addPreviewCardToLayout(String url, LinkPreviewResponse data) {
+        for(int i=0; i<previewContainer.getChildCount(); i++){
+            if(url.equals(previewContainer.getChildAt(i).getTag())) return;
+        }
+
+        CardView card = new CardView(this);
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        params.setMargins(0, 0, 0, 24);
+        card.setLayoutParams(params);
+        card.setRadius(16f);
+        card.setCardElevation(8f);
+        card.setCardBackgroundColor(Color.parseColor("#F8F9FA"));
+        card.setTag(url);
+
+        LinearLayout innerLayout = new LinearLayout(this);
+        innerLayout.setOrientation(LinearLayout.VERTICAL);
+        card.addView(innerLayout);
+
+        ImageView image = new ImageView(this);
+        LinearLayout.LayoutParams imgParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, 400);
+        image.setLayoutParams(imgParams);
+        image.setScaleType(ImageView.ScaleType.CENTER_CROP);
+
+        if (data.getImage() != null && !data.getImage().isEmpty()) {
+            Glide.with(this).load(data.getImage()).into(image);
+        } else {
+            image.setImageResource(android.R.drawable.ic_menu_gallery);
+        }
+        innerLayout.addView(image);
+
+        LinearLayout textLayout = new LinearLayout(this);
+        textLayout.setOrientation(LinearLayout.VERTICAL);
+        textLayout.setPadding(30, 30, 30, 30);
+        innerLayout.addView(textLayout);
+
+        TextView title = new TextView(this);
+        title.setText(data.getTitle());
+        title.setTextSize(16);
+        title.setTextColor(Color.BLACK);
+        title.setTypeface(null, android.graphics.Typeface.BOLD);
+        title.setMaxLines(1);
+        title.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        textLayout.addView(title);
+
+        TextView desc = new TextView(this);
+        desc.setText(data.getDescription());
+        desc.setTextSize(14);
+        desc.setTextColor(Color.GRAY);
+        desc.setMaxLines(2);
+        desc.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        desc.setPadding(0, 8, 0, 0);
+        textLayout.addView(desc);
+
+        card.setOnClickListener(v -> {
+            try {
+                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+                startActivity(intent);
+            } catch (Exception e) {
+                Toast.makeText(InquiryWriteActivity.this, "링크 오류", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        previewContainer.addView(card);
     }
 
     private final ActivityResultLauncher<Intent> galleryLauncher = registerForActivityResult(
@@ -112,7 +278,6 @@ public class InquiryWriteActivity extends AppCompatActivity {
         }
     }
 
-    // [수정] 토큰 인자 제거
     private void uploadFileThenSubmit(String title, String content) {
         MultipartBody.Part filePart = prepareFilePart("file", selectedFileUri);
 
@@ -121,7 +286,6 @@ public class InquiryWriteActivity extends AppCompatActivity {
             return;
         }
 
-        // [핵심] 토큰 없이 파일 파트만 전달 (Interceptor가 자동 처리)
         apiService.uploadFile(filePart).enqueue(new Callback<FileUploadResponse>() {
             @Override
             public void onResponse(@NotNull Call<FileUploadResponse> call, @NotNull Response<FileUploadResponse> response) {
@@ -139,7 +303,6 @@ public class InquiryWriteActivity extends AppCompatActivity {
         });
     }
 
-    // [수정] 토큰 생성/로깅/전달 코드 모두 삭제
     private void finalWriteInquiry(String title, String content, Long fileId) {
         Long user_Id = tokenManager.fetchUserId();
         InquiryWriteRequest request = new InquiryWriteRequest(user_Id, title, content, fileId);
@@ -147,25 +310,15 @@ public class InquiryWriteActivity extends AppCompatActivity {
         apiService.writeInquiry(request).enqueue(new Callback<InquiryResponse>() {
             @Override
             public void onResponse(Call<InquiryResponse> call, Response<InquiryResponse> response) {
-                resetSubmitUI(); // 버튼 잠금 해제
+                resetSubmitUI();
 
                 if (response.isSuccessful()) {
                     Toast.makeText(InquiryWriteActivity.this, "등록 성공!", Toast.LENGTH_SHORT).show();
                     setResult(Activity.RESULT_OK);
                     finish();
                 } else {
-                    // 🚨 여기서 에러를 해부합니다.
                     try {
-                        // 에러 바디는 한 번 읽으면 사라지므로 변수에 저장
                         String errorBody = response.errorBody() != null ? response.errorBody().string() : "null";
-                        String requestUrl = call.request().url().toString(); // 실제 날아가는 주소
-
-                        Log.e("InquiryDetailLog", "=== 404 원인 분석 ===");
-                        Log.e("InquiryDetailLog", "1. 요청 주소: " + requestUrl);
-                        Log.e("InquiryDetailLog", "2. 응답 코드: " + response.code());
-                        Log.e("InquiryDetailLog", "3. 서버 메시지: " + errorBody);
-                        Log.e("InquiryDetailLog", "======================");
-
                         Toast.makeText(InquiryWriteActivity.this, "실패: " + response.code(), Toast.LENGTH_SHORT).show();
                     } catch (Exception e) {
                         e.printStackTrace();
@@ -175,7 +328,6 @@ public class InquiryWriteActivity extends AppCompatActivity {
 
             @Override
             public void onFailure(Call<InquiryResponse> call, Throwable t) {
-                Log.e("InquiryDetailLog", "네트워크 통신 아예 실패: " + t.getMessage());
                 handleFailure("네트워크 오류: " + t.getMessage());
             }
         });

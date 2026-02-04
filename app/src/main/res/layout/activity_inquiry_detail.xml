@@ -78,7 +78,17 @@
                 android:layout_height="wrap_content"
                 android:textSize="18sp"
                 android:lineSpacingExtra="6dp"
-                android:textColor="#333333" />
+                android:textColor="#333333"
+                android:autoLink="web"
+                android:linksClickable="true"/>
+
+            <LinearLayout
+                android:id="@+id/detail_preview_container"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginTop="16dp"
+                android:animateLayoutChanges="true"/>
 
             <LinearLayout
                 android:id="@+id/layout_attachment"

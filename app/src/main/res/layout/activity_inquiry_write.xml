@@ -30,7 +30,6 @@
             android:textStyle="bold" />
     </RelativeLayout>
 
-    <!-- [1] 버튼을 ScrollView 내부로 이동시켜 터치 간섭 해결 -->
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -63,13 +62,23 @@
             <EditText
                 android:id="@+id/et_content"
                 android:layout_width="match_parent"
-                android:layout_height="200dp"
+                android:layout_height="wrap_content"
+                android:minHeight="150dp"
                 android:layout_marginTop="20dp"
                 android:background="#F8F8F8"
                 android:gravity="top"
-                android:hint="문의내용 입력"
+                android:hint="문의내용 입력 "
                 android:padding="16dp"
-                android:textSize="14sp" />
+                android:textSize="14sp"
+                android:inputType="textMultiLine|textNoSuggestions" />
+
+            <LinearLayout
+                android:id="@+id/preview_container"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginTop="8dp"
+                android:animateLayoutChanges="true"/>
 
             <ImageView
                 android:id="@+id/iv_add_image"

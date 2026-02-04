@@ -124,4 +124,8 @@ dependencies {
 
     // Barcode Scanner
     implementation(libs.zxing.embedded)
+
+    implementation("org.jsoup:jsoup:1.17.2")
+// [추가] 이미지 로딩 (썸네일 보여주기용)
+    implementation("com.github.bumptech.glide:glide:4.16.0")
 }
