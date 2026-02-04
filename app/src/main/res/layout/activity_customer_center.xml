@@ -39,14 +39,6 @@
         android:paddingTop="30dp">
 
         <TextView
-            style="@style/InquiryCategoryItem"
-            android:text="고장신고" />
-
-        <TextView
-            style="@style/InquiryCategoryItem"
-            android:text="방치신고" />
-
-        <TextView
             android:id="@+id/menu_inquiry"
             style="@style/InquiryCategoryItem"
             android:text="문의하기" />
@@ -55,6 +47,14 @@
             android:id="@+id/menu_inquiry_list"
             style="@style/InquiryCategoryItem"
             android:text="신고내역보기" />
+
+        <TextView
+            style="@style/InquiryCategoryItem"
+            android:text="고장신고" />
+
+        <TextView
+            style="@style/InquiryCategoryItem"
+            android:text="방치신고" />
 
     </LinearLayout>
 
