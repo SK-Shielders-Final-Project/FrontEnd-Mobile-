@@ -84,6 +84,7 @@
         android:id="@+id/charge_button"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:backgroundTint="@color/brand_primary"
         android:text="충전하기"
         android:layout_margin="16dp"
         app:layout_constraintBottom_toBottomOf="parent"

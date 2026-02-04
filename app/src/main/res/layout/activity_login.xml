@@ -31,6 +31,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="start"
         android:layout_marginBottom="16dp"
+        android:buttonTint="@color/brand_primary"
         android:text="자동 로그인" />
 
     <Button
