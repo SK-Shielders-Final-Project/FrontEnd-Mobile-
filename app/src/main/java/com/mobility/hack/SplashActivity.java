@@ -2,13 +2,17 @@ package com.mobility.hack;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
+import android.os.Handler; // Delay를 위해 추가
+import android.os.Looper;  // Main Thread 처리를 위해 추가
+import android.util.Log;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AlertDialog;
 
 import com.mobility.hack.auth.LoginActivity;
 import com.mobility.hack.network.ApiService;
+import com.mobility.hack.network.IntegrityRequest;
+import com.mobility.hack.network.IntegrityResponse;
 import com.mobility.hack.network.LoginResponse;
 import com.mobility.hack.network.RefreshRequest;
 import com.mobility.hack.ride.MainActivity;
@@ -31,39 +35,129 @@ public class SplashActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_splash);
 
-        // [체크] MainApplication 인스턴스가 제대로 생성되었는지 확인
         MainApplication app = (MainApplication) getApplication();
         apiService = app.getApiService();
         tokenManager = app.getTokenManager();
 
-        // frida 탐지
-/*        SecurityEngine engine = new SecurityEngine();
+        // ---------------------------------------------------------
+        // [보안 단계 1] C++ 레벨 탐지 시작
+        // ---------------------------------------------------------
+        SecurityEngine engine = new SecurityEngine();
         SecurityBridge bridge = new SecurityBridge();
 
         engine.initAntiDebug();
-        engine.startFridaMonitoring();*/
+        //engine.startFridaMonitoring();
 
-        //루트 탐지
-/*        int rootStatus = bridge.detectRooting(this);
-        if (rootStatus == 0x47) {
-            Toast.makeText(this, "보안 위협이 탐지되었습니다. (Rooted)", Toast.LENGTH_LONG).show();
-            bridge.checkSecurity(this);
-            return;
-        }*/
-
+        //engine.startSystemCheck(this);
         new Handler(Looper.getMainLooper()).postDelayed(() -> {
-            // [수정] null 체크를 추가하여 크래시 방지
-            if (tokenManager != null) {
-                if (tokenManager.isAutoLoginEnabled() && tokenManager.fetchRefreshToken() != null) {
-                    refreshAccessToken();
+            // onSystemStable()이 호출해주던 것을 여기서 대신 호출
+            checkFlowAndNavigate();
+        }, 1500); // 1.5초 정도 스플래시 보여주고 이동
+    }
+
+    // ... (onNetworkError - 기존과 동일) ...
+    public void onNetworkError(int errorCode) {
+        runOnUiThread(() -> {
+            new AlertDialog.Builder(this)
+                    .setTitle("System Maintenance")
+                    .setMessage("현재 서버 긴급 점검 중입니다.\n(Error Code: " + errorCode + ")")
+                    .setCancelable(false)
+                    .setPositiveButton("확인", (dialog, which) -> {
+                        finishAffinity();
+                        System.exit(0);
+                    })
+                    .show();
+        });
+    }
+
+    public void onSystemStable() {
+        runOnUiThread(() -> {
+
+            // 무결성 검사 우회 (테스트용)
+            // performIntegrityCheck();  // <--- 이 줄을 주석 처리 (서버 검증 끄기)
+
+            checkFlowAndNavigate();      // <--- 바로 다음 화면 로직으로 이동
+        });
+    }
+
+    /**
+     * [보안 단계 3] 서버 연동 무결성 검사
+     */
+    private void performIntegrityCheck() {
+
+        // 안티프리다
+        //new SecurityEngine().checkFridaOnce();
+
+        String sig = "";
+        String bin = "";
+
+        try {
+            sig = SecurityEngine.getNativeSignature(this);
+            bin = SecurityEngine.getNativeBinaryHash(this);
+            Log.d("SECURITY", "Splash Check - Sig: " + sig + ", Bin: " + bin);
+        } catch (UnsatisfiedLinkError e) {
+            Log.e("SECURITY", "JNI Linking Error", e);
+            showKillAppDialog();
+            return;
+        } catch (Exception e) {
+            Log.e("SECURITY", "Unknown Error in JNI", e);
+            showKillAppDialog();
+            return;
+        }
+
+        apiService.checkIntegrity(new IntegrityRequest(sig, bin)).enqueue(new Callback<IntegrityResponse>() {
+            @Override
+            public void onResponse(@NotNull Call<IntegrityResponse> call, @NotNull Response<IntegrityResponse> response) {
+                if (isFinishing() || isDestroyed()) return;
+
+                if (response.isSuccessful() && response.body() != null) {
+                    if (response.body().isValid()) {
+                        Log.d("SECURITY", "무결성 검증 통과 -> 앱 진입 시도");
+                        checkFlowAndNavigate();
+                    } else {
+                        // 검증 실패 (변조됨)
+                        showKillAppDialog();
+                    }
                 } else {
-                    goToLoginActivity();
+                    // 서버 오류(500 등) 발생 시에도 보안을 위해 종료 처리
+                    Log.e("SECURITY", "Integrity Server Error: " + response.code());
+                    handleNetworkErrorAndExit("서버 통신 오류가 발생했습니다. (Code: " + response.code() + ")");
                 }
-            } else {
-                // tokenManager가 null이면 강제로 로그인 화면으로 보냄
-                goToLoginActivity();
             }
-        }, 3000);
+
+            @Override
+            public void onFailure(@NotNull Call<IntegrityResponse> call, @NotNull Throwable t) {
+                Log.e("SECURITY", "Integrity Network Error", t);
+
+                // [수정됨] Fail-Closed 정책 적용
+                // 네트워크 오류 발생 시 검증 불가로 판단하고 앱 종료
+                handleNetworkErrorAndExit("보안 검증을 위해 네트워크 연결이 필요합니다.");
+            }
+        });
+    }
+
+    /**
+     * [보안/UX] 네트워크 오류 시 토스트 출력 후 앱 종료
+     * 토스트가 뜰 시간을 확보하기 위해 1.5초 딜레이를 줌
+     */
+    private void handleNetworkErrorAndExit(String message) {
+        Toast.makeText(SplashActivity.this, message, Toast.LENGTH_LONG).show();
+
+        // 즉시 종료하면 토스트가 보이지 않을 수 있으므로 Handler 사용
+        new Handler(Looper.getMainLooper()).postDelayed(() -> {
+            finishAffinity(); // 액티비티 스택 비우기
+            System.exit(0);   // 프로세스 강제 종료
+        }, 1500);
+    }
+
+    // ... (나머지 checkFlowAndNavigate, refreshAccessToken, showKillAppDialog 등 기존 코드 유지) ...
+
+    private void checkFlowAndNavigate() {
+        if (tokenManager != null && tokenManager.isAutoLoginEnabled() && tokenManager.fetchRefreshToken() != null) {
+            refreshAccessToken();
+        } else {
+            goToLoginActivity();
+        }
     }
 
     private void refreshAccessToken() {
@@ -72,30 +166,37 @@ public class SplashActivity extends AppCompatActivity {
             @Override
             public void onResponse(@NotNull Call<LoginResponse> call, @NotNull Response<LoginResponse> response) {
                 LoginResponse loginResponse = response.body();
-                // ✨ [수정] 토큰이 유효한지 명확하게 확인
-                if (response.isSuccessful() && loginResponse != null && loginResponse.getAccessToken() != null && !loginResponse.getAccessToken().isEmpty()) {
-                    // 새로운 액세스 토큰 저장
+                if (response.isSuccessful() && loginResponse != null && loginResponse.getAccessToken() != null) {
                     tokenManager.saveAuthToken(loginResponse.getAccessToken());
-
-                    // 서버로부터 새로운 리프레시 토큰을 받았을 경우에만 갱신
-                    if (loginResponse.getRefreshToken() != null && !loginResponse.getRefreshToken().isEmpty()) {
+                    if (loginResponse.getRefreshToken() != null) {
                         tokenManager.saveRefreshToken(loginResponse.getRefreshToken());
                     }
                     goToMainActivity();
                 } else {
-                    // 응답은 성공했으나 토큰이 없거나, 응답 자체가 실패한 경우 모두 로그인 화면으로 보냄
-                    tokenManager.clearData(); // 만료된 토큰 정보 삭제
+                    tokenManager.clearData();
                     goToLoginActivity();
                 }
             }
 
             @Override
             public void onFailure(@NotNull Call<LoginResponse> call, @NotNull Throwable t) {
-                // 네트워크 오류 등
-                Toast.makeText(SplashActivity.this, "네트워크 오류로 자동 로그인에 실패했습니다.", Toast.LENGTH_SHORT).show();
+                Toast.makeText(SplashActivity.this, "네트워크 오류로 자동 로그인 실패", Toast.LENGTH_SHORT).show();
                 goToLoginActivity();
             }
         });
+    }
+
+    private void showKillAppDialog() {
+        if (isFinishing()) return;
+        new AlertDialog.Builder(this)
+                .setTitle("⛔ 보안 경고")
+                .setMessage("변조된 앱이 감지되었습니다.\n안전을 위해 앱을 종료합니다.")
+                .setCancelable(false)
+                .setPositiveButton("종료", (dialog, which) -> {
+                    finishAffinity();
+                    System.exit(0);
+                })
+                .show();
     }
 
     private void goToMainActivity() {

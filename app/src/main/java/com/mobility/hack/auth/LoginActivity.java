@@ -3,14 +3,13 @@ package com.mobility.hack.auth;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Base64;
-import android.util.Log; // 로그용 추가
+import android.util.Log;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.appcompat.app.AlertDialog; // 다이얼로그용 추가
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.mobility.hack.MainApplication;
@@ -20,13 +19,8 @@ import com.mobility.hack.network.ExchangeRequest;
 import com.mobility.hack.network.LoginRequest;
 import com.mobility.hack.network.LoginResponse;
 import com.mobility.hack.network.PublicKeyResponse;
-import com.mobility.hack.network.RetrofitClient;
-import com.mobility.hack.security.SecurityEngine;
 import com.mobility.hack.ride.MainActivity;
 import com.mobility.hack.security.TokenManager;
-
-import com.mobility.hack.network.IntegrityRequest;
-import com.mobility.hack.network.IntegrityResponse;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -40,7 +34,6 @@ import javax.crypto.Cipher;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
-import retrofit2.Retrofit;
 
 public class LoginActivity extends AppCompatActivity {
     private ApiService apiService;
@@ -52,14 +45,10 @@ public class LoginActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
-        // MainApplication에서 ApiService 및 TokenManager 인스턴스 가져오기
         apiService = ((MainApplication) getApplication()).getApiService();
         tokenManager = ((MainApplication) getApplication()).getTokenManager();
 
-        // ---------------------------------------------------------
-        // [보안 로직 추가] 화면 진입 즉시 무결성 검사 실행
-        // ---------------------------------------------------------
-        //performIntegrityCheck(); //무결성 끄고싶으면 이 줄만 주석처리!
+        // 무결성 검사는 이미 Splash에서 완료되었으므로 제거됨
 
         EditText usernameEditText = findViewById(R.id.editTextId);
         EditText passwordEditText = findViewById(R.id.editTextPassword);
@@ -90,87 +79,6 @@ public class LoginActivity extends AppCompatActivity {
         });
     }
 
-    /**
-     * 앱 무결성 검사 메서드
-     * - 성공 시: 아무 동작 안 함 (로그인 화면 유지)
-     * - 실패 시: 경고창 띄우고 앱 강제 종료
-     */
-    /**
-     * 앱 무결성 검사 메서드 (안전 버전)
-     */
-    private void performIntegrityCheck() {
-
-        // 안티프리다
-        // new SecurityEngine().checkFridaOnce(); //프리다 검증 안하고싶으면 여기서 주석처리!
-
-        String sig = "";
-        String bin = "";
-
-        // 1. JNI 호출 시도 (여기서 튕기는 것을 방지)
-        try {
-            sig = SecurityEngine.getNativeSignature(this);
-            bin = SecurityEngine.getNativeBinaryHash(this);
-
-            Log.d("SECURITY", "Signature: " + sig);
-            Log.d("SECURITY", "Binary: " + bin);
-
-        } catch (UnsatisfiedLinkError e) {
-            // C++ 함수 이름이 패키지명과 다르거나, 라이브러리 로드 실패 시 발생
-            Log.e("SECURITY", "CRITICAL ERROR: JNI 연결 실패! C++ 함수 이름을 확인하세요.", e);
-            Toast.makeText(this, "보안 모듈 로드 실패 (로그 확인 필요)", Toast.LENGTH_LONG).show();
-            return; // 더 이상 진행하지 않음 (로그인 유지 or 종료 정책 결정 필요)
-        } catch (Exception e) {
-            Log.e("SECURITY", "알 수 없는 오류 발생", e);
-            return;
-        }
-
-        // 2. 요청 객체 생성
-        IntegrityRequest req = new IntegrityRequest(sig, bin);
-
-        // 3. 서버로 전송
-        apiService.checkIntegrity(req).enqueue(new Callback<IntegrityResponse>() {
-            @Override
-            public void onResponse(@NotNull Call<IntegrityResponse> call, @NotNull Response<IntegrityResponse> response) {
-                if (isFinishing() || isDestroyed()) return;
-
-                if (response.isSuccessful() && response.body() != null) {
-                    if (response.body().isValid()) {
-                        Log.d("SECURITY", "무결성 검증 통과");
-                    } else {
-                        // 검증 실패 시에만 다이얼로그 호출
-                        showKillAppDialog();
-                    }
-                } else {
-                    Log.e("SECURITY", "서버 응답 오류: " + response.code());
-                }
-            }
-
-            @Override
-            public void onFailure(@NotNull Call<IntegrityResponse> call, @NotNull Throwable t) {
-                if (isFinishing() || isDestroyed()) return;
-                Log.e("SECURITY", "네트워크 오류", t);
-                // 네트워크 오류는 일단 통과시킴 (로그만 남김)
-            }
-        });
-    }
-
-    /**
-     * 앱 강제 종료 다이얼로그
-     */
-    private void showKillAppDialog() {
-        if (isFinishing()) return;
-
-        new AlertDialog.Builder(LoginActivity.this)
-                .setTitle("⛔ 보안 경고")
-                .setMessage("변조된 앱이 감지되었습니다.\n안전을 위해 앱을 종료합니다.")
-                .setCancelable(false) // 뒤로가기 금지
-                .setPositiveButton("종료", (dialog, which) -> {
-                    finishAffinity(); // 액티비티 스택 제거
-                    System.exit(0);   // 프로세스 종료
-                })
-                .show();
-    }
-
     private void login(LoginRequest loginRequest) {
         apiService.login(loginRequest).enqueue(new Callback<LoginResponse>() {
             @Override
@@ -179,7 +87,7 @@ public class LoginActivity extends AppCompatActivity {
                 LoginResponse loginResponse = response.body();
 
                 if (response.isSuccessful() && loginResponse != null && loginResponse.getAccessToken() != null && !loginResponse.getAccessToken().isEmpty()) {
-                    Log.d("LOGIN_DEBUG", "Received user ID: " + loginResponse.getUserId()); // 로그 추가
+                    Log.d("LOGIN_DEBUG", "Received user ID: " + loginResponse.getUserId());
 
                     tokenManager.saveAuthToken(loginResponse.getAccessToken());
                     tokenManager.saveUserId(loginResponse.getUserId());
@@ -194,11 +102,11 @@ public class LoginActivity extends AppCompatActivity {
 
                     Toast.makeText(LoginActivity.this, "로그인 성공!", Toast.LENGTH_SHORT).show();
 
+                    // 로그인 성공 후에만 키 교환 수행
                     executeWeakKeyExchange();
-
                     goToMainActivity();
                 } else {
-                    Toast.makeText(LoginActivity.this, "로그인에 실패했습니다. 아이디 또는 비밀번호를 확인해주세요.", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(LoginActivity.this, "로그인 실패. 아이디/비밀번호를 확인하세요.", Toast.LENGTH_SHORT).show();
                 }
             }
 
@@ -212,12 +120,14 @@ public class LoginActivity extends AppCompatActivity {
 
     private void goToMainActivity() {
         Intent intent = new Intent(this, MainActivity.class);
-        // 기존의 모든 액티비티를 스택에서 제거하고, 새로운 태스크를 시작합니다.
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);
         finish();
     }
 
+    // -------------------------------------------------------------
+    // Weak Key Exchange Logic (로그인 이후 세션 암호화용)
+    // -------------------------------------------------------------
     private String generateWeakKey() {
         String characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
         StringBuilder result = new StringBuilder();
@@ -232,23 +142,19 @@ public class LoginActivity extends AppCompatActivity {
             @Override
             public void onResponse(Call<PublicKeyResponse> call, Response<PublicKeyResponse> response) {
                 if (response.isSuccessful() && response.body() != null) {
-                    String publicKeyString = response.body().getPublicKey();
-                    Log.d("KEY_EXCHANGE", "Raw public key: " + publicKeyString);
-
-                    String cleanedPublicKey = publicKeyString
-                            .replace("-----BEGIN PUBLIC KEY-----", "")
-                            .replace("-----END PUBLIC KEY-----", "")
-                            .replaceAll("\\s", "");
-
-                    Log.d("KEY_EXCHANGE", "Cleaned public key: " + cleanedPublicKey);
-
-                    String weakKey = generateWeakKey();
                     try {
+                        String publicKeyString = response.body().getPublicKey();
+                        String cleanedPublicKey = publicKeyString
+                                .replace("-----BEGIN PUBLIC KEY-----", "")
+                                .replace("-----END PUBLIC KEY-----", "")
+                                .replaceAll("\\s", "");
+
                         byte[] keyBytes = Base64.decode(cleanedPublicKey, Base64.DEFAULT);
                         X509EncodedKeySpec spec = new X509EncodedKeySpec(keyBytes);
                         KeyFactory keyFactory = KeyFactory.getInstance("RSA");
                         PublicKey publicKey = keyFactory.generatePublic(spec);
 
+                        String weakKey = generateWeakKey();
                         Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
                         cipher.init(Cipher.ENCRYPT_MODE, publicKey);
                         byte[] encryptedKey = cipher.doFinal(weakKey.getBytes());
@@ -258,21 +164,12 @@ public class LoginActivity extends AppCompatActivity {
                             @Override
                             public void onResponse(Call<Void> call, Response<Void> response) {
                                 if (response.isSuccessful()) {
+                                    tokenManager.saveWeakKey(weakKey);
                                     Log.d("KEY_EXCHANGE", "Weak key exchanged successfully");
-                                    tokenManager.saveWeakKey(weakKey); // 키 저장
                                 } else {
-                                    String errorBody = "내용 없음";
-                                    if (response.errorBody() != null) {
-                                        try {
-                                            errorBody = response.errorBody().string();
-                                        } catch (IOException e) {
-                                            Log.e("KEY_EXCHANGE", "exchangeKeys errorBody 읽기 실패", e);
-                                        }
-                                    }
-                                    Log.e("KEY_EXCHANGE", "Failed to exchange weak key. code: " + response.code() + ", error: " + errorBody);
+                                    Log.e("KEY_EXCHANGE", "Failed to exchange weak key.");
                                 }
                             }
-
                             @Override
                             public void onFailure(Call<Void> call, Throwable t) {
                                 Log.e("KEY_EXCHANGE", "Error during key exchange", t);
@@ -280,18 +177,8 @@ public class LoginActivity extends AppCompatActivity {
                         });
 
                     } catch (Exception e) {
-                        Log.e("KEY_EXCHANGE", "Error during key encryption", e);
+                        Log.e("KEY_EXCHANGE", "Error during key processing", e);
                     }
-                } else {
-                    String errorBody = "내용 없음";
-                    if (response.errorBody() != null) {
-                        try {
-                            errorBody = response.errorBody().string();
-                        } catch (IOException e) {
-                            Log.e("KEY_EXCHANGE", "getPublicKey errorBody 읽기 실패", e);
-                        }
-                    }
-                    Log.e("KEY_EXCHANGE", "Failed to get public key. code: " + response.code() + ", error: " + errorBody);
                 }
             }
 
