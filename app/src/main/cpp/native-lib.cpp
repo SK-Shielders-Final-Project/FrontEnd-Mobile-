@@ -1,170 +1,166 @@
 #include <jni.h>
 #include <string>
 #include <unistd.h>
-#include <vector>
 #include <sys/stat.h>
-#include <fstream>
-#include <sys/system_properties.h>
+#include <fcntl.h>
+#include <dirent.h>
+#include <signal.h> // kill() 사용을 위해
 #include <android/log.h>
+#include <stdlib.h>
+#include <stdio.h>
 
-#define LOG_TAG "SecurityEngine"
-#define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG, LOG_TAG, __VA_ARGS__)
-#define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
+#define TAG "SecurityEngine"
+#define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, TAG, __VA_ARGS__)
 
-#define ERR_CODE_ROOTED 0x47
+// =============================================================
+// [1] 탐지 로직 (Helper Functions)
+// =============================================================
 
-// ------------------------------------------------------------------------
-// [Helper] 탐지 로직 함수들 (반드시 extern "C" 위에 있어야 함!)
-// ------------------------------------------------------------------------
-
-// 1. 파일 존재 여부 확인
-bool fileExists(const char* path) {
-    struct stat buffer;
-    return (stat(path, &buffer) == 0);
+// 문자열 검색 도구
+char* my_strstr(const char *haystack, const char *needle) {
+    if (!*needle) return (char *)haystack;
+    for (; *haystack; haystack++) {
+        const char *h = haystack, *n = needle;
+        while (*h && *n && *h == *n) { h++; n++; }
+        if (!*n) return (char *)haystack;
+    }
+    return NULL;
 }
 
-// 2. 위험한 파일/디렉토리 체크
-bool checkRootFiles() {
-    const char* paths[] = {
-            "/system/app/Superuser.apk",
-            "/sbin/su",
-            "/system/bin/su",
-            "/system/xbin/su",
-            "/data/local/xbin/su",
-            "/data/local/bin/su",
-            "/system/sd/xbin/su",
-            "/system/bin/failsafe/su",
-            "/data/local/su",
-            "/system/xbin/daemonsu",
-            "/system/etc/init.d/99SuperSUDaemon",
-            "/dev/com.koushikdutta.superuser.daemon/",
-            "/system/app/SuperSU.apk",
-            "/sbin/.magisk",
-            "/sbin/.core",
-            "/cache/magisk.log",
-            "/data/adb/magisk",
-            "/data/adb/magisk.db",
-            "/data/adb/ksu",
-            "/data/adb/kernelsu",
-            "/data/data/me.weishu.kernelsu",
-            //"/system/bin/sh", // [테스트용] 필요할 때만 주석 해제
-            nullptr
-    };
-
-    for (int i = 0; paths[i] != nullptr; i++) {
-        if (fileExists(paths[i])) {
-            LOGE("[탐지] 파일 발견됨: %s", paths[i]);
-            return true;
+// 1. Frida 스레드 검사
+bool check_frida_threads() {
+    DIR *dir = opendir("/proc/self/task");
+    if (!dir) return false;
+    struct dirent *entry;
+    char path[256], buf[256];
+    bool detected = false;
+    while ((entry = readdir(dir)) != NULL) {
+        if (entry->d_name[0] == '.') continue;
+        snprintf(path, sizeof(path), "/proc/self/task/%s/comm", entry->d_name);
+        int fd = open(path, O_RDONLY);
+        if (fd >= 0) {
+            int len = read(fd, buf, sizeof(buf) - 1);
+            if (len > 0) {
+                buf[len] = 0;
+                // 프리다 특유의 스레드 이름들
+                if (my_strstr(buf, "gmain") || my_strstr(buf, "gum-js-loop") ||
+                    my_strstr(buf, "pool-frida") || my_strstr(buf, "linjector")) {
+                    detected = true;
+                }
+            }
+            close(fd);
         }
+        if (detected) break;
+    }
+    closedir(dir);
+    return detected;
+}
+
+// 2. 루팅/프리다 파일 검사 (통합)
+bool check_files() {
+    const char* paths[] = {
+            "/sbin/su", "/system/bin/su", "/system/xbin/su", "/data/local/tmp/su",
+            "/data/local/tmp/frida-server", "/data/local/tmp/re.frida.server",
+            "/sbin/.magisk", "/data/adb/magisk.db", "/data/adb/ksu", nullptr
+    };
+    struct stat buffer;
+    for (int i = 0; paths[i] != nullptr; i++) {
+        if (stat(paths[i], &buffer) == 0) return true;
     }
     return false;
 }
 
-// 3. 빌드 태그 확인
+// 3. 빌드 태그 확인 (JNI 필요)
 bool checkBuildTags(JNIEnv* env) {
     jclass buildClass = env->FindClass("android/os/Build");
     jfieldID tagsField = env->GetStaticFieldID(buildClass, "TAGS", "Ljava/lang/String;");
     jstring tags = (jstring)env->GetStaticObjectField(buildClass, tagsField);
-
     const char* tagsStr = env->GetStringUTFChars(tags, nullptr);
-    bool isTestKeys = (strstr(tagsStr, "test-keys") != nullptr);
-
-    if (isTestKeys) {
-        LOGE("[탐지] test-keys 빌드 태그 발견");
-    }
-
+    bool isTestKeys = (my_strstr(tagsStr, "test-keys") != NULL);
     env->ReleaseStringUTFChars(tags, tagsStr);
     return isTestKeys;
 }
 
-// 4. 시스템 속성(Props) 확인 (이 함수가 없어서 에러가 났었습니다!)
-bool checkSystemProperties() {
-    char property[PROP_VALUE_MAX];
+// =============================================================
+// [2] 초기화 시점 방어 (Java 호출 없이 자동 실행)
+// =============================================================
 
-    /*
-    // ro.debuggable = 1 (디버깅 가능)
-    if (__system_property_get("ro.debuggable", property) > 0) {
-        if (strcmp(property, "1") == 0) {
-            LOGE("[탐지] ro.debuggable = 1");
-            return true;
-        }
-    }
+// ① [가장 빠름] 라이브러리 로드 시 생성자 단계에서 실행
+// JNIEnv가 없으므로 리눅스 시스템 콜 기반 검사만 수행 (파일, 스레드)
+__attribute__((constructor))
+void native_init() {
+    bool compromised = false;
 
-     ro.secure = 0 (보안 해제)
-    if (__system_property_get("ro.secure", property) > 0) {
-        if (strcmp(property, "0") == 0) {
-            LOGE("[탐지] ro.secure = 0");
-            return true;
-        }
+    if (check_files()) compromised = true;
+    if (check_frida_threads()) compromised = true;
+
+// [수정 전]
+/*
+    if (compromised) {
+        LOGE(">> [CRITICAL] 초기화 단계에서 위협 감지됨. 프로세스 제거.");
+        // 조용하고 확실하게 죽임 (Java로 돌아가지 않음)
+        kill(getpid(), SIGKILL);
     }
-    */
-    return false;
+*/
+
+// [수정 후: 테스트용]
+    if (compromised) {
+        LOGE(">> [테스트 모드] 위협이 감지되었으나 종료하지 않음.");
+        // kill(getpid(), SIGKILL);  // <--- ★ 이 줄을 주석 처리하세요
+    }
 }
 
+// ② [두 번째] JNI 로드 단계 (Java 연동 직전)
+// 여기서 JNIEnv를 쓸 수 있으므로 빌드 태그 등을 추가 검사
+JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void* reserved) {
+    JNIEnv* env;
+    if (vm->GetEnv(reinterpret_cast<void**>(&env), JNI_VERSION_1_6) != JNI_OK) {
+        return JNI_ERR;
+    }
+
+    // 1차: 이미 생성자에서 걸러졌겠지만 한번 더 확인
+    if (check_frida_threads()) {
+        // kill(getpid(), SIGKILL); // <--- ★ 주석 처리
+        // return JNI_ERR;          // <--- ★ 주석 처리 (에러 리턴 막기)
+        LOGE(">> [테스트 모드] Frida 스레드 감지됨 (무시)");
+    }
+
+    // 2차: JNI가 필요한 검사 수행
+    if (checkBuildTags(env)) {
+        LOGE(">> [CRITICAL] Test-Keys 빌드 감지됨.");
+        // JNI_ERR를 리턴하면 Java에서 UnsatisfiedLinkError가 발생하며 앱이 뻗음
+        // return JNI_ERR;          // <--- ★ 주석 처리 (에러 리턴 막기)
+        LOGE(">> [테스트 모드] 빌드 태그 감지됨 (무시)");
+    }
+
+    return JNI_VERSION_1_6; // 정상 로드
+}
+
+// =============================================================
+// [3] Java 연동 함수 (기존 유지하되 startSystemCheck는 제거)
+// =============================================================
 extern "C" {
 
-// ========================================================================
-// [통합] SecurityEngine.java와 연결된 함수들
-// ========================================================================
-
-// 1. API Key 가져오기
+// API Key 가져오기 (탐지 시 엉뚱한 값 반환 로직 추가 가능)
 JNIEXPORT jstring JNICALL
 Java_com_mobility_hack_security_SecurityEngine_getSecureApiKey(JNIEnv* env, jobject thiz) {
-    const char part1[] = {'H', 'A', 'C', 'K', '\0'};
-    const char part2[] = {'I', 'N', 'G', '_', 'L', '\0'};
-    const char part3[] = {'A', 'B', '_', '2', '0', '\0'};
-    const char part4[] = {'2', '4', '_', 'O', 'K', '\0'};
-
-    std::string result = "";
-    result.append(part1).append(part2).append(part3).append(part4);
-    return env->NewStringUTF(result.c_str());
+    // 만약 여기까지 살아서 왔다면 정상일 확률이 높음
+    return env->NewStringUTF("REAL_SECRET_KEY_HACKING_LAB_2024");
 }
 
-// 2. Anti-Debug 초기화
+// Anti-Debug (빈 껍데기만 남김 - 이미 native_init에서 수행함)
 JNIEXPORT void JNICALL
 Java_com_mobility_hack_security_SecurityEngine_initAntiDebug(JNIEnv* env, jobject thiz) {
-    LOGD("Anti-Debug Initialized");
+    // Do nothing or additional runtime check
 }
 
-// 3. 시스템 검사 시작 (기만 전술 포함)
+// Frida 모니터링 (백그라운드 감시 스레드 시작용)
 JNIEXPORT void JNICALL
-Java_com_mobility_hack_security_SecurityEngine_startSystemCheck(JNIEnv *env, jobject thiz, jobject activity) {
-
-    LOGD("--- 통합 보안 엔진 검사 시작 ---");
-    bool isRooted = false;
-
-    // 여기서 checkSystemProperties()를 호출하는데, 위쪽에 정의가 없으면 에러가 납니다.
-    // 이제 위쪽(4번 함수)에 정의해두었으므로 정상 작동합니다.
-    if (checkRootFiles()) isRooted = true;
-    else if (checkBuildTags(env)) isRooted = true;
-    else if (checkSystemProperties()) isRooted = true;
-    /*else if (fileExists("/sys/fs/selinux/enforce")) {
-        std::ifstream selinux("/sys/fs/selinux/enforce");
-        int enforcing;
-        selinux >> enforcing;
-        if (enforcing == 0) {
-            LOGE("[탐지] SELinux Permissive Mode");
-            isRooted = true;
-        }
-    } */
-
-    // Java 메서드 찾기 (SplashActivity의 메서드를 찾음)
-    jclass activityClass = env->GetObjectClass(activity);
-    jmethodID methodFakeError = env->GetMethodID(activityClass, "onNetworkError", "(I)V");
-    jmethodID methodSuccess = env->GetMethodID(activityClass, "onSystemStable", "()V");
-
-    if (methodFakeError == nullptr || methodSuccess == nullptr) {
-        LOGE("Java 콜백 메서드를 찾을 수 없습니다.");
-        return;
-    }
-
-    if (isRooted) {
-        LOGE(">> 위협 감지! 기만 전술 실행 (0x47)");
-        env->CallVoidMethod(activity, methodFakeError, 0x47);
-    } else {
-        LOGD(">> 시스템 안전. 로그인 진행");
-        env->CallVoidMethod(activity, methodSuccess);
-    }
+Java_com_mobility_hack_security_SecurityEngine_startFridaMonitoring(JNIEnv *env, jobject thiz) {
+    // (필요하다면 여기에 스레드 생성 코드 추가 - 이전 코드의 start_monitor_thread 활용)
 }
 
-} // extern "C" 끝
+// ★ startSystemCheck 삭제됨! ★
+// (Java에서 호출할 필요가 없어졌으므로 제거합니다.)
+
+} // extern "C"

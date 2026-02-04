@@ -45,48 +45,18 @@ public class SplashActivity extends AppCompatActivity {
         SecurityEngine engine = new SecurityEngine();
         SecurityBridge bridge = new SecurityBridge();
 
-        engine.initAntiDebug();
-        //engine.startFridaMonitoring();
+        //performIntegrityCheck();
 
-        //engine.startSystemCheck(this);
+        // [수정] 보안 검사 없이 1.5초 뒤 강제 이동 (테스트용)
         new Handler(Looper.getMainLooper()).postDelayed(() -> {
-            // onSystemStable()이 호출해주던 것을 여기서 대신 호출
             checkFlowAndNavigate();
-        }, 1500); // 1.5초 정도 스플래시 보여주고 이동
-    }
-
-    // ... (onNetworkError - 기존과 동일) ...
-    public void onNetworkError(int errorCode) {
-        runOnUiThread(() -> {
-            new AlertDialog.Builder(this)
-                    .setTitle("System Maintenance")
-                    .setMessage("현재 서버 긴급 점검 중입니다.\n(Error Code: " + errorCode + ")")
-                    .setCancelable(false)
-                    .setPositiveButton("확인", (dialog, which) -> {
-                        finishAffinity();
-                        System.exit(0);
-                    })
-                    .show();
-        });
-    }
-
-    public void onSystemStable() {
-        runOnUiThread(() -> {
-
-            // 무결성 검사 우회 (테스트용)
-            // performIntegrityCheck();  // <--- 이 줄을 주석 처리 (서버 검증 끄기)
-
-            checkFlowAndNavigate();      // <--- 바로 다음 화면 로직으로 이동
-        });
+        }, 1500);
     }
 
     /**
      * [보안 단계 3] 서버 연동 무결성 검사
      */
     private void performIntegrityCheck() {
-
-        // 안티프리다
-        //new SecurityEngine().checkFridaOnce();
 
         String sig = "";
         String bin = "";

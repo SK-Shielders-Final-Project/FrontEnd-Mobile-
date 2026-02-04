@@ -9,7 +9,6 @@ add_library(
         SHARED
         native-lib.cpp      # 원본 프로젝트의 기존 소스
         integrity_check.cpp # 무결성 검사 소스
-        anti_frida.cpp
 )
 
 # -----------------------------------------------------------
