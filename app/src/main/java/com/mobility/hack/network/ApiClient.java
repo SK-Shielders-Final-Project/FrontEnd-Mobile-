@@ -1,11 +1,14 @@
-package com.mobility.hack.network;
+package com.mobility.hack.network; // 1. 패키지는 맨 위에!
 
+import com.mobility.hack.BuildConfig;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
 public class ApiClient {
 
-    private static final String BASE_URL = "http://43.203.51.77:8080/";
+    // 3. 중복된 부분 제거하고 깔끔하게 수정
+    private static final String BASE_URL = BuildConfig.BASE_URL;
+
     private static Retrofit retrofit = null;
 
     public static Retrofit getClient() {

@@ -8,7 +8,7 @@ plugins {
     alias(libs.plugins.kotlin.kapt)
 }
 
-// Load MAPS_API_KEY from local.properties
+// Load properties from local.properties
 val localProperties = Properties()
 val localPropertiesFile = rootProject.file("local.properties")
 if (localPropertiesFile.exists()) {
@@ -35,14 +35,24 @@ android {
             }
         }
 
+        // [수정] local.properties에서 SERVER_URL 읽어오기 (없으면 기존 IP 사용)
+        // 이 코드가 있어야 자바에서 BuildConfig.BASE_URL을 쓸 수 있습니다.
+        val serverUrl = localProperties.getProperty("SERVER_URL") ?: ""
+        buildConfigField("String", "BASE_URL", "\"$serverUrl\"")
+
         // Set the API key as a manifest placeholder
         manifestPlaceholders["MAPS_API_KEY"] = localProperties.getProperty("MAPS_API_KEY") ?: ""
         manifestPlaceholders["TOSS_CLIENT_KEY"] = localProperties.getProperty("toss.clientKey") ?: ""
     }
 
+    // [수정] BuildConfig 클래스 생성을 활성화
+    buildFeatures {
+        buildConfig = true
+    }
+
     buildTypes {
         release {
-            isMinifyEnabled = true
+            isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -126,6 +136,4 @@ dependencies {
     implementation(libs.zxing.embedded)
 
     implementation("org.jsoup:jsoup:1.17.2")
-// [추가] 이미지 로딩 (썸네일 보여주기용)
-    implementation("com.github.bumptech.glide:glide:4.16.0")
 }
