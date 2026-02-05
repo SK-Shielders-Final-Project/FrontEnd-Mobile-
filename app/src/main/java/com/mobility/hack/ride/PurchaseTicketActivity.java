@@ -29,11 +29,14 @@ import retrofit2.Response;
 
 public class PurchaseTicketActivity extends AppCompatActivity {
 
+    public static final String EXTRA_BIKE_ID = "BIKE_ID"; // "bikeId" -> "BIKE_ID"로 수정
+
     private MaterialButtonToggleGroup timeSelectionGroup;
     private TextView totalAmountText;
     private TextView planDetailsText;
     private int selectedAmount = 1000;
     private int selectedHours = 1;
+    private String bikeIdString; // QR에서 받아온 바이크 ID (문자열)
     private ApiService apiService;
     private TokenManager tokenManager;
 
@@ -41,6 +44,14 @@ public class PurchaseTicketActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_purchase_ticket);
+
+        // 인텐트에서 바이크 ID 가져오기
+        bikeIdString = getIntent().getStringExtra(EXTRA_BIKE_ID);
+        if (bikeIdString == null || bikeIdString.isEmpty()) {
+            Toast.makeText(this, "유효하지 않은 자전거 번호입니다.", Toast.LENGTH_SHORT).show();
+            finish();
+            return;
+        }
 
         // 뷰 초기화
         MaterialToolbar toolbar = findViewById(R.id.toolbar);
@@ -77,7 +88,16 @@ public class PurchaseTicketActivity extends AppCompatActivity {
 
         // '다음' 버튼 리스너 (포인트 차감 요청)
         nextButton.setOnClickListener(v -> {
-            PointRequest request = new PointRequest(selectedHours, 1); // bikeId는 1로 고정
+            int bikeId;
+            try {
+                // "SN-2026-001"과 같은 형식에서 숫자만 추출
+                bikeId = Integer.parseInt(bikeIdString.replaceAll("[^0-9]", ""));
+            } catch (NumberFormatException e) {
+                Toast.makeText(this, "자전거 번호 형식이 올바르지 않습니다.", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            PointRequest request = new PointRequest(selectedHours, bikeId);
 
             apiService.usePoint(request).enqueue(new Callback<PointResponse>() {
                 @Override
