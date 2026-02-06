@@ -70,7 +70,7 @@ public class EditMyInfoActivity extends AppCompatActivity {
 
     private void loadUserInfo() {
         long userId = tokenManager.fetchUserId();
-        apiService.getUserInfo(userId).enqueue(new Callback<UserInfoResponse>() {
+        apiService.getUserInfo().enqueue(new Callback<UserInfoResponse>() {
             @Override
             public void onResponse(Call<UserInfoResponse> call, Response<UserInfoResponse> response) {
                 if (response.isSuccessful() && response.body() != null) {

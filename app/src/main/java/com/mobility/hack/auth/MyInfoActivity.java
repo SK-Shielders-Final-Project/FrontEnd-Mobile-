@@ -76,7 +76,7 @@ public class MyInfoActivity extends AppCompatActivity {
             return;
         }
 
-        apiService.getUserInfo(userId).enqueue(new Callback<UserInfoResponse>() {
+        apiService.getUserInfo().enqueue(new Callback<UserInfoResponse>() {
             @Override
             public void onResponse(@NotNull Call<UserInfoResponse> call, @NotNull Response<UserInfoResponse> response) {
                 if (isFinishing() || isDestroyed()) return;

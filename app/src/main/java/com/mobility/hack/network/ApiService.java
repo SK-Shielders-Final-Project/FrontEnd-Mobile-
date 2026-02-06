@@ -42,9 +42,6 @@ public interface ApiService {
     Call<Void> resetPassword(@Body ResetPasswordRequest resetPayload);
 
 
-    @GET("/api/user/info/{userId}")
-    Call<UserInfoResponse> getUserInfo(@Path("userId") long userId);
-
     @GET("/api/user/info")
     Call<UserInfoResponse> getUserInfo();
 

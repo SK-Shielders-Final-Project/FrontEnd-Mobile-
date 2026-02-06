@@ -59,6 +59,10 @@ public class PurchaseTicketActivity extends AppCompatActivity {
         totalAmountText = findViewById(R.id.total_amount_text);
         planDetailsText = findViewById(R.id.plan_details_text);
         MaterialButton nextButton = findViewById(R.id.next_button);
+        TextView dailyPassTab = findViewById(R.id.daily_pass_tab);
+
+        // 탭 텍스트 설정
+        dailyPassTab.setText("선택된 기기: " + bikeIdString);
 
         // MainApplication에서 ApiService 및 TokenManager 인스턴스 가져오기
         apiService = ((MainApplication) getApplication()).getApiService();
