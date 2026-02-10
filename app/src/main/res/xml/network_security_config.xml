@@ -1,10 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
+
 <network-security-config>
-    <!-- [11] 취약점: 모든 도메인에 대해 평문(HTTP) 통신 허용 -->
-    <base-config cleartextTrafficPermitted="true">
-        <trust-anchors>
-            <certificates src="system" />
-            <!-- <certificates src="user" /> --> <!-- WebView 충돌의 원인이므로 임시 주석 처리 -->
-        </trust-anchors>
-    </base-config>
+
+<!--    인증서 고정 주석 해제-->
+<!--<domain-config>-->
+<!--    <domain includeSubdomains="true">zdme.kro.kr</domain>-->
+<!--    <pin-set>-->
+<!--        <pin digest="SHA-256">I4ti+J6dwuzb76hT2PmdNW1p50iMgR8uIZIFKKo55Lo=</pin>-->
+<!--    </pin-set>-->
+<!--</domain-config>-->
+
+<!--<base-config cleartextTrafficPermitted="true">-->
+<!--    <trust-anchors>-->
+<!--        <certificates src="system" />-->
+<!--    </trust-anchors>-->
+<!--</base-config>-->
+
+<!--</network-security-config>-->
+
+<!-- 인증서 고정 주석 처리-->
+<base-config cleartextTrafficPermitted="true">
+    <trust-anchors>
+        <certificates src="system" />
+        <certificates src="user" />
+    </trust-anchors>
+</base-config>
 </network-security-config>

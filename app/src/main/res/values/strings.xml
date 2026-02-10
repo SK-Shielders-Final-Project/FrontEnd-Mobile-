@@ -1,6 +1,4 @@
 <resources>
     <string name="app_name">작당모빌</string>
 
-    <!-- 서버 URL -->
-    <string name="server_url">http://43.203.51.77:8080</string>
 </resources>

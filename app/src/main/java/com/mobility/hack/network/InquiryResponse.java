@@ -2,6 +2,7 @@ package com.mobility.hack.network;
 
 import com.google.gson.annotations.SerializedName;
 import java.io.Serializable;
+import com.mobility.hack.BuildConfig;
 
 /**
  * 백엔드 InquiryResponse 규격에 맞춘 통합 응답 모델
@@ -63,11 +64,13 @@ public class InquiryResponse implements Serializable {
     public String getDownloadUrl() {
         if (attachment == null) return null;
 
-        // 규칙: path + "/" + fileName + "." + ext
         String fullPath = attachment.getPath() + "/" + attachment.getFileName() + "." + attachment.getExt();
 
-        // 다운로드 서버 포트인 8080으로 주소 완성
-        return "http://43.203.51.77:8080/api/user/files/download?file=" + fullPath;
+        // [2] 기존 하드코딩 IP 삭제 -> BuildConfig.BASE_URL 사용
+        // 주의: BASE_URL 끝에 이미 '/'가 있다면 "api/..." 앞의 '/'는 빼야 슬래시 두 개(//)가 안 생깁니다.
+
+        // 예: https://zdme.kro.kr/ + api/user/...
+        return BuildConfig.BASE_URL + "api/user/files/download?file=" + fullPath;
     }
 
     // --- Getters ---

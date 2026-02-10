@@ -8,6 +8,7 @@ import com.mobility.hack.security.TokenManager;
 import java.net.CookieManager;
 import java.net.CookiePolicy;
 import java.util.concurrent.TimeUnit;
+import com.mobility.hack.BuildConfig;
 
 import okhttp3.JavaNetCookieJar;
 import okhttp3.OkHttpClient;
@@ -17,7 +18,7 @@ import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
 public class RetrofitClient {
-    private static final String BASE_URL = "http://43.203.51.77:8080/";
+    private static final String BASE_URL = BuildConfig.BASE_URL;
 
     // Retrofit 인스턴스를 저장할 static 변수 (싱글턴 구현)
     private static Retrofit retrofit = null;

@@ -8,7 +8,7 @@ plugins {
     alias(libs.plugins.kotlin.kapt)
 }
 
-// Load properties from local.properties
+// [핵심] local.properties 파일 로드
 val localProperties = Properties()
 val localPropertiesFile = rootProject.file("local.properties")
 if (localPropertiesFile.exists()) {
@@ -35,17 +35,20 @@ android {
             }
         }
 
-        // [수정] local.properties에서 SERVER_URL 읽어오기 (없으면 기존 IP 사용)
-        // 이 코드가 있어야 자바에서 BuildConfig.BASE_URL을 쓸 수 있습니다.
+        // -------------------------------------------------------------------
+        // [수정 포인트] local.properties의 "SERVER_URL"을 읽어서 자바 코드(BuildConfig)로 넘김
+        // -------------------------------------------------------------------
         val serverUrl = localProperties.getProperty("SERVER_URL") ?: ""
+
+        // BuildConfig.BASE_URL 변수 생성
         buildConfigField("String", "BASE_URL", "\"$serverUrl\"")
 
-        // Set the API key as a manifest placeholder
+        // AndroidManifest.xml에서 쓸 변수들 (${MAPS_API_KEY} 등으로 사용)
         manifestPlaceholders["MAPS_API_KEY"] = localProperties.getProperty("MAPS_API_KEY") ?: ""
         manifestPlaceholders["TOSS_CLIENT_KEY"] = localProperties.getProperty("toss.clientKey") ?: ""
     }
 
-    // [수정] BuildConfig 클래스 생성을 활성화
+    // [필수] BuildConfig 클래스 생성을 활성화해야 위 설정이 먹힙니다.
     buildFeatures {
         buildConfig = true
     }
@@ -67,9 +70,8 @@ android {
         }
     }
 
-    // JDK 21 사용에 따른 설정 변경
+    // JDK 21 설정
     compileOptions {
-        // Enable core library desugaring
         isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.VERSION_21
         targetCompatibility = JavaVersion.VERSION_21
@@ -86,9 +88,8 @@ android {
 
 kapt {
     correctErrorTypes = true
-    useBuildCache = false // Kapt 안정성을 위해 비활성화
+    useBuildCache = false
     arguments {
-        // Hilt 안정성 및 증분 빌드 오류(NPE) 방지 핵심 인자들
         arg("dagger.hilt.disableModulesHaveInstallInCheck", "true")
         arg("kapt.incremental.apt", "false")
         arg("kapt.use.worker.api", "false")
@@ -96,7 +97,6 @@ kapt {
 }
 
 dependencies {
-    // Enable core library desugaring
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
 
     implementation(libs.appcompat)
@@ -109,7 +109,7 @@ dependencies {
     implementation(libs.retrofit)
     implementation(libs.converter.gson)
     implementation(libs.logging.interceptor)
-    implementation(libs.okhttp.urlconnection) // ⭐️ JavaNetCookieJar를 위한 의존성 추가
+    implementation(libs.okhttp.urlconnection)
 
     // Glide
     implementation("com.github.bumptech.glide:glide:4.16.0")
@@ -128,8 +128,6 @@ dependencies {
 
     // Google Maps SDK
     implementation("com.google.android.gms:play-services-maps:17.0.0")
-
-    // Google Location SDK
     implementation("com.google.android.gms:play-services-location:17.0.0")
 
     // Barcode Scanner
