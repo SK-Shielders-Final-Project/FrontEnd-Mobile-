@@ -47,12 +47,12 @@ public class SplashActivity extends AppCompatActivity {
         // ---------------------------------------------------------
         // [보안 단계 1] Root 탐지
         // ---------------------------------------------------------
-/*        int rootResult = bridge.detectRooting(this);
+        int rootResult = bridge.detectRooting(this);
         if (rootResult == 0x47) {
             Log.e("SECURITY", "Rooting Detected");
             showKillAppDialog();
             return;
-        }*/
+        }
 
         // ---------------------------------------------------------
         // [보안 단계 2] 무결성 검증 (Nonce → Verify)
