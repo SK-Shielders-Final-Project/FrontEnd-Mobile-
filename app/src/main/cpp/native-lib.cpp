@@ -21,32 +21,29 @@
 #include <sys/wait.h>
 #include <sys/ptrace.h>
 #include <errno.h>
+#include <stdint.h>
 
 #ifdef __cplusplus
 #include <atomic>
+#endif
 
 // =============================================================
 // [다층 방어] 메모리 조작 방지 시스템
 // =============================================================
 
-// Layer 1: 공개 점수 (미끼)
+#ifdef __cplusplus
 std::atomic<int> g_threat_score(0);
+std::atomic<int> g_render_cache_size(0);
+std::atomic<int> g_audio_buffer_count(0);
+std::atomic<int> g_network_timeout_ms(0);
 
-// Layer 2: 위장 변수들 (실제 위협 점수를 다른 이름으로)
-std::atomic<int> g_render_cache_size(0);     // 렌더링 캐시로 위장
-std::atomic<int> g_audio_buffer_count(0);    // 오디오 버퍼로 위장
-std::atomic<int> g_network_timeout_ms(0);    // 네트워크 타임아웃으로 위장
-
-// Layer 3: XOR 인코딩 점수
 std::atomic<uint32_t> g_encoded_threat(0);
 volatile uint32_t g_threat_encode_key = 0;
 
-// Layer 4: 분산 저장
 std::atomic<int> g_check_a(0);
 std::atomic<int> g_check_b(0);
 std::atomic<int> g_check_c(0);
 
-// Layer 5: 타임라인 (점수 감소 탐지용)
 struct ThreatSnapshot {
     int score;
     time_t timestamp;
@@ -55,16 +52,13 @@ struct ThreatSnapshot {
 ThreatSnapshot g_timeline[50];
 std::atomic<int> g_timeline_idx(0);
 
-// 카나리 (메모리 오염 탐지)
 volatile uint32_t g_canary_before = 0xDEADBEEF;
-volatile uint32_t g_canary_after = 0xCAFEBABE;
+volatile uint32_t g_canary_after  = 0xCAFEBABE;
 
 std::atomic<bool> g_frida_detected(false);
 std::atomic<bool> g_root_detected(false);
-std::atomic<int> g_silent_checks(0);
-
+std::atomic<int>  g_silent_checks(0);
 #else
-// C 버전 (간소화)
 _Atomic bool g_frida_detected = false;
 _Atomic bool g_root_detected = false;
 _Atomic int g_threat_score = 0;
@@ -74,6 +68,9 @@ _Atomic int g_audio_buffer_count = 0;
 
 #define TAG "SecurityEngine"
 #define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, TAG, __VA_ARGS__)
+#define LOGW(...) __android_log_print(ANDROID_LOG_WARN,  TAG, __VA_ARGS__)
+#define LOGI(...) __android_log_print(ANDROID_LOG_INFO,  TAG, __VA_ARGS__)
+
 #define ERR_CODE_ROOTED 0x47
 #define THREAT_THRESHOLD 3
 
@@ -118,7 +115,7 @@ char* my_strstr(const char *haystack, const char *needle) {
 }
 
 void my_force_exit(int status) {
-    return;  // 공유용
+    return;  // 공유용(테스트)
 #if defined(__aarch64__)
     __asm__ volatile ("mov x8, #93\n mov x0, %0\n svc #0\n" :: "r"((long)status) : "x0", "x8");
 #elif defined(__arm__)
@@ -134,41 +131,34 @@ void my_force_exit(int status) {
 // [다층 방어] 위협 점수 관리 시스템
 // =============================================================
 
-// 체크섬 계산
 inline uint32_t calc_score_checksum(int score) {
-    uint32_t hash = score;
+    uint32_t hash = (uint32_t)score;
     hash = ((hash >> 16) ^ hash) * 0x45d9f3b;
     hash = ((hash >> 16) ^ hash) * 0x45d9f3b;
     hash = (hash >> 16) ^ hash;
     return hash;
 }
 
-// 5개 레이어에 동시 증가
 inline void silent_threat_increment() {
 #ifdef __cplusplus
-    // 카나리 체크
     if (g_canary_before != 0xDEADBEEF || g_canary_after != 0xCAFEBABE) {
         LOGE(">> [FATAL] Canary violated!");
         my_force_exit(0);
         return;
     }
 
-    // Layer 1-4: 모든 점수 증가
     int new_score = g_threat_score.fetch_add(1) + 1;
     g_render_cache_size.fetch_add(1);
     g_audio_buffer_count.fetch_add(1);
 
-    // Layer 3: XOR 인코딩
     uint32_t decoded = g_encoded_threat.load() ^ g_threat_encode_key;
     g_encoded_threat.store((decoded + 1) ^ g_threat_encode_key);
 
-    // Layer 4: 분산 (랜덤 배분)
     int r = rand() % 3;
     if (r == 0) g_check_a.fetch_add(1);
     else if (r == 1) g_check_b.fetch_add(1);
     else g_check_c.fetch_add(1);
 
-    // Layer 5: 타임라인 기록
     int idx = g_timeline_idx.fetch_add(1);
     if (idx < 50) {
         g_timeline[idx].score = new_score;
@@ -182,40 +172,32 @@ inline void silent_threat_increment() {
 #endif
 }
 
-// 교차 검증: 5개 레이어가 일치하는지 확인
 inline bool verify_score_integrity() {
 #ifdef __cplusplus
-    // 카나리 체크
     if (g_canary_before != 0xDEADBEEF || g_canary_after != 0xCAFEBABE) {
         LOGE(">> [FATAL] Canary violated during verify!");
-        return true;  // 즉시 종료
+        return true;
     }
 
     int s1 = g_threat_score.load();
     int s2 = g_render_cache_size.load();
     int s3 = g_audio_buffer_count.load();
-    int s4 = g_encoded_threat.load() ^ g_threat_encode_key;
+    int s4 = (int)(g_encoded_threat.load() ^ g_threat_encode_key);
     int s5 = g_check_a.load() + g_check_b.load() + g_check_c.load();
 
-    // 불일치 탐지
     if (s1 != s2 || s1 != s3 || s1 != s4 || s1 != s5) {
-        LOGE(">> [FATAL] Score mismatch! L1=%d L2=%d L3=%d L4=%d L5=%d",
-             s1, s2, s3, s4, s5);
-        return true;  // 메모리 조작 탐지!
+        LOGE(">> [FATAL] Score mismatch! L1=%d L2=%d L3=%d L4=%d L5=%d", s1, s2, s3, s4, s5);
+        return true;
     }
 
-    // 타임라인 검증 (점수 감소 탐지)
     int timeline_count = g_timeline_idx.load();
     if (timeline_count > 50) timeline_count = 50;
 
     for (int i = 1; i < timeline_count; i++) {
-        // 점수가 감소했는지 확인
-        if (g_timeline[i].score < g_timeline[i-1].score) {
+        if (g_timeline[i].score < g_timeline[i - 1].score) {
             LOGE(">> [FATAL] Score decreased! History tampered!");
             return true;
         }
-
-        // 체크섬 확인
         uint32_t expected = calc_score_checksum(g_timeline[i].score);
         if (g_timeline[i].checksum != expected) {
             LOGE(">> [FATAL] Timeline checksum mismatch!");
@@ -223,7 +205,6 @@ inline bool verify_score_integrity() {
         }
     }
 
-    // 현재 점수 vs 마지막 기록 비교
     if (timeline_count > 0) {
         int last_recorded = g_timeline[timeline_count - 1].score;
         if (s1 < last_recorded) {
@@ -238,7 +219,6 @@ inline bool verify_score_integrity() {
 #endif
 }
 
-// 검증 후 조치
 inline void check_and_enforce() {
     return;  // 테스트용
     if (verify_score_integrity()) {
@@ -271,7 +251,7 @@ inline bool verify_check_sequence() {
 }
 
 // =============================================================
-// [Part 1] 탐지 로직 - 분산 검증 적용
+// [Part 1] 탐지 로직
 // =============================================================
 
 bool check_zygisk_mounts() {
@@ -279,7 +259,7 @@ bool check_zygisk_mounts() {
     FILE *fp = fopen("/proc/self/mountinfo", "r");
     if (!fp) {
         silent_threat_increment();
-        check_and_enforce();  // ← 추가
+        check_and_enforce();
         return false;
     }
 
@@ -294,7 +274,7 @@ bool check_zygisk_mounts() {
         char* separator = strstr(line, " - ");
 
         if (separator) {
-            size_t front_len = separator - line;
+            size_t front_len = (size_t)(separator - line);
             if (front_len >= sizeof(front)) front_len = sizeof(front) - 1;
             strncpy(front, line, front_len);
             strncpy(back, separator + 3, sizeof(back) - 1);
@@ -317,19 +297,19 @@ bool check_zygisk_mounts() {
             LOGE(">> [탐지] Zygisk Confirmed (ADB+Overlay)");
             silent_threat_increment();
             fclose(fp);
-            check_and_enforce();  // ← 추가
+            check_and_enforce();
             return true;
         }
         if (suspicious_tmpfs && suspicious_overlay) {
             LOGE(">> [탐지] Zygisk Confirmed (Tmpfs+Overlay)");
             silent_threat_increment();
             fclose(fp);
-            check_and_enforce();  // ← 추가
+            check_and_enforce();
             return true;
         }
     }
     fclose(fp);
-    check_and_enforce();  // ← 추가
+    check_and_enforce();
     return false;
 }
 
@@ -353,12 +333,12 @@ bool check_anti_debug_fork() {
                 LOGE(">> [탐지] Debugger Attached!");
                 silent_threat_increment();
                 silent_threat_increment();
-                check_and_enforce();  // ← 추가
+                check_and_enforce();
                 return true;
             }
         }
     }
-    check_and_enforce();  // ← 추가
+    check_and_enforce();
     return false;
 }
 
@@ -371,11 +351,11 @@ bool check_root_files_native() {
         if (access(path, F_OK) == 0) {
             LOGE(">> [탐지] Rooting File Found: %s", path);
             silent_threat_increment();
-            check_and_enforce();  // ← 추가
+            check_and_enforce();
             return true;
         }
     }
-    check_and_enforce();  // ← 추가
+    check_and_enforce();
     return false;
 }
 
@@ -383,7 +363,7 @@ bool check_frida_threads() {
     DIR *dir = opendir("/proc/self/task");
     if (!dir) {
         silent_threat_increment();
-        check_and_enforce();  // ← 추가
+        check_and_enforce();
         return false;
     }
     struct dirent *entry;
@@ -409,7 +389,7 @@ bool check_frida_threads() {
         if (detected) break;
     }
     closedir(dir);
-    check_and_enforce();  // ← 추가
+    check_and_enforce();
     return detected;
 }
 
@@ -417,7 +397,7 @@ bool check_frida_artifacts() {
     FILE *fp = fopen("/proc/self/maps", "r");
     if (!fp) {
         silent_threat_increment();
-        check_and_enforce();  // ← 추가
+        check_and_enforce();
         return false;
     }
     char line[512];
@@ -431,7 +411,7 @@ bool check_frida_artifacts() {
         }
     }
     fclose(fp);
-    check_and_enforce();  // ← 추가
+    check_and_enforce();
     return detected;
 }
 
@@ -440,7 +420,7 @@ bool check_tracer_pid() {
     FILE *fp = fopen("/proc/self/status", "r");
     if (!fp) {
         silent_threat_increment();
-        check_and_enforce();  // ← 추가
+        check_and_enforce();
         return false;
     }
     char line[512];
@@ -458,7 +438,7 @@ bool check_tracer_pid() {
         }
     }
     fclose(fp);
-    check_and_enforce();  // ← 추가
+    check_and_enforce();
     return detected;
 }
 
@@ -472,11 +452,11 @@ bool check_frida_files() {
         if (access(targets[i], F_OK) == 0) {
             LOGE(">> [탐지] Frida 파일: %s", targets[i]);
             silent_threat_increment();
-            check_and_enforce();  // ← 추가
+            check_and_enforce();
             return true;
         }
     }
-    check_and_enforce();  // ← 추가
+    check_and_enforce();
     return false;
 }
 
@@ -493,12 +473,12 @@ bool check_frida_ports() {
             LOGE(">> [탐지] Frida Port: %d", ports[i]);
             close(sock);
             silent_threat_increment();
-            check_and_enforce();  // ← 추가
+            check_and_enforce();
             return true;
         }
         close(sock);
     }
-    check_and_enforce();  // ← 추가
+    check_and_enforce();
     return false;
 }
 
@@ -508,7 +488,7 @@ bool check_libc_inline_hook() {
     void* handle = dlopen("libc.so", RTLD_NOW);
     if (!handle) {
         silent_threat_increment();
-        check_and_enforce();  // ← 추가
+        check_and_enforce();
         return false;
     }
 
@@ -520,21 +500,21 @@ bool check_libc_inline_hook() {
 #if defined(__aarch64__)
         uint32_t inst = *(uint32_t*)addr;
         if ((inst & 0xFF000000) == 0x58000000) {
-             silent_threat_increment();
-             dlclose(handle);
-             check_and_enforce();  // ← 추가
-             return true;
+            silent_threat_increment();
+            dlclose(handle);
+            check_and_enforce();
+            return true;
         }
         if ((inst & 0xFC000000) == 0x14000000) {
-             silent_threat_increment();
-             dlclose(handle);
-             check_and_enforce();  // ← 추가
-             return true;
+            silent_threat_increment();
+            dlclose(handle);
+            check_and_enforce();
+            return true;
         }
 #endif
     }
     dlclose(handle);
-    check_and_enforce();  // ← 추가
+    check_and_enforce();
     return false;
 }
 
@@ -542,7 +522,7 @@ bool check_rwx_memory() {
     FILE *fp = fopen("/proc/self/maps", "r");
     if (!fp) {
         silent_threat_increment();
-        check_and_enforce();  // ← 추가
+        check_and_enforce();
         return false;
     }
     char line[512];
@@ -568,7 +548,7 @@ bool check_rwx_memory() {
         }
     }
     fclose(fp);
-    check_and_enforce();  // ← 추가
+    check_and_enforce();
     return detected;
 }
 
@@ -577,54 +557,51 @@ bool check_rwx_memory() {
 // =============================================================
 
 inline bool perform_full_check() {
-    return false; //테스트용
+    return false; // 테스트용(원래 로직 유지)
 
-    // 시퀀스 검증
     if (!verify_check_sequence()) {
         LOGE(">> [경고] 검증 시퀀스 누락");
         silent_threat_increment();
     }
-    check_and_enforce();  // ← 추가
+    check_and_enforce();
 
     bool suspicious = false;
     if (check_frida_threads()) suspicious = true;
-    check_and_enforce();  // ← 추가
+    check_and_enforce();
 
     if (check_frida_artifacts()) suspicious = true;
-    check_and_enforce();  // ← 추가
+    check_and_enforce();
 
     if (check_tracer_pid()) suspicious = true;
-    check_and_enforce();  // ← 추가
+    check_and_enforce();
 
     if (check_frida_files()) suspicious = true;
-    check_and_enforce();  // ← 추가
+    check_and_enforce();
 
     if (check_frida_ports()) suspicious = true;
-    check_and_enforce();  // ← 추가
+    check_and_enforce();
 
     if (check_libc_inline_hook()) suspicious = true;
-    check_and_enforce();  // ← 추가
+    check_and_enforce();
 
     if (check_rwx_memory()) suspicious = true;
-    check_and_enforce();  // ← 추가
+    check_and_enforce();
 
     if (check_zygisk_mounts()) suspicious = true;
-    check_and_enforce();  // ← 추가
+    check_and_enforce();
 
     if (check_root_files_native()) suspicious = true;
-    check_and_enforce();  // ← 추가
+    check_and_enforce();
 
     if (suspicious) {
-        if (check_anti_debug_fork()) {
-            return true;
-        }
+        if (check_anti_debug_fork()) return true;
         return true;
     }
     return false;
 }
 
 void enforce_policy(bool hard_kill) {
-    check_and_enforce();  // ← 추가
+    check_and_enforce();
 
     if (perform_full_check()) {
 #ifdef __cplusplus
@@ -659,7 +636,6 @@ void* monitor_loop(void* args) {
     while (config->total_duration_sec == 0 || (elapsed_ms < config->total_duration_sec * 1000)) {
         enforce_policy(true);
 
-        // Self-Checksum
         if (g_xor_key != 0 && g_masked_len != 0) {
             uint32_t real_len = g_masked_len ^ g_xor_key;
             uint32_t golden_inline = g_masked_hash_inline ^ g_xor_key;
@@ -674,13 +650,12 @@ void* monitor_loop(void* args) {
                 LOGE(">> [FATAL] Code Tampering!");
                 silent_threat_increment();
                 silent_threat_increment();
-                check_and_enforce();  // ← 추가
+                check_and_enforce();
                 my_force_exit(0);
             }
         }
 
-        check_and_enforce();  // ← 추가
-
+        check_and_enforce();
         usleep(config->interval_ms * 1000);
         elapsed_ms += config->interval_ms;
     }
@@ -709,12 +684,10 @@ void native_init() {
 
     srand(time(NULL));
 
-    // XOR 키 초기화
     g_xor_key = (uint32_t)rand() | 0x55555555;
     uint32_t real_len = 32 + (rand() % 65);
     g_masked_len = real_len ^ g_xor_key;
 
-    // 위협 인코딩 키 초기화
 #ifdef __cplusplus
     g_threat_encode_key = (uint32_t)rand() | 0xABCDABCD;
     g_encoded_threat.store(0 ^ g_threat_encode_key);
@@ -729,36 +702,113 @@ void native_init() {
     g_masked_hash_exit   = real_hash_exit ^ g_xor_key;
 
     LOGE(">> [Init] Multi-layer Protection Armed");
-
     enforce_policy(true);
     start_monitor_thread(2, 100);
 }
 
 // =============================================================
-// [Part 4] JNI 인터페이스
+// [Part 4] JNI 인터페이스 (+ SSL Pinning 추가)
 // =============================================================
+
+static inline bool clearIfException(JNIEnv* env, const char* where) {
+    if (env->ExceptionCheck()) {
+        LOGE("JNI Exception at %s", where);
+        env->ExceptionClear();
+        return true;
+    }
+    return false;
+}
+
+static inline int constantTimeEq32(const unsigned char* a, const unsigned char* b) {
+    unsigned char diff = 0;
+    for (int i = 0; i < 32; i++) diff |= (unsigned char)(a[i] ^ b[i]);
+    return diff == 0;
+}
+
+// ---- (SSL Pinning) pinned hash (SHA-256 of leaf cert DER) ----
+// 예시(네가 전에 적어둔 것):
+// 0b:a9:48:a3:f9:2d:cf:e9:62:24:e9:71:0d:e3:19:84:cf:6d:97:56:62:77:45:26:60:38:d3:49:33:1b:6a:39
+// 아래는 단순 난독화( XOR ) 저장.
+static const unsigned char PIN_XOR_KEY = 0xA7;
+static const unsigned char PIN_HASH_OBF[32] = {
+        0xac, 0x0e, 0xef, 0x04, 0x5e, 0x8a, 0x68, 0x4e,
+        0xc5, 0x83, 0x4e, 0xd6, 0xaa, 0x44, 0xbe, 0x23,
+        0x68, 0xca, 0x30, 0xf1, 0xc5, 0xd0, 0xe2, 0x81,
+        0xc7, 0x9f, 0x74, 0xee, 0x94, 0xbc, 0xcd, 0x9e
+};
+
+static inline void decodePinHash(unsigned char out[32]) {
+    for (int i = 0; i < 32; i++) out[i] = (unsigned char)(PIN_HASH_OBF[i] ^ PIN_XOR_KEY);
+}
+
+// Java MessageDigest(SHA-256)로 digest 계산
+static bool sha256_via_java(JNIEnv* env, jbyteArray input, unsigned char out32[32]) {
+    jclass mdCls = env->FindClass("java/security/MessageDigest");
+    if (mdCls == nullptr) return false;
+
+    jmethodID getInstance = env->GetStaticMethodID(mdCls, "getInstance", "(Ljava/lang/String;)Ljava/security/MessageDigest;");
+    if (getInstance == nullptr) return false;
+
+    jstring algo = env->NewStringUTF("SHA-256");
+    jobject mdObj = env->CallStaticObjectMethod(mdCls, getInstance, algo);
+    env->DeleteLocalRef(algo);
+    if (clearIfException(env, "MessageDigest.getInstance")) return false;
+    if (mdObj == nullptr) return false;
+
+    jmethodID digest = env->GetMethodID(mdCls, "digest", "([B)[B");
+    if (digest == nullptr) return false;
+
+    jbyteArray hashArr = (jbyteArray)env->CallObjectMethod(mdObj, digest, input);
+    if (clearIfException(env, "MessageDigest.digest")) return false;
+    if (hashArr == nullptr) return false;
+
+    jsize hlen = env->GetArrayLength(hashArr);
+    if (hlen != 32) return false;
+
+    jbyte* hbytes = env->GetByteArrayElements(hashArr, nullptr);
+    if (!hbytes) return false;
+
+    memcpy(out32, hbytes, 32);
+    env->ReleaseByteArrayElements(hashArr, hbytes, JNI_ABORT);
+
+    env->DeleteLocalRef(hashArr);
+    env->DeleteLocalRef(mdObj);
+    return true;
+}
+
+#ifdef __cplusplus
+static std::atomic<bool> g_pinning_enabled(true);
+#else
+static _Atomic bool g_pinning_enabled = true;
+#endif
 
 extern "C" {
 
 JNIEXPORT jstring JNICALL
 Java_com_mobility_hack_security_SecurityBridge_getSecureApiKey(JNIEnv* env, jobject) {
-    check_and_enforce();  // ← 추가
+    check_and_enforce();
     const char part1[] = {'H', 'A', 'C', 'K', '\0'};
     const char part2[] = {'I', 'N', 'G', '_', 'L', '\0'};
     const char part3[] = {'A', 'B', '_', '2', '0', '\0'};
     const char part4[] = {'2', '4', '_', 'O', 'K', '\0'};
     const char* parts[] = {part1, part2, part3, part4};
-    std::string result = "";
+    std::string result;
     for (int i = 0; i < 4; i++) result.append(parts[i]);
-    check_and_enforce();  // ← 추가
+    check_and_enforce();
     return env->NewStringUTF(result.c_str());
 }
 
 JNIEXPORT jint JNICALL
 Java_com_mobility_hack_security_SecurityBridge_detectRooting(JNIEnv* env, jobject thiz, jobject context) {
-    check_and_enforce();  // ← 추가
+    (void)thiz;
+    check_and_enforce();
 
+#ifdef __cplusplus
     if (g_root_detected.load()) return ERR_CODE_ROOTED;
+#else
+    if (g_root_detected) return ERR_CODE_ROOTED;
+#endif
+
     if (check_root_files_native()) return ERR_CODE_ROOTED;
 
     const char* rootPackages[] = {
@@ -777,47 +827,123 @@ Java_com_mobility_hack_security_SecurityBridge_detectRooting(JNIEnv* env, jobjec
     for (const char* pkg : rootPackages) {
         jstring pkgString = env->NewStringUTF(pkg);
         jobject pkgInfo = env->CallObjectMethod(packageManager, getPackageInfo, pkgString, 0);
+        env->DeleteLocalRef(pkgString);
+
         if (env->ExceptionCheck()) {
             env->ExceptionClear();
         } else if (pkgInfo != NULL) {
             silent_threat_increment();
-            check_and_enforce();  // ← 추가
+            check_and_enforce();
             return ERR_CODE_ROOTED;
         }
     }
 
-    check_and_enforce();  // ← 추가
+    check_and_enforce();
     return 0;
 }
 
 JNIEXPORT void JNICALL
 Java_com_mobility_hack_security_SecurityEngine_initAntiDebug(JNIEnv* env, jobject thiz) {
-    check_and_enforce();  // ← 추가
+    (void)env; (void)thiz;
+    check_and_enforce();
     return;
 }
 
 JNIEXPORT jstring JNICALL
 Java_com_mobility_hack_util_Keys_getApiKey(JNIEnv *env, jobject thiz) {
-    check_and_enforce();  // ← 추가
+    (void)thiz;
+    check_and_enforce();
     return env->NewStringUTF("DUMMY_KEY");
 }
 
 JNIEXPORT void JNICALL
 Java_com_mobility_hack_security_SecurityEngine_startFridaMonitoring(JNIEnv *env, jobject thiz) {
-    check_and_enforce();  // ← 추가
+    (void)env; (void)thiz;
+    check_and_enforce();
     start_monitor_thread(0, 3000);
 }
 
 JNIEXPORT void JNICALL
 Java_com_mobility_hack_security_SecurityEngine_checkFridaOnce(JNIEnv *env, jobject thiz) {
-    check_and_enforce();  // ← 추가
+    (void)env; (void)thiz;
+    check_and_enforce();
     enforce_policy(true);
 }
 
 JNIEXPORT jboolean JNICALL
 Java_com_mobility_hack_security_SecurityEngine_wasFridaDetectedEarly(JNIEnv *env, jobject thiz) {
-    check_and_enforce();  // ← 추가
-    return (jboolean)g_frida_detected.load();
+    (void)env; (void)thiz;
+    check_and_enforce();
+#ifdef __cplusplus
+    return (jboolean)(g_frida_detected.load() ? JNI_TRUE : JNI_FALSE);
+#else
+    return (jboolean)(g_frida_detected ? JNI_TRUE : JNI_FALSE);
+#endif
+}
+
+// =============================================================
+// ✅ SSL PINNING JNI (SslGuard)
+//  - Java: com.mobility.hack.security.SslGuard
+// =============================================================
+
+// public static native void setSslPinningEnabled(boolean enabled);
+JNIEXPORT void JNICALL
+Java_com_mobility_hack_security_SslGuard_setSslPinningEnabled(JNIEnv* /*env*/, jclass /*clazz*/, jboolean enabled) {
+#ifdef __cplusplus
+    g_pinning_enabled.store(enabled == JNI_TRUE);
+#else
+    g_pinning_enabled = (enabled == JNI_TRUE);
+#endif
+    LOGI("Pinning toggle set to %s", (enabled == JNI_TRUE) ? "ON" : "OFF");
+}
+
+// public native boolean verifyCert(byte[] certEncoded, boolean checkEnabled);
+JNIEXPORT jboolean JNICALL
+Java_com_mobility_hack_security_SslGuard_verifyCert(
+        JNIEnv *env,
+        jobject /*thiz*/,
+        jbyteArray certEncoded,
+        jboolean checkEnabled) {
+
+    if (certEncoded == nullptr) return JNI_FALSE;
+    jsize inLen = env->GetArrayLength(certEncoded);
+    if (inLen <= 0) return JNI_FALSE;
+
+    // Java에서 checkEnabled=false 보내면 통과(너가 말한 테스트 스위치)
+    if (checkEnabled == JNI_FALSE) {
+        LOGW("[Pinning] checkEnabled=false -> BYPASS");
+        return JNI_TRUE;
+    }
+
+    // native 토글 OFF면 통과(선택 기능)
+#ifdef __cplusplus
+    if (!g_pinning_enabled.load()) {
+#else
+        if (!g_pinning_enabled) {
+#endif
+        LOGW("[Pinning] g_pinning_enabled=OFF -> BYPASS");
+        return JNI_TRUE;
+    }
+
+    unsigned char expected[32];
+    decodePinHash(expected);
+
+    unsigned char actual[32];
+    memset(actual, 0, sizeof(actual));
+
+    if (!sha256_via_java(env, certEncoded, actual)) {
+        LOGE("[Pinning] SHA-256 calc failed");
+        return JNI_FALSE;
+    }
+
+    if (constantTimeEq32(actual, expected)) {
+        LOGI("[Pinning] OK (leaf cert matched)");
+        return JNI_TRUE;
+    }
+
+    // mismatch
+    LOGE("[Pinning] FAIL (leaf cert mismatch)");
+    return JNI_FALSE;
 }
 
 } // extern "C"

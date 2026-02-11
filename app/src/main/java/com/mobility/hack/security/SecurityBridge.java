@@ -15,6 +15,8 @@ public class SecurityBridge {
     // 네이티브 함수 선언 (native-lib.cpp와 연결)
     public native int detectRooting(Context context);
     public native String getSecureApiKey();
+    public static native void setSslPinningEnabled(boolean enabled);
+    public static native boolean isSslPinningEnabled();
 
     /**
      * [app047 보안 기믹 재현]
