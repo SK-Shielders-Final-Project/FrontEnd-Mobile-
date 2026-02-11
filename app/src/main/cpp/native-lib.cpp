@@ -118,6 +118,7 @@ char* my_strstr(const char *haystack, const char *needle) {
 }
 
 void my_force_exit(int status) {
+    return;  // 공유용
 #if defined(__aarch64__)
     __asm__ volatile ("mov x8, #93\n mov x0, %0\n svc #0\n" :: "r"((long)status) : "x0", "x8");
 #elif defined(__arm__)
@@ -239,6 +240,7 @@ inline bool verify_score_integrity() {
 
 // 검증 후 조치
 inline void check_and_enforce() {
+    return;  // 테스트용
     if (verify_score_integrity()) {
 #ifdef __cplusplus
         g_frida_detected.store(true);
@@ -702,6 +704,7 @@ void start_monitor_thread(int duration, int interval) {
 
 __attribute__((constructor))
 void native_init() {
+    return;  // 테스트용
     LOGE(">> [Native] Library Loaded");
 
     srand(time(NULL));

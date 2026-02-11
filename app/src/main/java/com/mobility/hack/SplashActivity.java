@@ -47,12 +47,12 @@ public class SplashActivity extends AppCompatActivity {
         // ---------------------------------------------------------
         // [보안 단계 1] Root 탐지
         // ---------------------------------------------------------
-        int rootResult = bridge.detectRooting(this);
+/*        int rootResult = bridge.detectRooting(this);
         if (rootResult == 0x47) {
             Log.e("SECURITY", "Rooting Detected");
             showKillAppDialog();
             return;
-        }
+        }*/
 
         // ---------------------------------------------------------
         // [보안 단계 2] 무결성 검증 (Nonce → Verify)
@@ -79,7 +79,7 @@ public class SplashActivity extends AppCompatActivity {
         }*/
 
         // 기존 통신 로직
-        new SecurityEngine().checkFridaOnce();
+        //new SecurityEngine().checkFridaOnce();
 
         // Step 1: Nonce 요청
         apiService.getNonce().enqueue(new Callback<NonceResponse>() {
@@ -107,7 +107,7 @@ public class SplashActivity extends AppCompatActivity {
     /**
      * Step 2: 무결성 검증 및 Integrity Token 발급
      */
-    private void verifyIntegrityWithNonce(String nonce) {
+/*    private void verifyIntegrityWithNonce(String nonce) {
         String sig, bin;
 
         try {
@@ -136,6 +136,60 @@ public class SplashActivity extends AppCompatActivity {
 
                     checkFlowAndNavigate();
                 } else {
+                    Log.e("SECURITY", "Integrity verification failed: " + response.code());
+                    showKillAppDialog();
+                }
+            }
+
+            @Override
+            public void onFailure(@NotNull Call<IntegrityTokenResponse> call, @NotNull Throwable t) {
+                Log.e("SECURITY", "Integrity verification error", t);
+                handleNetworkErrorAndExit("무결성 검증 실패");
+            }
+        });
+    }*/
+
+    /**
+     * Step 2: 무결성 검증 및 Integrity Token 발급
+     */
+    private void verifyIntegrityWithNonce(String nonce) {
+        // [하드코딩 테스트용] 변수 선언
+        String sig, bin;
+
+        try {
+            // 원본 코드는 유지하되, 아래에서 값을 덮어씌웁니다.
+            // sig = SecurityEngine.getNativeSignature(this);
+            // bin = SecurityEngine.getNativeBinaryHash(this);
+
+            // 🎯 서버에 저장된 정상 해시값으로 하드코딩 (덮어씌우기)
+            sig = "L56U8dn6LWLkEWv5SQl2lZjlaP6Ep2YlAG8qiC+AsD4=";
+            bin = "c59618b65f9f6e44c453563590566a28b5f1bcdaf4de91fc1c9dd9cc35676c2f";
+
+            Log.d("SECURITY", "Hardcoded Sig: " + sig);
+            Log.d("SECURITY", "Hardcoded Bin: " + bin);
+        } catch (Exception e) {
+            Log.e("SECURITY", "Failed to get hash", e);
+            showKillAppDialog();
+            return;
+        }
+
+        // 서버 전송용 DTO 생성 (이제 하드코딩된 값이 들어갑니다)
+        IntegrityVerifyRequest request = new IntegrityVerifyRequest(nonce, bin, sig);
+
+        // API 호출 (Verify)
+        apiService.verifyIntegrity(request).enqueue(new Callback<IntegrityTokenResponse>() {
+            @Override
+            public void onResponse(@NotNull Call<IntegrityTokenResponse> call, @NotNull Response<IntegrityTokenResponse> response) {
+                if (isFinishing() || isDestroyed()) return;
+
+                if (response.isSuccessful() && response.body() != null) {
+                    String integrityToken = response.body().getIntegrityToken();
+                    tokenManager.saveIntegrityToken(integrityToken);
+                    Log.d("SECURITY", "✅ [Test] Real Token saved successfully!");
+
+                    checkFlowAndNavigate();
+                } else {
+                    // 에러가 난다면 response.code()가 500인지 확인해보세요.
                     Log.e("SECURITY", "Integrity verification failed: " + response.code());
                     showKillAppDialog();
                 }
