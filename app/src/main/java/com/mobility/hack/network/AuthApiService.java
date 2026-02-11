@@ -9,7 +9,7 @@ import retrofit2.http.POST;
 
 public interface AuthApiService {
 
-    @POST("api/auth/refresh")
+    @POST("/api/auth/refresh")
     Call<AccessTokenResponse> refreshAccessToken(@Body RefreshTokenRequest request);
 
 }

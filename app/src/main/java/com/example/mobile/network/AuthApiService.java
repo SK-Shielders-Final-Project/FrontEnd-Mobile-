@@ -14,7 +14,7 @@ public interface AuthApiService {
      * @param request refreshToken을 포함하는 요청 객체
      * @return accessToken을 포함하는 응답 객체
      */
-    @POST("api/auth/refresh")
+    @POST("/api/auth/refresh")
     Call<AccessTokenResponse> refreshAccessToken(@Body RefreshTokenRequest request);
 
 }

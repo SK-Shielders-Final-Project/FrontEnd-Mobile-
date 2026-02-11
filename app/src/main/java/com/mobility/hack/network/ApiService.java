@@ -57,24 +57,24 @@ public interface ApiService {
     // -----------------------------------------------------------
     // [게시판 관련 API]
     // -----------------------------------------------------------
-    @GET("api/user/inquiry/{inquiry_id}")
+    @GET("/api/user/inquiry/{inquiry_id}")
     Call<InquiryDetailResponseDto> getInquiryDetails(@Path("inquiry_id") long inquiryId);
 
     @POST("/api/user/inquiry/delete")
     Call<InquiryDeleteResponse> deleteInquiry(@Body InquiryDeleteRequest request);
 
-    @POST("api/user/inquiry/write")
+    @POST("/api/user/inquiry/write")
     Call<InquiryResponse> writeInquiry(@Body InquiryWriteRequest request);
 
     @GET("/api/user/inquiry")
     Call<List<InquiryResponse>> getInquiryList(@Query("user_id") long userId);
 
-    @PUT("api/user/inquiry/modify")
+    @PUT("/api/user/inquiry/modify")
     Call<InquiryModifyResponse> modifyInquiry(@Body InquiryModifyRequest request);
 
     // [파일 업로드]
     @Multipart
-    @POST("api/files/upload")
+    @POST("/api/files/upload")
     Call<FileUploadResponse> uploadFile(@Part MultipartBody.Part file);
 
 
@@ -104,7 +104,7 @@ public interface ApiService {
     @POST("/api/bikes")
     Call<List<BikeResponse>> getBikes();
 
-    @POST("api/chat")
+    @POST("/api/chat")
     Call<ChatResponse> sendChatMessage(@Body ChatRequest request);
 
     // 앱 무결성 검증 API

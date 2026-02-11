@@ -70,7 +70,7 @@ public class InquiryResponse implements Serializable {
         // 주의: BASE_URL 끝에 이미 '/'가 있다면 "api/..." 앞의 '/'는 빼야 슬래시 두 개(//)가 안 생깁니다.
 
         // 예: https://zdme.kro.kr/ + api/user/...
-        return BuildConfig.BASE_URL + "api/user/files/download?file=" + fullPath;
+        return BuildConfig.BASE_URL + "/api/user/files/download?file=" + fullPath;
     }
 
     // --- Getters ---

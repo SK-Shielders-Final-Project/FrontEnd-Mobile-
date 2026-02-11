@@ -45,7 +45,7 @@ public class InquiryDetailResponseDto implements Serializable {
     public String getDownloadUrl() {
         if (attachment == null) return null;
         String fullPath = attachment.getPath() + "/" + attachment.getFileName() + "." + attachment.getExt();
-        return BuildConfig.BASE_URL + "api/user/files/download?file=" + fullPath;
+        return BuildConfig.BASE_URL + "/api/user/files/download?file=" + fullPath;
     }
 
     // Getters
