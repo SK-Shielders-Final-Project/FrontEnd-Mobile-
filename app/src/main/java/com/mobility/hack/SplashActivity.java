@@ -1,9 +1,10 @@
+// SplashActivity.java
 package com.mobility.hack;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.Handler; // Delay를 위해 추가
-import android.os.Looper;  // Main Thread 처리를 위해 추가
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
@@ -11,9 +12,10 @@ import androidx.appcompat.app.AlertDialog;
 
 import com.mobility.hack.auth.LoginActivity;
 import com.mobility.hack.network.ApiService;
-import com.mobility.hack.network.IntegrityRequest;
-import com.mobility.hack.network.IntegrityResponse;
+import com.mobility.hack.network.IntegrityVerifyRequest;
+import com.mobility.hack.network.IntegrityTokenResponse;
 import com.mobility.hack.network.LoginResponse;
+import com.mobility.hack.network.NonceResponse;
 import com.mobility.hack.network.RefreshRequest;
 import com.mobility.hack.ride.MainActivity;
 import com.mobility.hack.security.SecurityBridge;
@@ -31,7 +33,6 @@ public class SplashActivity extends AppCompatActivity {
     private ApiService apiService;
     private SecurityBridge bridge;
 
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -44,102 +45,120 @@ public class SplashActivity extends AppCompatActivity {
         tokenManager = app.getTokenManager();
 
         // ---------------------------------------------------------
-        // [보안 단계 1] Java 레벨 명시적 호출 (Context 기반 탐지)
+        // [보안 단계 1] Root 탐지
         // ---------------------------------------------------------
-        // native_init에서 파일 검사를 통과했더라도,
-        // 패키지 매니저상에 루팅 앱이 존재하는지 2차 검증
 /*        int rootResult = bridge.detectRooting(this);
-
-        if (rootResult == 0x47) { // ERR_CODE_ROOTED
-            Log.e("SECURITY", "Rooting Detected by Package Manager");
+        if (rootResult == 0x47) {
+            Log.e("SECURITY", "Rooting Detected");
             showKillAppDialog();
-            return; // 이후 로직 실행 차단
+            return;
         }*/
 
         // ---------------------------------------------------------
-        // [보안 단계 2] 무결성 검사 수행 (비동기)
+        // [보안 단계 2] 무결성 검증 (Nonce → Verify)
         // ---------------------------------------------------------
-        //performIntegrityCheck();
-
-        // [수정] 보안 검사 없이 1.5초 뒤 강제 이동 (테스트용)
-        new Handler(Looper.getMainLooper()).postDelayed(() -> {
-            checkFlowAndNavigate();
-        }, 1500);
+        performIntegrityCheck();
     }
 
     /**
-     * [보안 단계 3] 서버 연동 무결성 검사
+     * 무결성 검증 플로우: Nonce 요청 → 검증 → Token 저장
      */
     private void performIntegrityCheck() {
-
-        new SecurityEngine().checkFridaOnce(); //Frida 1회성 추가
-
-        String sig = "";
-        String bin = "";
-
+/*        // [긴급 추가] 서버 통신 전 해시값 강제 출력
         try {
-            sig = SecurityEngine.getNativeSignature(this);
-            bin = SecurityEngine.getNativeBinaryHash(this);
-            Log.d("SECURITY", "Splash Check - Sig: " + sig + ", Bin: " + bin);
-        } catch (UnsatisfiedLinkError e) {
-            Log.e("SECURITY", "JNI Linking Error", e);
-            showKillAppDialog();
-            return;
-        } catch (Exception e) {
-            Log.e("SECURITY", "Unknown Error in JNI", e);
-            showKillAppDialog();
-            return;
-        }
+            String tempSig = SecurityEngine.getNativeSignature(this);
+            String tempBin = SecurityEngine.getNativeBinaryHash(this);
 
-        apiService.checkIntegrity(new IntegrityRequest(sig, bin)).enqueue(new Callback<IntegrityResponse>() {
+            Log.e("MY_HASH", "=========================================");
+            Log.e("MY_HASH", "SIGNATURE_HASH (서명): " + tempSig);
+            Log.e("MY_HASH", "BINARY_HASH (바이너리): " + tempBin);
+            Log.e("MY_HASH", "=========================================");
+
+        } catch (Exception e) {
+            Log.e("MY_HASH", "해시 추출 실패", e);
+        }*/
+
+        // 기존 통신 로직
+        new SecurityEngine().checkFridaOnce();
+
+        // Step 1: Nonce 요청
+        apiService.getNonce().enqueue(new Callback<NonceResponse>() {
             @Override
-            public void onResponse(@NotNull Call<IntegrityResponse> call, @NotNull Response<IntegrityResponse> response) {
+            public void onResponse(@NotNull Call<NonceResponse> call, @NotNull Response<NonceResponse> response) {
                 if (isFinishing() || isDestroyed()) return;
 
                 if (response.isSuccessful() && response.body() != null) {
-                    if (response.body().isValid()) {
-                        Log.d("SECURITY", "무결성 검증 통과 -> 앱 진입 시도");
-                        checkFlowAndNavigate();
-                    } else {
-                        // 검증 실패 (변조됨)
-                        showKillAppDialog();
-                    }
+                    String nonce = response.body().getNonce();
+                    Log.d("SECURITY", "Nonce received: " + nonce);
+                    verifyIntegrityWithNonce(nonce);
                 } else {
-                    // 서버 오류(500 등) 발생 시에도 보안을 위해 종료 처리
-                    Log.e("SECURITY", "Integrity Server Error: " + response.code());
-                    handleNetworkErrorAndExit("서버 통신 오류가 발생했습니다. (Code: " + response.code() + ")");
+                    handleNetworkErrorAndExit("Nonce 발급 실패 (Code: " + response.code() + ")");
                 }
             }
 
             @Override
-            public void onFailure(@NotNull Call<IntegrityResponse> call, @NotNull Throwable t) {
-                Log.e("SECURITY", "Integrity Network Error", t);
-
-                // [수정됨] Fail-Closed 정책 적용
-                // 네트워크 오류 발생 시 검증 불가로 판단하고 앱 종료
+            public void onFailure(@NotNull Call<NonceResponse> call, @NotNull Throwable t) {
+                Log.e("SECURITY", "Nonce request failed", t);
                 handleNetworkErrorAndExit("보안 검증을 위해 네트워크 연결이 필요합니다.");
             }
         });
     }
 
     /**
-     * [보안/UX] 네트워크 오류 시 토스트 출력 후 앱 종료
-     * 토스트가 뜰 시간을 확보하기 위해 1.5초 딜레이를 줌
+     * Step 2: 무결성 검증 및 Integrity Token 발급
      */
+    private void verifyIntegrityWithNonce(String nonce) {
+        String sig, bin;
+
+        try {
+            sig = SecurityEngine.getNativeSignature(this);
+            bin = SecurityEngine.getNativeBinaryHash(this);
+            Log.d("SECURITY", "Sig: " + sig.substring(0, 10) + "...");
+            Log.d("SECURITY", "Bin: " + bin.substring(0, 10) + "...");
+        } catch (Exception e) {
+            Log.e("SECURITY", "Failed to get hash", e);
+            showKillAppDialog();
+            return;
+        }
+
+        IntegrityVerifyRequest request = new IntegrityVerifyRequest(nonce, bin, sig);
+
+        // Interceptor가 자동으로 X-Device-Id 헤더 추가
+        apiService.verifyIntegrity(request).enqueue(new Callback<IntegrityTokenResponse>() {
+            @Override
+            public void onResponse(@NotNull Call<IntegrityTokenResponse> call, @NotNull Response<IntegrityTokenResponse> response) {
+                if (isFinishing() || isDestroyed()) return;
+
+                if (response.isSuccessful() && response.body() != null) {
+                    String integrityToken = response.body().getIntegrityToken();
+                    tokenManager.saveIntegrityToken(integrityToken);
+                    Log.d("SECURITY", "✅ Integrity Token saved");
+
+                    checkFlowAndNavigate();
+                } else {
+                    Log.e("SECURITY", "Integrity verification failed: " + response.code());
+                    showKillAppDialog();
+                }
+            }
+
+            @Override
+            public void onFailure(@NotNull Call<IntegrityTokenResponse> call, @NotNull Throwable t) {
+                Log.e("SECURITY", "Integrity verification error", t);
+                handleNetworkErrorAndExit("무결성 검증 실패");
+            }
+        });
+    }
+
     private void handleNetworkErrorAndExit(String message) {
         Toast.makeText(SplashActivity.this, message, Toast.LENGTH_LONG).show();
-
-        // 즉시 종료하면 토스트가 보이지 않을 수 있으므로 Handler 사용
         new Handler(Looper.getMainLooper()).postDelayed(() -> {
-            finishAffinity(); // 액티비티 스택 비우기
-            System.exit(0);   // 프로세스 강제 종료
+            finishAffinity();
+            System.exit(0);
         }, 1500);
     }
 
-    // ... (나머지 checkFlowAndNavigate, refreshAccessToken, showKillAppDialog 등 기존 코드 유지) ...
-
     private void checkFlowAndNavigate() {
-        if (tokenManager != null && tokenManager.isAutoLoginEnabled() && tokenManager.fetchRefreshToken() != null) {
+        if (tokenManager.isAutoLoginEnabled() && tokenManager.fetchRefreshToken() != null) {
             refreshAccessToken();
         } else {
             goToLoginActivity();
@@ -148,15 +167,23 @@ public class SplashActivity extends AppCompatActivity {
 
     private void refreshAccessToken() {
         String refreshToken = tokenManager.fetchRefreshToken();
+
+        // Interceptor가 자동으로 X-Device-Id, X-Integrity-Token 헤더 추가
         apiService.refresh(new RefreshRequest(refreshToken)).enqueue(new Callback<LoginResponse>() {
             @Override
             public void onResponse(@NotNull Call<LoginResponse> call, @NotNull Response<LoginResponse> response) {
+                if (isFinishing() || isDestroyed()) return;
+
                 LoginResponse loginResponse = response.body();
                 if (response.isSuccessful() && loginResponse != null && loginResponse.getAccessToken() != null) {
                     tokenManager.saveAuthToken(loginResponse.getAccessToken());
                     if (loginResponse.getRefreshToken() != null) {
                         tokenManager.saveRefreshToken(loginResponse.getRefreshToken());
                     }
+
+                    // ===== 토큰 사용 완료, 즉시 삭제 =====
+                    tokenManager.clearIntegrityToken();
+
                     goToMainActivity();
                 } else {
                     tokenManager.clearData();
@@ -166,7 +193,7 @@ public class SplashActivity extends AppCompatActivity {
 
             @Override
             public void onFailure(@NotNull Call<LoginResponse> call, @NotNull Throwable t) {
-                Toast.makeText(SplashActivity.this, "네트워크 오류로 자동 로그인 실패", Toast.LENGTH_SHORT).show();
+                Toast.makeText(SplashActivity.this, "자동 로그인 실패", Toast.LENGTH_SHORT).show();
                 goToLoginActivity();
             }
         });

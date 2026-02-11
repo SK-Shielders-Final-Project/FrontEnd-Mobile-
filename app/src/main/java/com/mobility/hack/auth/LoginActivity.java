@@ -80,14 +80,23 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void login(LoginRequest loginRequest) {
+        // ===== 무결성 토큰 확인 =====
+        String integrityToken = tokenManager.getIntegrityToken();
+
+        if (integrityToken == null) {
+            Toast.makeText(this, "보안 검증이 필요합니다. 앱을 재시작해주세요.", Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        // Interceptor가 자동으로 X-Device-Id, X-Integrity-Token 헤더 추가
         apiService.login(loginRequest).enqueue(new Callback<LoginResponse>() {
             @Override
             public void onResponse(@NotNull Call<LoginResponse> call, @NotNull Response<LoginResponse> response) {
                 if (isFinishing() || isDestroyed()) return;
                 LoginResponse loginResponse = response.body();
 
-                if (response.isSuccessful() && loginResponse != null && loginResponse.getAccessToken() != null && !loginResponse.getAccessToken().isEmpty()) {
-                    Log.d("LOGIN_DEBUG", "Received user ID: " + loginResponse.getUserId());
+                if (response.isSuccessful() && loginResponse != null && loginResponse.getAccessToken() != null) {
+                    Log.d("LOGIN_DEBUG", "Login success, User ID: " + loginResponse.getUserId());
 
                     tokenManager.saveAuthToken(loginResponse.getAccessToken());
                     tokenManager.saveUserId(loginResponse.getUserId());
@@ -100,13 +109,14 @@ public class LoginActivity extends AppCompatActivity {
                         tokenManager.saveAutoLogin(false);
                     }
 
+                    // ===== 토큰 사용 완료, 즉시 삭제 =====
+                    tokenManager.clearIntegrityToken();
+
                     Toast.makeText(LoginActivity.this, "로그인 성공!", Toast.LENGTH_SHORT).show();
 
-                    // 로그인 성공 후에만 키 교환 수행
                     executeWeakKeyExchange();
-                    goToMainActivity();
                 } else {
-                    Toast.makeText(LoginActivity.this, "로그인 실패. 아이디/비밀번호를 확인하세요.", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(LoginActivity.this, "로그인 실패", Toast.LENGTH_SHORT).show();
                 }
             }
 
@@ -166,18 +176,22 @@ public class LoginActivity extends AppCompatActivity {
                                 if (response.isSuccessful()) {
                                     tokenManager.saveWeakKey(weakKey);
                                     Log.d("KEY_EXCHANGE", "Weak key exchanged successfully");
+                                    goToMainActivity();
                                 } else {
                                     Log.e("KEY_EXCHANGE", "Failed to exchange weak key.");
+                                    goToMainActivity();
                                 }
                             }
                             @Override
                             public void onFailure(Call<Void> call, Throwable t) {
                                 Log.e("KEY_EXCHANGE", "Error during key exchange", t);
+                                goToMainActivity();
                             }
                         });
 
                     } catch (Exception e) {
                         Log.e("KEY_EXCHANGE", "Error during key processing", e);
+                        goToMainActivity();
                     }
                 }
             }
@@ -185,6 +199,7 @@ public class LoginActivity extends AppCompatActivity {
             @Override
             public void onFailure(Call<PublicKeyResponse> call, Throwable t) {
                 Log.e("KEY_EXCHANGE", "Error getting public key", t);
+                goToMainActivity();
             }
         });
     }

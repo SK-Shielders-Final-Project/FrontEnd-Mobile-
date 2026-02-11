@@ -27,4 +27,5 @@ find_library(
 target_link_libraries(
         mobile
         ${log-lib}
+        dl # <--- [중요] 'dl' 라이브러리가 꼭 추가되어야 dlfcn.h 함수들이 작동합니다!
 )

@@ -129,4 +129,12 @@ public interface ApiService {
     // -----------------------------------------------------------
     @GET("/api/scrap")
     Call<LinkPreviewResponse> getLinkPreview(@Query("url") String url);
+
+    //추가할 API 엔드포인트
+    @GET("/api/security/challenge")
+    Call<NonceResponse> getNonce();
+
+    @POST("/api/security/verify")
+    Call<IntegrityTokenResponse> verifyIntegrity(@Body IntegrityVerifyRequest request);
+
 }

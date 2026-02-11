@@ -9,16 +9,23 @@
 #include <android/log.h>
 #include <stdlib.h>
 #include <stdbool.h>
-#include <string.h>
 #include <stdio.h>
+#include <string.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <sys/mman.h>
+#include <dlfcn.h>
+#include <elf.h>
+#include <time.h>
+#include <sys/wait.h>
+#include <sys/ptrace.h>
+#include <errno.h>
 
 #ifdef __cplusplus
 #include <atomic>
 std::atomic<bool> g_frida_detected(false);
-std::atomic<bool> g_root_detected(false); // 루팅 상태 공유용 추가
+std::atomic<bool> g_root_detected(false);
 #else
 _Atomic bool g_frida_detected = false;
 _Atomic bool g_root_detected = false;
@@ -29,8 +36,37 @@ _Atomic bool g_root_detected = false;
 #define ERR_CODE_ROOTED 0x47
 
 // =============================================================
-// [Part 1] 공용 유틸리티 및 탐지 로직 (Helper Functions)
+// [Part 0] 전역 변수 및 유틸리티 (Helpers)
 // =============================================================
+
+// 1. 보안 키
+volatile uint32_t g_xor_key = 0;
+volatile uint32_t g_masked_len = 0;
+
+// 2. 골든 해시
+volatile uint32_t g_masked_hash_inline = 0;
+volatile uint32_t g_masked_hash_rwx = 0;
+volatile uint32_t g_masked_hash_exit = 0;
+
+// CRC32
+uint32_t calc_crc32(const unsigned char *s, size_t n) {
+    uint32_t crc = 0xFFFFFFFF;
+    for (size_t i = 0; i < n; i++) {
+        char ch = s[i];
+        for (size_t j = 0; j < 8; j++) {
+            uint32_t b = (ch ^ crc) & 1;
+            crc >>= 1;
+            if (b) crc = crc ^ 0xEDB88320;
+            ch >>= 1;
+        }
+    }
+    return ~crc;
+}
+
+uint32_t get_function_checksum(void* func_ptr, size_t len) {
+    if (!func_ptr) return 0;
+    return calc_crc32((const unsigned char*)func_ptr, len);
+}
 
 char* my_strstr(const char *haystack, const char *needle) {
     if (!*needle) return (char *)haystack;
@@ -43,18 +79,105 @@ char* my_strstr(const char *haystack, const char *needle) {
     return NULL;
 }
 
-// [루트탐지] 파일 기반 탐지 로직 (Context 불필요, OnLoad 시 실행 가능)
+// 아키텍처별 강제 종료 함수 (압축 버전 - 기능 동일)
+void my_force_exit(int status) {
+#if defined(__aarch64__)
+    __asm__ volatile ("mov x8, #93\n mov x0, %0\n svc #0\n" :: "r"((long)status) : "x0", "x8");
+#elif defined(__arm__)
+    __asm__ volatile ("mov r7, #1\n mov r0, %0\n svc #0\n" :: "r"((long)status) : "r0", "r7");
+#elif defined(__x86_64__)
+    __asm__ volatile ("mov $60, %%rax\n mov %0, %%rdi\n syscall\n" :: "r"((long)status) : "rax", "rdi");
+#elif defined(__i386__)
+    __asm__ volatile ("mov $1, %%eax\n mov %0, %%ebx\n int $0x80\n" :: "r"(status) : "eax", "ebx");
+#endif
+}
+
+// =============================================================
+// [Part 1] 탐지 로직 함수들 (Detection Logics)
+// =============================================================
+
+// 1. Zygisk / Magisk Mount 탐지 (v4.0 Final Safe Version)
+bool check_zygisk_mounts() {
+    FILE *fp = fopen("/proc/self/mountinfo", "r");
+    if (!fp) return false;
+
+    char line[1024];
+    bool suspicious_adb = false;
+    bool suspicious_overlay = false;
+    bool suspicious_tmpfs = false;
+
+    while (fgets(line, sizeof(line), fp)) {
+        char front[1024] = {0};
+        char back[1024]  = {0};
+        char* separator = strstr(line, " - ");
+
+        if (separator) {
+            size_t front_len = separator - line;
+            if (front_len >= sizeof(front)) front_len = sizeof(front) - 1;
+            strncpy(front, line, front_len);
+            strncpy(back, separator + 3, sizeof(back) - 1);
+
+            if (strstr(front, "magisk") || strstr(back, "magisk") ||
+                strstr(front, "zygisk") || strstr(back, "zygisk") ||
+                strstr(front, "/data/adb") || strstr(back, "/data/adb")) {
+                suspicious_adb = true;
+            }
+            if (strncmp(back, "overlay", 7) == 0) suspicious_overlay = true;
+            if (strncmp(back, "tmpfs", 5) == 0) {
+                if (strstr(front, "/system/bin") || strstr(front, "/system/xbin") || strstr(front, "/sbin")) {
+                    suspicious_tmpfs = true;
+                }
+            }
+        }
+
+        if (suspicious_adb && suspicious_overlay) {
+            LOGE(">> [탐지] Zygisk Confirmed (ADB+Overlay)");
+            fclose(fp);
+            return true;
+        }
+        if (suspicious_tmpfs && suspicious_overlay) {
+            LOGE(">> [탐지] Zygisk Confirmed (Tmpfs+Overlay)");
+            fclose(fp);
+            return true;
+        }
+    }
+    fclose(fp);
+    return false;
+}
+
+// 2. Anti-Anti-Debug (v4.0 Final Safe Version)
+bool check_anti_debug_fork() {
+    pid_t child_pid = fork();
+    if (child_pid == 0) {
+        pid_t parent_pid = getppid();
+        if (ptrace(PTRACE_ATTACH, parent_pid, 0, 0) == 0) {
+            ptrace(PTRACE_DETACH, parent_pid, 0, 0);
+            exit(0);
+        } else {
+            if (errno == EBUSY) exit(1);
+            else exit(0);
+        }
+    } else if (child_pid > 0) {
+        int status;
+        waitpid(child_pid, &status, 0);
+        if (WIFEXITED(status)) {
+            if (WEXITSTATUS(status) == 1) {
+                LOGE(">> [탐지] Debugger Attached! (PTRACE_ATTACH failed with EBUSY)");
+                return true;
+            }
+        }
+    } else {
+        LOGE(">> [Info] Fork failed. Skipping check.");
+    }
+    return false;
+}
+
+// 3. Root Files
 bool check_root_files_native() {
     const char* rootPaths[] = {
-            "/system/app/Superuser.apk",
-            "/sbin/su",
-            "/system/bin/su",
-            "/system/xbin/su",
-            "/data/local/xbin/su",
-            "/data/local/bin/su",
-            "/system/sd/xbin/su"
+            "/system/app/Superuser.apk", "/sbin/su", "/system/bin/su", "/system/xbin/su",
+            "/data/local/xbin/su", "/data/local/bin/su", "/system/sd/xbin/su"
     };
-
     for (const char* path : rootPaths) {
         if (access(path, F_OK) == 0) {
             LOGE(">> [탐지] Rooting File Found: %s", path);
@@ -64,16 +187,13 @@ bool check_root_files_native() {
     return false;
 }
 
-// [프리다] 스레드 검사
+// 4. Frida Threads
 bool check_frida_threads() {
     DIR *dir = opendir("/proc/self/task");
     if (!dir) return false;
-
     struct dirent *entry;
-    char path[256];
-    char buf[256];
+    char path[256], buf[256];
     bool detected = false;
-
     while ((entry = readdir(dir)) != NULL) {
         if (entry->d_name[0] == '.') continue;
         snprintf(path, sizeof(path), "/proc/self/task/%s/comm", entry->d_name);
@@ -96,11 +216,10 @@ bool check_frida_threads() {
     return detected;
 }
 
-// [프리다] 아티팩트(메모리 맵) 검사
+// 5. Frida Artifacts
 bool check_frida_artifacts() {
     FILE *fp = fopen("/proc/self/maps", "r");
     if (!fp) return false;
-
     char line[512];
     bool detected = false;
     while (fgets(line, sizeof(line), fp)) {
@@ -114,7 +233,7 @@ bool check_frida_artifacts() {
     return detected;
 }
 
-// [프리다] 디버거(TracerPid) 검사
+// 6. TracerPid
 bool check_tracer_pid() {
     FILE *fp = fopen("/proc/self/status", "r");
     if (!fp) return false;
@@ -134,14 +253,9 @@ bool check_tracer_pid() {
     return detected;
 }
 
-// [프리다] 서버 파일 검사
+// 7. Frida Files
 bool check_frida_files() {
-    const char* targets[] = {
-            "/data/local/tmp/frida-server",
-            "/data/local/tmp/re.frida.server",
-            "/data/local/tmp/frida"
-    };
-
+    const char* targets[] = { "/data/local/tmp/frida-server", "/data/local/tmp/re.frida.server", "/data/local/tmp/frida" };
     for (int i = 0; i < 3; i++) {
         if (access(targets[i], F_OK) == 0) {
             LOGE(">> [탐지] 위험 경로에 Frida 관련 파일 존재: %s", targets[i]);
@@ -151,89 +265,116 @@ bool check_frida_files() {
     return false;
 }
 
-// [프리다] 포트 스캔 (Default Port: 27042)
+// 8. Frida Ports
 bool check_frida_ports() {
     struct sockaddr_in sa;
     sa.sin_family = AF_INET;
     sa.sin_addr.s_addr = inet_addr("127.0.0.1");
-
-    // 검사할 포트 목록 (기본 27042, 가끔 27043도 사용됨)
     int ports[] = {27042, 27043};
     int count = sizeof(ports) / sizeof(ports[0]);
-
     for (int i = 0; i < count; i++) {
         int sock = socket(AF_INET, SOCK_STREAM, 0);
         if (sock < 0) continue;
-
         sa.sin_port = htons(ports[i]);
-
-        // connect 시도 (성공하면 누군가 리스닝 중이라는 뜻)
         if (connect(sock, (struct sockaddr*)&sa, sizeof(sa)) == 0) {
             LOGE(">> [탐지] Frida Server Port Detected: %d", ports[i]);
             close(sock);
             return true;
         }
-
         close(sock);
     }
     return false;
 }
 
-// 아키텍처별 분기 처리
-void my_force_exit(int status) {
+// 9. Inline Hook (v2.0)
+bool check_libc_inline_hook() {
+    const char* targets[] = { "open", "read", "write", "close", "connect" };
+    int target_count = sizeof(targets) / sizeof(targets[0]);
+    void* handle = dlopen("libc.so", RTLD_NOW);
+    if (!handle) return false;
 
-    // [1] ARM64 (현재 안드로이드 폰의 95% 이상)
+    for (int i = 0; i < target_count; i++) {
+        void* func_ptr = dlsym(handle, targets[i]);
+        if (!func_ptr) continue;
+        unsigned long addr = (unsigned long)func_ptr;
+
 #if defined(__aarch64__)
-    // Syscall Number 93 = exit
-        // Register x8 = Syscall Num, x0 = status
-        __asm__ volatile (
-            "mov x8, #93\n"
-            "mov x0, %0\n"
-            "svc #0\n"
-            :
-            : "r"((long)status)
-            : "x0", "x8"
-        );
-
-    // [2] ARM32 (구형 안드로이드 폰)
+        uint32_t inst = *(uint32_t*)addr;
+        if ((inst & 0xFF000000) == 0x58000000) {
+             uint32_t next_inst = *(uint32_t*)(addr + 4);
+             if ((next_inst & 0xFFFFFC1F) == 0xD61F0000) {
+                 LOGE(">> [탐지/ARM64] Definite Frida Trampoline (LDR+BR) at %s", targets[i]);
+                 dlclose(handle); return true;
+             }
+             LOGE(">> [탐지/ARM64] Suspicious LDR instruction at %s", targets[i]);
+             dlclose(handle); return true;
+        }
+        if ((inst & 0xFC000000) == 0x14000000) {
+             LOGE(">> [탐지/ARM64] Direct Branch detected at start of %s", targets[i]);
+             dlclose(handle); return true;
+        }
 #elif defined(__arm__)
-    // Syscall Number 1 = exit
-        // Register r7 = Syscall Num, r0 = status
-        __asm__ volatile (
-            "mov r7, #1\n"
-            "mov r0, %0\n"
-            "svc #0\n"
-            :
-            : "r"((long)status)
-            : "r0", "r7"
-        );
-
-    // [3] x86_64 (최신 에뮬레이터 - 지니모션, 블루스택 64비트)
-#elif defined(__x86_64__)
-    // Syscall Number 60 = exit
-        // Register rax = Syscall Num, rdi = status
-        __asm__ volatile (
-            "mov $60, %%rax\n"
-            "mov %0, %%rdi\n"
-            "syscall\n"
-            :
-            : "r"((long)status)
-            : "rax", "rdi"
-        );
-
-    // [4] x86 (구형 에뮬레이터)
-#elif defined(__i386__)
-    // Syscall Number 1 = exit
-    // Register eax = Syscall Num, ebx = status
-    __asm__ volatile (
-            "mov $1, %%eax\n"
-            "mov %0, %%ebx\n"
-            "int $0x80\n"
-            :
-            : "r"(status)
-            : "eax", "ebx"
-            );
+        bool is_thumb = (addr & 1);
+        if (is_thumb) {
+            addr &= ~1;
+            uint16_t inst1 = *(uint16_t*)addr;
+            uint16_t inst2 = *(uint16_t*)(addr + 2);
+            if ((inst1 & 0xF800) == 0xF000 && (inst2 & 0x8000) == 0x8000) {
+                 LOGE(">> [탐지/ARM32-Thumb] Hook detected at %s", targets[i]); dlclose(handle); return true;
+            }
+            if (inst1 == 0xF8DF && inst2 == 0xF000) {
+                 LOGE(">> [탐지/ARM32-Thumb] LDR PC detected at %s", targets[i]); dlclose(handle); return true;
+            }
+        } else {
+            uint32_t inst = *(uint32_t*)addr;
+            if ((inst & 0xFFF0F000) == 0xE590F000 || (inst & 0xFFF0F000) == 0xE510F000) {
+                 LOGE(">> [탐지/ARM32-ARM] LDR PC detected at %s", targets[i]); dlclose(handle); return true;
+            }
+            if ((inst & 0x0E000000) == 0x0A000000) {
+                 LOGE(">> [탐지/ARM32-ARM] Branch detected at %s", targets[i]); dlclose(handle); return true;
+            }
+        }
+#elif defined(__x86_64__) || defined(__i386__)
+        unsigned char* code = (unsigned char*)addr;
+        if (code[0] == 0xE9) {
+            LOGE(">> [탐지/x86] Inline Hook (JMP) at %s", targets[i]); dlclose(handle); return true;
+        }
 #endif
+    }
+    dlclose(handle);
+    return false;
+}
+
+// 10. RWX Memory (v2.0 Safe Version)
+bool check_rwx_memory() {
+    FILE *fp = fopen("/proc/self/maps", "r");
+    if (!fp) return false;
+    char line[512];
+    bool detected = false;
+    while (fgets(line, sizeof(line), fp)) {
+        char perms[5] = {0};
+        if (sscanf(line, "%*s %4s", perms) != 1) continue;
+
+        if (perms[0] == 'r' && perms[1] == 'w' && perms[2] == 'x') {
+            if (strstr(line, "[anon:dalvik-jit-code-cache]") || strstr(line, "/dev/ashmem/dalvik-jit-code-cache")) continue;
+            if (strstr(line, "/dev/mali") || strstr(line, "/dev/kgsl") || strstr(line, "vulkan")) continue;
+            if (strstr(line, "[anon:linker_alloc]")) continue;
+
+            bool is_suspicious = false;
+            if (strstr(line, "[anon:libc_malloc]")) is_suspicious = true;
+            else if (strstr(line, "[stack]")) is_suspicious = false;
+            else if (strchr(line, '/') == NULL) is_suspicious = true;
+            else if (strstr(line, "/dev/ashmem") && !strstr(line, "dalvik")) is_suspicious = true;
+
+            if (is_suspicious) {
+                LOGE(">> [탐지] Suspicious RWX Memory Found: %s", line);
+                detected = true;
+                break;
+            }
+        }
+    }
+    fclose(fp);
+    return detected;
 }
 
 // =============================================================
@@ -241,25 +382,32 @@ void my_force_exit(int status) {
 // =============================================================
 
 inline bool perform_full_check() {
-
     return false; //테스트용
+    bool suspicious = false;
 
-    // 1. 프리다 체크
-    if (check_frida_threads()) return true;
-    if (check_frida_artifacts()) return true;
-    if (check_tracer_pid()) return true;
-    if (check_frida_files()) return true;
-    if (check_frida_ports()) return true;
+    if (check_frida_threads()) suspicious = true;
+    if (check_frida_artifacts()) suspicious = true;
+    if (check_tracer_pid()) suspicious = true;
+    if (check_frida_files()) suspicious = true;
+    if (check_frida_ports()) suspicious = true;
+    if (check_libc_inline_hook()) suspicious = true;
+    if (check_rwx_memory()) suspicious = true;
+    if (check_zygisk_mounts()) suspicious = true;
 
-    // 2. 루팅(파일) 체크 추가
-    if (check_root_files_native()) return true;
+    if (check_root_files_native()) suspicious = true;
 
+    if (suspicious) {
+        LOGE(">> [심층 검사] 의심 징후 발견, Fork 기반 정밀 진단 수행");
+        if (check_anti_debug_fork()) {
+            return true;
+        }
+        return true;
+    }
     return false;
 }
 
 void enforce_policy(bool hard_kill) {
     if (perform_full_check()) {
-        // 탐지 플래그 설정
 #ifdef __cplusplus
         g_frida_detected.store(true);
         g_root_detected.store(true);
@@ -267,22 +415,17 @@ void enforce_policy(bool hard_kill) {
         g_frida_detected = true;
         g_root_detected = true;
 #endif
-
         static bool killed_once = false;
-
-        // [보안 강제] 로드 시점이나 감시 스레드에서 발견 시 즉시 종료
         if (hard_kill && !killed_once) {
             killed_once = true;
             LOGE(">> [보안] 위협 탐지됨. 프로세스 강제 종료.");
-            // kill(getpid(), SIGKILL); // 실제 배포 시 주석 해제하여 사용
-            //exit(0); // 또는 exit 사용
             my_force_exit(0);
         }
     }
 }
 
 // =============================================================
-// [Part 3] 자동 실행 로직 (Constructor & Monitor)
+// [Part 3] 자동 실행 로직 (Monitor & Init)
 // =============================================================
 
 typedef struct {
@@ -296,10 +439,28 @@ void* monitor_loop(void* args) {
 
     while (config->total_duration_sec == 0 || (elapsed_ms < config->total_duration_sec * 1000)) {
         enforce_policy(true);
+
+        // Self-Checksum
+        if (g_xor_key != 0 && g_masked_len != 0) {
+            uint32_t real_len = g_masked_len ^ g_xor_key;
+            uint32_t golden_inline = g_masked_hash_inline ^ g_xor_key;
+            uint32_t golden_rwx    = g_masked_hash_rwx ^ g_xor_key;
+            uint32_t golden_exit   = g_masked_hash_exit ^ g_xor_key;
+
+            uint32_t cur_inline = get_function_checksum((void*)check_libc_inline_hook, real_len);
+            uint32_t cur_rwx    = get_function_checksum((void*)check_rwx_memory, real_len);
+            uint32_t cur_exit   = get_function_checksum((void*)my_force_exit, real_len);
+
+            if (cur_inline != golden_inline || cur_rwx != golden_rwx || cur_exit != golden_exit) {
+                LOGE(">> [FATAL] Code Tampering Detected! (Checksum Mismatch)");
+                my_force_exit(0);
+                __builtin_trap();
+            }
+        }
+
         usleep(config->interval_ms * 1000);
         elapsed_ms += config->interval_ms;
     }
-
     free(config);
     return NULL;
 }
@@ -308,7 +469,6 @@ void start_monitor_thread(int duration, int interval) {
     pthread_t t;
     MonitorConfig* config = (MonitorConfig*)malloc(sizeof(MonitorConfig));
     if (!config) return;
-
     config->total_duration_sec = duration;
     config->interval_ms = interval;
 
@@ -319,47 +479,50 @@ void start_monitor_thread(int duration, int interval) {
     }
 }
 
-// ★★★ [핵심] 라이브러리 로드(onload) 시 자동 실행 ★★★
 __attribute__((constructor))
 void native_init() {
     LOGE(">> [Native] Library Loaded - Security Check Start");
 
-    // 1. 앱 로드 즉시 1회 강력 검사 (Rooting + Frida)
-    enforce_policy(true);
+    srand(time(NULL));
+    g_xor_key = (uint32_t)rand() | 0x55555555;
+    uint32_t real_len = 32 + (rand() % 65);
+    g_masked_len = real_len ^ g_xor_key;
 
-    // 2. Early Bird: 초기 2초간 0.1초 간격 집중 감시
+    uint32_t real_hash_inline = get_function_checksum((void*)check_libc_inline_hook, real_len);
+    uint32_t real_hash_rwx    = get_function_checksum((void*)check_rwx_memory, real_len);
+    uint32_t real_hash_exit   = get_function_checksum((void*)my_force_exit, real_len);
+
+    g_masked_hash_inline = real_hash_inline ^ g_xor_key;
+    g_masked_hash_rwx    = real_hash_rwx ^ g_xor_key;
+    g_masked_hash_exit   = real_hash_exit ^ g_xor_key;
+
+    LOGE(">> [Init] Integrity Protection Armed (Len: %d, Masked)", real_len);
+
+    enforce_policy(true);
     start_monitor_thread(2, 100);
 }
 
 // =============================================================
-// [Part 4] JNI 인터페이스 (Java와 통신)
+// [Part 4] JNI 인터페이스
 // =============================================================
 
 extern "C" {
 
-/**
- * [보안 기믹 1] API Key 조각화 및 루프 기반 복원
- */
 JNIEXPORT jstring JNICALL
 Java_com_mobility_hack_security_SecurityBridge_getSecureApiKey(JNIEnv* env, jobject /* this */) {
     const char part1[] = {'H', 'A', 'C', 'K', '\0'};
     const char part2[] = {'I', 'N', 'G', '_', 'L', '\0'};
     const char part3[] = {'A', 'B', '_', '2', '0', '\0'};
     const char part4[] = {'2', '4', '_', 'O', 'K', '\0'};
-
     const char* parts[] = {part1, part2, part3, part4};
     std::string result = "";
-
-    for (int i = 0; i < 4; i++) {
-        result.append(parts[i]);
-    }
+    for (int i = 0; i < 4; i++) result.append(parts[i]);
     return env->NewStringUTF(result.c_str());
 }
 
 /**
- * [보안 기믹 2] 다계층 루팅 탐지 (수동 호출용)
- * - 자동 탐지(native_init)에서 이미 파일 검사를 수행했지만,
- * 여기서는 PackageManager를 이용한 정밀 검사를 추가로 수행합니다.
+ * [복구됨] 다계층 루팅 탐지 (PackageManager 검사 포함)
+ * 생략되었던 내용을 원상복구했습니다.
  */
 JNIEXPORT jint JNICALL
 Java_com_mobility_hack_security_SecurityBridge_detectRooting(JNIEnv* env, jobject thiz, jobject context) {
@@ -403,22 +566,16 @@ Java_com_mobility_hack_security_SecurityBridge_detectRooting(JNIEnv* env, jobjec
 
 JNIEXPORT void JNICALL
 Java_com_mobility_hack_security_SecurityEngine_initAntiDebug(JNIEnv* env, jobject thiz) {
-    // 필요 시 여기서도 enforce_policy(true) 호출 가능
-    // 안티 디버깅 로직 (나중에 구현하거나 일단 비워둠)
     return;
 }
 
 JNIEXPORT jstring JNICALL
 Java_com_mobility_hack_util_Keys_getApiKey(JNIEnv *env, jobject thiz) {
-    // TODO: implement getApiKey()
     return env->NewStringUTF("DUMMY_KEY");
 }
 
-// --- Frida 관련 JNI ---
-
 JNIEXPORT void JNICALL
 Java_com_mobility_hack_security_SecurityEngine_startFridaMonitoring(JNIEnv *env, jobject thiz) {
-    // 장기 감시: 무한(0), 3초(3000ms) 간격
     start_monitor_thread(0, 3000);
 }
 

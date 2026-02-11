@@ -1,15 +1,19 @@
+// TokenManager.java
 package com.mobility.hack.security;
 
 import android.content.SharedPreferences;
+import java.util.UUID;
 
 public class TokenManager {
-
     private static final String KEY_JWT_TOKEN = "jwt_token";
     private static final String KEY_REFRESH_TOKEN = "refresh_token";
     private static final String KEY_USER_ID = "user_id";
     private static final String KEY_AUTO_LOGIN = "auto_login";
-    private static final String KEY_WEAK_KEY = "weak_key"; // 암호화 키 저장을 위한 키
+    private static final String KEY_WEAK_KEY = "weak_key";
 
+    // ===== 추가 =====
+    private static final String KEY_DEVICE_ID = "device_id";
+    private static final String KEY_INTEGRITY_TOKEN = "integrity_token";
 
     private final SharedPreferences prefs;
 
@@ -17,35 +21,25 @@ public class TokenManager {
         this.prefs = prefs;
     }
 
+    // 기존 메서드들...
     public void saveAuthToken(String token) {
-        SharedPreferences.Editor editor = prefs.edit();
-        editor.putString(KEY_JWT_TOKEN, token);
-        editor.apply();
+        prefs.edit().putString(KEY_JWT_TOKEN, token).apply();
     }
 
     public void saveRefreshToken(String token) {
-        SharedPreferences.Editor editor = prefs.edit();
-        editor.putString(KEY_REFRESH_TOKEN, token);
-        editor.apply();
+        prefs.edit().putString(KEY_REFRESH_TOKEN, token).apply();
     }
 
     public void saveUserId(long userId) {
-        SharedPreferences.Editor editor = prefs.edit();
-        editor.putLong(KEY_USER_ID, userId);
-        editor.apply();
+        prefs.edit().putLong(KEY_USER_ID, userId).apply();
     }
 
     public void saveAutoLogin(boolean enabled) {
-        SharedPreferences.Editor editor = prefs.edit();
-        editor.putBoolean(KEY_AUTO_LOGIN, enabled);
-        editor.apply();
+        prefs.edit().putBoolean(KEY_AUTO_LOGIN, enabled).apply();
     }
 
-    // 암호화 키 저장
     public void saveWeakKey(String key) {
-        SharedPreferences.Editor editor = prefs.edit();
-        editor.putString(KEY_WEAK_KEY, key);
-        editor.apply();
+        prefs.edit().putString(KEY_WEAK_KEY, key).apply();
     }
 
     public String fetchAuthToken() {
@@ -64,14 +58,46 @@ public class TokenManager {
         return prefs.getBoolean(KEY_AUTO_LOGIN, false);
     }
 
-    // 암호화 키 불러오기
     public String getWeakKey() {
         return prefs.getString(KEY_WEAK_KEY, null);
     }
 
     public void clearData() {
-        SharedPreferences.Editor editor = prefs.edit();
-        editor.clear();
-        editor.apply();
+        prefs.edit().clear().apply();
+    }
+
+    // ===== 추가 메서드 =====
+
+    /**
+     * Device ID 가져오기 (없으면 생성)
+     */
+    public String getOrCreateDeviceId() {
+        String deviceId = prefs.getString(KEY_DEVICE_ID, null);
+        if (deviceId == null) {
+            deviceId = UUID.randomUUID().toString();
+            prefs.edit().putString(KEY_DEVICE_ID, deviceId).apply();
+        }
+        return deviceId;
+    }
+
+    /**
+     * Integrity Token 저장
+     */
+    public void saveIntegrityToken(String token) {
+        prefs.edit().putString(KEY_INTEGRITY_TOKEN, token).apply();
+    }
+
+    /**
+     * Integrity Token 가져오기
+     */
+    public String getIntegrityToken() {
+        return prefs.getString(KEY_INTEGRITY_TOKEN, null);
+    }
+
+    /**
+     * Integrity Token 삭제 (1회용)
+     */
+    public void clearIntegrityToken() {
+        prefs.edit().remove(KEY_INTEGRITY_TOKEN).apply();
     }
 }
