@@ -47,12 +47,12 @@ public class SplashActivity extends AppCompatActivity {
         // ---------------------------------------------------------
         // [보안 단계 1] Root 탐지
         // ---------------------------------------------------------
-/*        int rootResult = bridge.detectRooting(this);
+        int rootResult = bridge.detectRooting(this);
         if (rootResult == 0x47) {
             Log.e("SECURITY", "Rooting Detected");
             showKillAppDialog();
             return;
-        }*/
+        }
 
         // ---------------------------------------------------------
         // [보안 단계 2] 무결성 검증 (Nonce → Verify)
@@ -79,7 +79,7 @@ public class SplashActivity extends AppCompatActivity {
         }*/
 
         // 기존 통신 로직
-        //new SecurityEngine().checkFridaOnce();
+        new SecurityEngine().checkFridaOnce();
 
         // Step 1: Nonce 요청
         apiService.getNonce().enqueue(new Callback<NonceResponse>() {
@@ -107,7 +107,7 @@ public class SplashActivity extends AppCompatActivity {
     /**
      * Step 2: 무결성 검증 및 Integrity Token 발급
      */
-/*    private void verifyIntegrityWithNonce(String nonce) {
+    private void verifyIntegrityWithNonce(String nonce) {
         String sig, bin;
 
         try {
@@ -147,12 +147,12 @@ public class SplashActivity extends AppCompatActivity {
                 handleNetworkErrorAndExit("무결성 검증 실패");
             }
         });
-    }*/
+    }
 
     /**
-     * Step 2: 무결성 검증 및 Integrity Token 발급
+     * (테스트) Step 2: 무결성 검증 및 Integrity Token 발급
      */
-    private void verifyIntegrityWithNonce(String nonce) {
+/*    private void verifyIntegrityWithNonce(String nonce) {
         // [하드코딩 테스트용] 변수 선언
         String sig, bin;
 
@@ -201,7 +201,8 @@ public class SplashActivity extends AppCompatActivity {
                 handleNetworkErrorAndExit("무결성 검증 실패");
             }
         });
-    }
+    }*/
+
 
     private void handleNetworkErrorAndExit(String message) {
         Toast.makeText(SplashActivity.this, message, Toast.LENGTH_LONG).show();
