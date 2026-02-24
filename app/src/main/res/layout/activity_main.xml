@@ -132,21 +132,6 @@
         </LinearLayout>
     </LinearLayout>
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
-        android:background="@drawable/bg_edittext_rounded"
-        android:elevation="6dp"
-        android:paddingHorizontal="20dp"
-        android:paddingVertical="8dp"
-        android:text="모든 자전거"
-        android:textColor="@color/text_primary"
-        android:textStyle="bold"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/topBar" />
-
     <ImageButton
         android:id="@+id/btnRefresh"
         android:layout_width="50dp"
@@ -187,7 +172,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:tint="@color/white" />
 
-    <!-- 대여 중인 정보 박스 -->
+    <!-- 대여 중인 정보 박스 (기존) -->
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/rentalStatusLayout"
         android:layout_width="300dp"
@@ -202,7 +187,6 @@
         app:layout_constraintStart_toStartOf="parent"
         tools:visibility="visible">
 
-        <!-- 1. 남은 시간 표시 -->
         <TextView
             android:id="@+id/tvRentalTimeLabel"
             android:layout_width="wrap_content"
@@ -225,7 +209,6 @@
             app:layout_constraintTop_toBottomOf="@id/tvRentalTimeLabel"
             tools:text="02:42:14" />
 
-        <!-- 2. 시간 연장 버튼 (상단) -->
         <Button
             android:id="@+id/btnExtendRental"
             style="@style/Widget.MaterialComponents.Button.OutlinedButton"
@@ -235,7 +218,6 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
-        <!-- 3. 사용 종료 버튼 (하단) -->
         <Button
             android:id="@+id/btnEndRental"
             android:layout_width="0dp"
@@ -248,6 +230,60 @@
             app:layout_constraintTop_toBottomOf="@id/btnExtendRental" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <!-- [수정] 자전거 정보 창 디자인 변경 -->
+    <LinearLayout
+        android:id="@+id/bikeInfoLayout"
+        android:layout_width="match_parent"
+        android:layout_height="375dp"
+        android:background="@drawable/bg_edittext_rounded"
+        android:elevation="8dp"
+        android:orientation="vertical"
+        android:visibility="gone"
+        app:layout_constraintBottom_toTopOf="@+id/bottomNavigation"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        tools:visibility="visible">
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="16dp">
+
+            <TextView
+                android:id="@+id/tv_bike_id_info"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="자전거 정보"
+                android:textColor="@color/text_primary"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+            <ImageButton
+                android:id="@+id/btnCloseBikeInfo"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_gravity="end|top"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="닫기"
+                android:src="@drawable/ic_close"
+                android:tint="@color/text_primary" />
+        </FrameLayout>
+
+        <ImageView
+            android:id="@+id/iv_bike_image"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            android:layout_marginBottom="16dp"
+            android:background="#E0E0E0"
+            android:contentDescription="자전거 이미지"
+            android:scaleType="centerCrop" />
+
+    </LinearLayout>
+
 
     <LinearLayout
         android:id="@+id/bottomNavigation"
