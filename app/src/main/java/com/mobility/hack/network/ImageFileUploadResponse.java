@@ -2,20 +2,20 @@ package com.mobility.hack.network;
 
 import com.google.gson.annotations.SerializedName;
 
-public class FileUploadResponse {
+// 이미지 업로드 응답을 위한 별도의 클래스
+public class ImageFileUploadResponse {
 
     @SerializedName("result")
     private String result;
 
     @SerializedName("file_id")
-    private Long fileId; // 타입을 Long으로 변경
+    private int fileId;
 
     public String getResult() {
         return result;
     }
 
-    // 메소드 이름을 getFile_id()로 변경
-    public Long getFile_id() {
+    public int getFileId() {
         return fileId;
     }
 }

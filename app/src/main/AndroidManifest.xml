@@ -164,6 +164,10 @@
             android:exported="false"
             android:windowSoftInputMode="adjustResize" />
 
+        <activity
+            android:name=".ride.ReturnBikeActivity"
+            android:exported="false" />
+
     </application>
 
 </manifest>

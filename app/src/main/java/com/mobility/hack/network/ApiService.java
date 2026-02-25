@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 
 import okhttp3.MultipartBody;
+import okhttp3.RequestBody;
 import okhttp3.ResponseBody;
 import retrofit2.Call;
 import retrofit2.http.Body;
@@ -72,7 +73,6 @@ public interface ApiService {
     @PUT("/api/user/inquiry/modify")
     Call<InquiryModifyResponse> modifyInquiry(@Body InquiryModifyRequest request);
 
-    // [파일 업로드]
     @Multipart
     @POST("/api/files/upload")
     Call<FileUploadResponse> uploadFile(@Part MultipartBody.Part file);
@@ -104,6 +104,12 @@ public interface ApiService {
     @POST("/api/bikes")
     Call<List<BikeResponse>> getBikes();
 
+    @GET("/api/user/bikes/{serial_number}")
+    Call<ResponseBody> getBikeImage(@Path("serial_number") String serialNumber);
+
+    @POST("/api/bikes/return")
+    Call<Void> returnBike(@Body ReturnRequest request);
+
     @POST("/api/chat")
     Call<ChatResponse> sendChatMessage(@Body ChatRequest request);
 
@@ -117,7 +123,7 @@ public interface ApiService {
     @GET("/api/user/crypto/public-key")
     Call<PublicKeyResponse> getPublicKey();
 
-    @POST("/api/user/crypto/exchange-key")
+    @POST("api/user/crypto/exchange-key")
     Call<Void> exchangeKeys(@Body ExchangeRequest request);
 
     @POST("/api/user/point/gift")

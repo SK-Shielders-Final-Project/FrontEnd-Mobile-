@@ -35,20 +35,19 @@ android {
             }
         }
 
-        // -------------------------------------------------------------------
-        // [수정 포인트] local.properties의 "SERVER_URL"을 읽어서 자바 코드(BuildConfig)로 넘김
-        // -------------------------------------------------------------------
         val serverUrl = localProperties.getProperty("SERVER_URL") ?: ""
-
-        // BuildConfig.BASE_URL 변수 생성
         buildConfigField("String", "BASE_URL", "\"$serverUrl\"")
 
-        // AndroidManifest.xml에서 쓸 변수들 (${MAPS_API_KEY} 등으로 사용)
         manifestPlaceholders["MAPS_API_KEY"] = localProperties.getProperty("MAPS_API_KEY") ?: ""
         manifestPlaceholders["TOSS_CLIENT_KEY"] = localProperties.getProperty("toss.clientKey") ?: ""
     }
 
-    // [필수] BuildConfig 클래스 생성을 활성화해야 위 설정이 먹힙니다.
+    sourceSets {
+        getByName("main") {
+            jni.srcDirs("src/main/cpp")
+        }
+    }
+
     buildFeatures {
         buildConfig = true
     }
@@ -70,7 +69,6 @@ android {
         }
     }
 
-    // JDK 21 설정
     compileOptions {
         isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.VERSION_21

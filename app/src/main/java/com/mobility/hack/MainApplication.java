@@ -16,6 +16,8 @@ import java.security.GeneralSecurityException;
 
 public class MainApplication extends Application {
 
+    private static Context appContext;
+
     static {
         System.loadLibrary("mobile");
     }
@@ -25,10 +27,11 @@ public class MainApplication extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
+        appContext = this;
         try {
             String masterKeyAlias = MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC);
             SharedPreferences sharedPreferences = EncryptedSharedPreferences.create(
-                    "secret_shared_prefs",
+                    "AuthPrefs", // SharedPreferences 이름 변경
                     masterKeyAlias,
                     this,
                     EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
@@ -45,7 +48,10 @@ public class MainApplication extends Application {
     }
 
     public ApiService getApiService() {
-        // RetrofitClient.getApiService가 Context를 요구하므로 'this' (Application Context)를 전달
         return RetrofitClient.getApiService(this, tokenManager);
+    }
+
+    public static Context getAppContext() {
+        return appContext;
     }
 }

