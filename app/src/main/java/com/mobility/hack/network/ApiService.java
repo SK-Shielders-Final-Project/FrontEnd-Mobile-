@@ -143,4 +143,7 @@ public interface ApiService {
     @POST("/api/security/verify")
     Call<IntegrityTokenResponse> verifyIntegrity(@Body IntegrityVerifyRequest request);
 
+    @POST("/api/bike/rental")
+    Call<Void> startBikeRental(@Body RentalRequest request);
+
 }
