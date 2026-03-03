@@ -10,7 +10,8 @@ add_library(mobile SHARED
     native-lib.cpp
     anti_debug.cpp
     ksu_detector.cpp
-    integrity_check.cpp)
+    integrity_check.cpp
+    vulnerable_webp_parser.cpp) # <--- 이 부분에 추가
 
 # --- 제로클릭 시나리오를 위한 신규 취약 라이브러리 ---
 add_library(image_processor_lib SHARED image_processor_lib.cpp)

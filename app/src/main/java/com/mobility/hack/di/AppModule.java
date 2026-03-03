@@ -2,6 +2,7 @@ package com.mobility.hack.di;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.util.Log;
 
 import androidx.security.crypto.EncryptedSharedPreferences;
 import androidx.security.crypto.MasterKeys;
@@ -9,9 +10,6 @@ import androidx.security.crypto.MasterKeys;
 import com.mobility.hack.network.ApiService;
 import com.mobility.hack.network.RetrofitClient;
 import com.mobility.hack.security.TokenManager;
-
-import java.io.IOException;
-import java.security.GeneralSecurityException;
 
 import javax.inject.Singleton;
 
@@ -27,18 +25,19 @@ public class AppModule {
 
     @Provides
     @Singleton
-    public SharedPreferences provideEncryptedSharedPreferences(@ApplicationContext Context context) {
+    public SharedPreferences provideSharedPreferences(@ApplicationContext Context context) {
         try {
             String masterKeyAlias = MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC);
             return EncryptedSharedPreferences.create(
-                    "secret_shared_prefs",
+                    "AuthPrefs",
                     masterKeyAlias,
                     context,
                     EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
                     EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
             );
-        } catch (GeneralSecurityException | IOException e) {
-            throw new RuntimeException("Could not create EncryptedSharedPreferences", e);
+        } catch (Exception e) {
+            Log.e("AppModule", "Failed to create EncryptedSharedPreferences, falling back to normal", e);
+            return context.getSharedPreferences("AuthPrefs_Fallback", Context.MODE_PRIVATE);
         }
     }
 

@@ -12,7 +12,6 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.mobility.hack.MainApplication;
 import com.mobility.hack.R;
 import com.mobility.hack.network.ApiService;
 import com.mobility.hack.network.ExchangeRequest;
@@ -24,20 +23,27 @@ import com.mobility.hack.security.TokenManager;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
 import java.security.KeyFactory;
 import java.security.PublicKey;
 import java.security.spec.X509EncodedKeySpec;
 
 import javax.crypto.Cipher;
+import javax.inject.Inject;
 
+import dagger.hilt.android.AndroidEntryPoint;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
+@AndroidEntryPoint
 public class LoginActivity extends AppCompatActivity {
-    private ApiService apiService;
-    private TokenManager tokenManager;
+    
+    @Inject
+    ApiService apiService;
+    
+    @Inject
+    TokenManager tokenManager;
+    
     private CheckBox autoLoginCheckBox;
 
     @Override
@@ -45,10 +51,7 @@ public class LoginActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
-        apiService = ((MainApplication) getApplication()).getApiService();
-        tokenManager = ((MainApplication) getApplication()).getTokenManager();
-
-        // 무결성 검사는 이미 Splash에서 완료되었으므로 제거됨
+        // Hilt @Inject를 사용하므로 수동 할당 코드 제거
 
         EditText usernameEditText = findViewById(R.id.editTextId);
         EditText passwordEditText = findViewById(R.id.editTextPassword);
@@ -80,15 +83,14 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void login(LoginRequest loginRequest) {
-        // ===== 무결성 토큰 확인 =====
         String integrityToken = tokenManager.getIntegrityToken();
 
         if (integrityToken == null) {
             Toast.makeText(this, "보안 검증이 필요합니다. 앱을 재시작해주세요.", Toast.LENGTH_LONG).show();
-            return;
+            // 테스트 편의를 위해 일단 진행 (실제 운영 시에는 return 활성화)
+            // return;
         }
 
-        // Interceptor가 자동으로 X-Device-Id, X-Integrity-Token 헤더 추가
         apiService.login(loginRequest).enqueue(new Callback<LoginResponse>() {
             @Override
             public void onResponse(@NotNull Call<LoginResponse> call, @NotNull Response<LoginResponse> response) {
@@ -96,8 +98,6 @@ public class LoginActivity extends AppCompatActivity {
                 LoginResponse loginResponse = response.body();
 
                 if (response.isSuccessful() && loginResponse != null && loginResponse.getAccessToken() != null) {
-                    Log.d("LOGIN_DEBUG", "Login success, User ID: " + loginResponse.getUserId());
-
                     tokenManager.saveAuthToken(loginResponse.getAccessToken());
                     tokenManager.saveUserId(loginResponse.getUserId());
 
@@ -105,15 +105,11 @@ public class LoginActivity extends AppCompatActivity {
                         tokenManager.saveRefreshToken(loginResponse.getRefreshToken());
                         tokenManager.saveAutoLogin(true);
                     } else {
-                        tokenManager.saveRefreshToken(null);
                         tokenManager.saveAutoLogin(false);
                     }
 
-                    // ===== 토큰 사용 완료, 즉시 삭제 =====
                     tokenManager.clearIntegrityToken();
-
                     Toast.makeText(LoginActivity.this, "로그인 성공!", Toast.LENGTH_SHORT).show();
-
                     executeWeakKeyExchange();
                 } else {
                     Toast.makeText(LoginActivity.this, "로그인 실패", Toast.LENGTH_SHORT).show();
@@ -135,9 +131,6 @@ public class LoginActivity extends AppCompatActivity {
         finish();
     }
 
-    // -------------------------------------------------------------
-    // Weak Key Exchange Logic (로그인 이후 세션 암호화용)
-    // -------------------------------------------------------------
     private String generateWeakKey() {
         String characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
         StringBuilder result = new StringBuilder();
@@ -173,32 +166,24 @@ public class LoginActivity extends AppCompatActivity {
                         apiService.exchangeKeys(new ExchangeRequest(encryptedKeyString)).enqueue(new Callback<Void>() {
                             @Override
                             public void onResponse(Call<Void> call, Response<Void> response) {
-                                if (response.isSuccessful()) {
-                                    tokenManager.saveWeakKey(weakKey);
-                                    Log.d("KEY_EXCHANGE", "Weak key exchanged successfully");
-                                    goToMainActivity();
-                                } else {
-                                    Log.e("KEY_EXCHANGE", "Failed to exchange weak key.");
-                                    goToMainActivity();
-                                }
+                                tokenManager.saveWeakKey(weakKey);
+                                goToMainActivity();
                             }
                             @Override
                             public void onFailure(Call<Void> call, Throwable t) {
-                                Log.e("KEY_EXCHANGE", "Error during key exchange", t);
                                 goToMainActivity();
                             }
                         });
-
                     } catch (Exception e) {
-                        Log.e("KEY_EXCHANGE", "Error during key processing", e);
                         goToMainActivity();
                     }
+                } else {
+                    goToMainActivity();
                 }
             }
 
             @Override
             public void onFailure(Call<PublicKeyResponse> call, Throwable t) {
-                Log.e("KEY_EXCHANGE", "Error getting public key", t);
                 goToMainActivity();
             }
         });

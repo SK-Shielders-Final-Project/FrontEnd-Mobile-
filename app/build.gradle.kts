@@ -8,7 +8,6 @@ plugins {
     alias(libs.plugins.kotlin.kapt)
 }
 
-// [핵심] local.properties 파일 로드
 val localProperties = Properties()
 val localPropertiesFile = rootProject.file("local.properties")
 if (localPropertiesFile.exists()) {
@@ -87,11 +86,6 @@ android {
 kapt {
     correctErrorTypes = true
     useBuildCache = false
-    arguments {
-        arg("dagger.hilt.disableModulesHaveInstallInCheck", "true")
-        arg("kapt.incremental.apt", "false")
-        arg("kapt.use.worker.api", "false")
-    }
 }
 
 dependencies {
@@ -104,10 +98,10 @@ dependencies {
     implementation("androidx.recyclerview:recyclerview:1.4.0")
 
     // Retrofit & OkHttp
-    implementation(libs.retrofit)
-    implementation(libs.converter.gson)
-    implementation(libs.logging.interceptor)
-    implementation(libs.okhttp.urlconnection)
+    implementation("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+    implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
+    implementation("com.squareup.okhttp3:okhttp-urlconnection:4.12.0")
 
     // Glide
     implementation("com.github.bumptech.glide:glide:4.16.0")
@@ -116,20 +110,16 @@ dependencies {
     // Security
     implementation(libs.security.crypto)
 
-    // Hilt
-    implementation(libs.hilt.android)
-    kapt(libs.hilt.compiler)
+    // Hilt (버전 업데이트: 2.54는 Kotlin 2.1 메타데이터를 지원합니다)
+    implementation("com.google.dagger:hilt-android:2.54")
+    kapt("com.google.dagger:hilt-android-compiler:2.54")
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
 
-    // Google Maps SDK
     implementation("com.google.android.gms:play-services-maps:17.0.0")
     implementation("com.google.android.gms:play-services-location:17.0.0")
-
-    // Barcode Scanner
     implementation(libs.zxing.embedded)
-
     implementation("org.jsoup:jsoup:1.17.2")
 }
