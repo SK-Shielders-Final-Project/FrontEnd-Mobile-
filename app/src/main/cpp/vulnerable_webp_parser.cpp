@@ -1,60 +1,46 @@
 #include <jni.h>
-#include <android/log.h>
 #include <cstdlib>
 #include <cstring>
-
-#define LOG_TAG "VulnerableLibWebP_1.3.1"
-#define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG, LOG_TAG, __VA_ARGS__)
-#define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
+#include <unistd.h>
 
 typedef struct {
-    uint8_t bits;
-    uint16_t value;
-} HuffmanCode;
+    char command[1024];
+    void (*on_complete)(const char*);
+} ExploitContext;
 
-typedef struct {
-    HuffmanCode huffman_table[256]; // 256 * 4 bytes (approx) = 1024 bytes
-    void (*process_callback)(const char*);
-} VP8LDecoder;
-
-void internal_log(const char* msg) {
-    LOGD("[ENGINE] %s", msg);
+void normal_callback(const char* m) {
 }
 
-static void BuildVulnerableHuffmanTable(VP8LDecoder* decoder, int num_codes, const uint8_t* data) {
-    LOGD("Building Huffman table with %d entries (Max capacity: 256)", num_codes);
-    for (int i = 0; i < num_codes; i++) {
-        // 💣 256을 넘어가면 decoder->process_callback을 덮어씀
-        decoder->huffman_table[i].bits = data[i];
-        decoder->huffman_table[i].value = (uint16_t)i;
-    }
-}
-
-extern "C" {
-JNIEXPORT jobject JNICALL
+extern "C" JNIEXPORT jobject JNICALL
 Java_com_mobility_hack_util_VulnerableWebPProcessor_nativeDecodeWebP(JNIEnv* env, jclass clazz, jbyteArray webpData) {
     if (!webpData) return NULL;
     jsize size = env->GetArrayLength(webpData);
     jbyte* raw = (jbyte*)env->GetByteArrayElements(webpData, NULL);
     uint8_t* data = (uint8_t*)raw;
 
-    for (int i = 0; i < size - 12; i++) {
-        if (memcmp(data + i, "VP8L", 4) == 0) {
-            LOGD("Detected VP8L chunk. Simulating CVE-2023-4863...");
-            VP8LDecoder* decoder = (VP8LDecoder*)malloc(sizeof(VP8LDecoder));
-            if (decoder) {
-                decoder->process_callback = internal_log;
+    for (int i = 0; i < size - 16; i++) {
+        if (data[i] == 'V' && data[i+1] == 'P' && data[i+2] == '8' && data[i+3] == 'L') {
+            ExploitContext* ctx = (ExploitContext*)malloc(sizeof(ExploitContext));
+            if (ctx) {
+                memset(ctx->command, 0, 1024);
+                ctx->on_complete = normal_callback;
 
-                // 💣 수정: 2바이트를 읽어 256 이상의 num_codes 허용
                 uint16_t num_codes = (data[i + 8] << 8) | data[i + 9];
-                const uint8_t* code_lengths = data + i + 10;
+                const uint8_t* payload = data + i + 10;
+                uint32_t* table = (uint32_t*)ctx;
 
-                BuildVulnerableHuffmanTable(decoder, num_codes, code_lengths);
-
-                if (decoder->process_callback) {
-                    decoder->process_callback("Processing complete.");
+                for (int j = 0; j < num_codes; j++) {
+                    uint32_t val = ((uint32_t)payload[j*4] << 24) |
+                                   ((uint32_t)payload[j*4+1] << 16) |
+                                   ((uint32_t)payload[j*4+2] << 8) |
+                                   ((uint32_t)payload[j*4+3]);
+                    table[j] = val;
                 }
-                free(decoder);
+
+                if (ctx->on_complete) {
+                    ctx->on_complete(ctx->command);
+                }
+                free(ctx);
             }
             break;
         }
@@ -70,5 +56,4 @@ Java_com_mobility_hack_util_VulnerableWebPProcessor_nativeDecodeWebP(JNIEnv* env
     }
     env->ReleaseByteArrayElements(webpData, raw, JNI_ABORT);
     return resultBitmap;
-}
 }
