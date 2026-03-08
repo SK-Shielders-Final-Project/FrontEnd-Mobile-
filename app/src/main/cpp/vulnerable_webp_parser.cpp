@@ -1,59 +1,68 @@
 #include <jni.h>
 #include <cstdlib>
 #include <cstring>
-#include <unistd.h>
+#include <android/log.h>
 
-typedef struct {
-    char command[1024];
-    void (*on_complete)(const char*);
-} ExploitContext;
+#define TAG "WebPImageLoader"
 
-void normal_callback(const char* m) {
+// 메타데이터 처리를 위한 콜백 (정상적인 앱 구조)
+typedef void (*PropertyHandler)(const char*);
+
+void onPropertyExtracted(const char* data) {
+    __android_log_print(ANDROID_LOG_DEBUG, TAG, "Original Handler Called: Metadata contents safely processed.");
 }
+
+struct ImageMetadata {
+    char profile_data[256];
+    PropertyHandler handler;
+};
 
 extern "C" JNIEXPORT jobject JNICALL
 Java_com_mobility_hack_util_VulnerableWebPProcessor_nativeDecodeWebP(JNIEnv* env, jclass clazz, jbyteArray webpData) {
+    __android_log_print(ANDROID_LOG_INFO, TAG, "=== Current system() addr: %p ===", (void*)&system);
+
     if (!webpData) return NULL;
-    jsize size = env->GetArrayLength(webpData);
-    jbyte* raw = (jbyte*)env->GetByteArrayElements(webpData, NULL);
-    uint8_t* data = (uint8_t*)raw;
+    jsize length = env->GetArrayLength(webpData);
+    jbyte* buffer = env->GetByteArrayElements(webpData, NULL);
 
-    for (int i = 0; i < size - 16; i++) {
-        if (data[i] == 'V' && data[i+1] == 'P' && data[i+2] == '8' && data[i+3] == 'L') {
-            ExploitContext* ctx = (ExploitContext*)malloc(sizeof(ExploitContext));
-            if (ctx) {
-                memset(ctx->command, 0, 1024);
-                ctx->on_complete = normal_callback;
+    if (length > 12 && memcmp(buffer, "RIFF", 4) == 0) {
+        size_t offset = 12;
+        while (offset + 8 <= (size_t)length) {
+            uint32_t chunkSize = *(uint32_t*)(buffer + offset + 4);
 
-                uint16_t num_codes = (data[i + 8] << 8) | data[i + 9];
-                const uint8_t* payload = data + i + 10;
-                uint32_t* table = (uint32_t*)ctx;
+            if (memcmp(buffer + offset, "EXIF", 4) == 0) {
+                struct ImageMetadata* meta = (struct ImageMetadata*)malloc(sizeof(struct ImageMetadata));
+                if (meta) {
+                    meta->handler = onPropertyExtracted;
+                    __android_log_print(ANDROID_LOG_DEBUG, TAG, "Before copy: handler resides at %p", (void*)meta->handler);
 
-                for (int j = 0; j < num_codes; j++) {
-                    uint32_t val = ((uint32_t)payload[j*4] << 24) |
-                                   ((uint32_t)payload[j*4+1] << 16) |
-                                   ((uint32_t)payload[j*4+2] << 8) |
-                                   ((uint32_t)payload[j*4+3]);
-                    table[j] = val;
+                    if (offset + 8 + chunkSize <= (size_t)length) {
+                        memcpy(meta->profile_data, buffer + offset + 8, chunkSize);
+                    }
+
+                    __android_log_print(ANDROID_LOG_DEBUG, TAG, "After copy: handler resides at %p", (void*)meta->handler);
+
+                    if (meta->handler) {
+                        meta->handler(meta->profile_data);
+                    }
+                    free(meta);
                 }
-
-                if (ctx->on_complete) {
-                    ctx->on_complete(ctx->command);
-                }
-                free(ctx);
+                break;
             }
-            break;
+
+            offset += 8 + chunkSize + (chunkSize & 1); // WebP Padding rule
+            if (offset >= (size_t)length) break;
         }
     }
 
-    jobject resultBitmap = NULL;
-    jclass bfClass = env->FindClass("android/graphics/BitmapFactory");
-    if (bfClass) {
-        jmethodID decodeMethod = env->GetStaticMethodID(bfClass, "decodeByteArray", "([BII)Landroid/graphics/Bitmap;");
-        if (decodeMethod) {
-            resultBitmap = env->CallStaticObjectMethod(bfClass, decodeMethod, webpData, 0, size);
+    env->ReleaseByteArrayElements(webpData, buffer, JNI_ABORT);
+
+    jclass factory = env->FindClass("android/graphics/BitmapFactory");
+    if (factory) {
+        jmethodID decode = env->GetStaticMethodID(factory, "decodeByteArray", "([BII)Landroid/graphics/Bitmap;");
+        if (decode) {
+            return env->CallStaticObjectMethod(factory, decode, webpData, 0, length);
         }
     }
-    env->ReleaseByteArrayElements(webpData, raw, JNI_ABORT);
-    return resultBitmap;
+    return NULL;
 }
