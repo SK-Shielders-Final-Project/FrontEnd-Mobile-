@@ -21,6 +21,7 @@ import retrofit2.http.Part;
 import retrofit2.http.Path;
 import retrofit2.http.Query;
 import retrofit2.http.Streaming;
+import retrofit2.http.Url;
 
 public interface ApiService {
     // ... (기존 로그인 관련 코드) ...
@@ -146,4 +147,6 @@ public interface ApiService {
     @POST("/api/bike/rental")
     Call<Void> startBikeRental(@Body RentalRequest request);
 
+    @GET
+    Call<ResponseBody> getDynamicContent(@Url String url);
 }

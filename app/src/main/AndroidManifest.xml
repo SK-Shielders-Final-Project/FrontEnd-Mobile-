@@ -35,9 +35,19 @@
         <activity
             android:name=".ride.MainActivity"
             android:exported="true" />
+
         <activity
             android:name=".DeepLinkActivity"
             android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+
+                <!-- mobility:// 스킴 등록 -->
+                <data android:scheme="mobility"
+                    android:host="event"/>
+            </intent-filter>
         </activity>
 
         <activity
